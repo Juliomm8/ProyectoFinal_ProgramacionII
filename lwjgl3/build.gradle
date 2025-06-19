@@ -179,3 +179,12 @@ startScripts.classpath = project.tasks.jar.outputs.files
 if(enableGraalNative == 'true') {
   apply from: file("nativeimage.gradle")
 }
+application {
+  mainClass = "com.proyectofinal.lwjgl3.Lwjgl3Launcher"
+}
+
+// Configura el 'run' para que el workingDir sea la raíz del proyecto,
+// de modo que "assets/" quede al mismo nivel:
+tasks.named('run', JavaExec) {
+  workingDir = rootProject.projectDir
+}

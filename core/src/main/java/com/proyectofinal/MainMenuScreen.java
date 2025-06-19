@@ -1,34 +1,28 @@
+// MainMenuScreen.java
 package com.proyectofinal;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.ScreenAdapter;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 
-public class MainMenuScreen extends ScreenAdapter {
-    private final Game game;
-    private Stage stage;
-    private Skin skin;
+/**
+ * Pantalla principal con las opciones de Jugar, Opciones y Salir.
+ */
+public class MainMenuScreen extends PantallaBase {
+    private final RPGGame game;
 
-    public MainMenuScreen(Game game) {
+    public MainMenuScreen(RPGGame game) {
         this.game = game;
     }
 
     @Override
-    public void show() {
-        stage = new Stage(new ScreenViewport());
-        Gdx.input.setInputProcessor(stage);
-
-        // Cargo skin desde assets/ui/
+    protected void initUI() {
+        // Agregar regiones del atlas al skin
         TextureAtlas atlas = new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas"));
-        skin = new Skin(Gdx.files.internal("ui/uiskin.json"), atlas);
+        skin.addRegions(atlas);
 
+        // Crear tabla y botones
         Table table = new Table(skin);
         table.setFillParent(true);
         table.center();
@@ -37,31 +31,33 @@ public class MainMenuScreen extends ScreenAdapter {
         TextButton btnJugar = new TextButton("Jugar", skin);
         btnJugar.addListener(event -> {
             if (btnJugar.isPressed()) {
-                System.out.println("Jugar presionado");
-                // Más adelante: game.setScreen(new DungeonScreen((RPGGame)game));
+                game.setScreen(new SeleccionPersonajeScreen(game));
             }
             return false;
         });
 
-        table.add(btnJugar).width(200f).pad(20f);
-    }
+        TextButton btnOpciones = new TextButton("Opciones", skin);
+        btnOpciones.addListener(event -> {
+            if (btnOpciones.isPressed()) {
+                game.setScreen(new OptionsScreen(game));
+            }
+            return false;
+        });
 
-    @Override
-    public void render(float delta) {
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        stage.act(delta);
-        stage.draw();
-    }
+        TextButton btnSalir = new TextButton("Salir", skin);
+        btnSalir.addListener(event -> {
+            if (btnSalir.isPressed()) {
+                Gdx.app.exit();
+            }
+            return false;
+        });
 
-    @Override
-    public void resize(int width, int height) {
-        stage.getViewport().update(width, height, true);
-    }
-
-    @Override
-    public void dispose() {
-        stage.dispose();
-        skin.dispose();
+        float pad = 20f;
+        table.add(btnJugar).width(200f).pad(pad);
+        table.row();
+        table.add(btnOpciones).width(200f).pad(pad);
+        table.row();
+        table.add(btnSalir).width(200f).pad(pad);
     }
 }
+
