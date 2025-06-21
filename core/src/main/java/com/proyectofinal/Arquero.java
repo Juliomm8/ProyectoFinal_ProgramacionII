@@ -1,30 +1,70 @@
-// Arquero.java
 package com.proyectofinal;
 
 /**
- * Subclase de Jugador especializada en disparos.
+ * Subclase de Jugador especializada en disparos con flechas limitadas y ráfaga ilimitada.
  */
-public class Arquero extends Jugador implements EquipableInterface {
+public class Arquero extends Jugador {
     private float precision;
+    private int flechas;
+    private boolean modoIlimitado;
+    private float tiempoIlimitado;
 
-    public Arquero(String nombre, int vida, int ataque, float precision) {
+    public Arquero(String nombre, int vida, int ataque, float precision, int flechasIniciales) {
         super(nombre, vida, ataque);
         this.precision = precision;
+        this.flechas = flechasIniciales;
+        this.modoIlimitado = false;
+        this.tiempoIlimitado = 0;
     }
 
     public float getPrecision() {
         return precision;
     }
 
-    @Override
-    public void equipar() {
-        System.out.println(getNombre() + " equipa su arco con precisión " + precision);
+    public int getFlechas() {
+        return flechas;
     }
 
     /**
-     * Acción del arquero para disparar.
+     * Ataque básico: dispara flecha y consume flecha si no está en ráfaga ilimitada.
      */
-    public void dispararFlecha() {
-        System.out.println(getNombre() + " dispara una flecha con precisión " + precision);
+    public void ataque1() {
+        if (modoIlimitado || flechas > 0) {
+            if (!modoIlimitado) flechas--;
+            System.out.println(getNombre() + " dispara flecha con precisión " + precision +
+                ". Flechas restantes: " + flechas);
+        } else {
+            System.out.println(getNombre() + " no tiene flechas.");
+        }
+    }
+
+    /**
+     * Recarga flechas al arquero.
+     */
+    public void recargarFlechas(int cantidad) {
+        flechas += cantidad;
+
+    }
+
+    /**
+     * Activa ráfaga de flechas ilimitadas durante segundos especificados.
+     */
+    public void activarRafagaIlimitada(float duracionSegundos) {
+        modoIlimitado = true;
+        tiempoIlimitado = duracionSegundos;
+        System.out.println(getNombre() + " activa ráfaga ilimitada por " + duracionSegundos + "s.");
+    }
+
+    /**
+     * Actualiza temporizador de ráfaga ilimitada; llamar cada frame con delta.
+     */
+    public void actualizar(float delta) {
+        if (modoIlimitado) {
+            tiempoIlimitado -= delta;
+            if (tiempoIlimitado <= 0) {
+                modoIlimitado = false;
+                System.out.println(getNombre() + " termina ráfaga ilimitada.");
+            }
+        }
     }
 }

@@ -1,11 +1,10 @@
-// Jugador.java
 package com.proyectofinal;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Representa al jugador con inventario de pociones.
+ * Representa al jugador con inventario de pociones y nivel.
  */
 public class Jugador extends Personaje {
     private List<Pocion> inventario;
@@ -15,6 +14,10 @@ public class Jugador extends Personaje {
         super(nombre, vida, ataque);
         this.inventario = new ArrayList<>();
         this.nivel = 1;
+    }
+
+    public int getNivel() {
+        return nivel;
     }
 
     public void recogerPocion(Pocion pocion) {
@@ -28,17 +31,8 @@ public class Jugador extends Personaje {
         }
     }
 
-    public int getNivel() {
-        return nivel;
-    }
-
     public void subirNivel() {
         nivel++;
         System.out.println(nombre + " sube al nivel " + nivel);
-    }
-
-    @Override
-    public int atacar() {
-        return super.atacar();
     }
 }

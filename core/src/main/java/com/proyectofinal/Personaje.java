@@ -1,9 +1,8 @@
 package com.proyectofinal;
 
 /**
- * Clase base para personajes con capacidad de atacar y recibir daño.
+ * Clase base para personajes con capacidad de atacar, recibir daño y curarse.
  */
-
 public abstract class Personaje implements AtacanteInterface, DaniableInterface {
     protected String nombre;
     protected int vida;
@@ -15,19 +14,21 @@ public abstract class Personaje implements AtacanteInterface, DaniableInterface 
         this.ataque = ataque;
     }
 
-    public String getNombre() {
-        return nombre;
-    }
-
-    public int getVida() {
-        return vida;
-    }
+    public String getNombre() { return nombre; }
+    public int getVida() { return vida; }
 
     @Override
     public void recibirDanio(int cantidad) {
         vida -= cantidad;
-        System.out.println(nombre + " recibe " + cantidad + " de daño. \nVida actual: " + vida);
+        System.out.println(nombre + " recibe " + cantidad + " de daño. Vida actual: " + vida);
+    }
 
+    /**
+     * Restaura puntos de vida.
+     */
+    public void curar(int cantidad) {
+        vida += cantidad;
+        System.out.println(nombre + " recupera " + cantidad + " de vida. Vida actual: " + vida);
     }
 
     @Override

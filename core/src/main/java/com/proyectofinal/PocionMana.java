@@ -1,7 +1,7 @@
 package com.proyectofinal;
 
 /**
- * Poción que restaura Mana al personaje.
+ * Poción que restaura mana al Mago o escudo al Caballero.
  */
 public class PocionMana extends Pocion {
 
@@ -11,8 +11,14 @@ public class PocionMana extends Pocion {
 
     @Override
     public void consumir(Personaje personaje) {
-        // Aquí agregarías lógica para restaurar el mana
-        // Si tienes un campo mana en Personaje, lo incrementarías
-        System.out.println(personaje.getNombre() + " ha restaurado " + valor + " Mana.");
+        if (personaje instanceof Mago) {
+            Mago m = (Mago) personaje;
+            m.recargarMana(valor);
+        } else if (personaje instanceof Caballero) {
+            Caballero c = (Caballero) personaje;
+            c.agregarEscudo(valor);
+        } else {
+            System.out.println(personaje.getNombre() + " no se beneficia de esta poción.");
+        }
     }
 }
