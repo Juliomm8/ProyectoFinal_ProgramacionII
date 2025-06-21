@@ -54,8 +54,18 @@ Los jugadores deberán:
 
 ---
 
+Aquí tienes la sección con el árbol de carpetas correctamente formateado en Markdown. Asegúrate de pegarlo dentro de tu `README.md`:
+
+
 ## Estructura del repositorio
+
+```
+
 /
-├── assets/ → recursos (skins, texturas, mapas)
-├── core/ → lógica del juego (pantallas, clases, tests)
-└── lwjgl3/ → launcher de escritorio con LWJGL3
+├── assets/    → recursos (skins, texturas, mapas)
+├── core/      → lógica del juego (pantallas, clases, tests)
+└── lwjgl3/    → launcher de escritorio con LWJGL3
+
+```
+```
+
