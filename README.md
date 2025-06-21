@@ -55,6 +55,7 @@ Los jugadores deberán:
 ---
 
 ## Estructura del repositorio
+/
 ├── assets/ → recursos (skins, texturas, mapas)
 ├── core/ → lógica del juego (pantallas, clases, tests)
 └── lwjgl3/ → launcher de escritorio con LWJGL3
