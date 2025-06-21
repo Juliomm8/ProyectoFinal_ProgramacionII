@@ -54,9 +54,6 @@ Los jugadores deberán:
 
 ---
 
-Aquí tienes la sección con el árbol de carpetas correctamente formateado en Markdown. Asegúrate de pegarlo dentro de tu `README.md`:
-
-
 ## Estructura del repositorio
 
 ```
