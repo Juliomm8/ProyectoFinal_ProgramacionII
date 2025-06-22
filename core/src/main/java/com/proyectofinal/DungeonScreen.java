@@ -9,8 +9,8 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
 public class DungeonScreen extends PantallaBase {
-    private final String    playerClass;
-    private PlayerActor     playerActor;
+    private final String playerClass;
+    private PlayerActor  playerActor;
 
     private SpriteBatch batch;
     private BitmapFont  font;
@@ -29,7 +29,7 @@ public class DungeonScreen extends PantallaBase {
         batch = new SpriteBatch();
         font  = new BitmapFont();
 
-        // 2) Crear Jugador lógico y actor visual (igual que antes)
+        // 2) Crear Jugador lógico y actor visual
         Jugador jugadorLogico;
         switch (playerClass) {
             case "Arquero":
@@ -52,15 +52,15 @@ public class DungeonScreen extends PantallaBase {
         playerActor.setPosition(50, 50);
         stage.addActor(playerActor);
 
-        // 3) Carga solo las texturas que vayas a usar
-        texHP       = new Texture(Gdx.files.internal("Pociones/pocionHP.png"));
-        texEXP      = new Texture(Gdx.files.internal("Pociones/pocionXP.png"));
+        // 3) Carga texturas de las pociones comunes
+        texHP  = new Texture(Gdx.files.internal("Pociones/pocionHP.png"));
+        texEXP = new Texture(Gdx.files.internal("Pociones/pocionXP.png"));
 
         // 4) Añade siempre HP y EXP
-        crearPocionActor(new PocionHP("Poción Vida", 30), texHP, 100, 150);
+        crearPocionActor(new PocionHP("Poción Vida", 30), texHP,  100, 150);
         crearPocionActor(new PocionEXP("Poción EXP", 1),   texEXP, 200, 150);
 
-        // 5) Según la clase, añade la tercera poción:
+        // 5) Según la clase, añade la tercera poción
         switch (playerClass) {
             case "Arquero":
                 texMunicion = new Texture(Gdx.files.internal("Pociones/pocionMunicion.png"));
@@ -70,16 +70,15 @@ public class DungeonScreen extends PantallaBase {
             case "Mago":
                 texMana = new Texture(Gdx.files.internal("Pociones/pocionMana.png"));
                 crearPocionActor(new PocionMana("Poción Maná", 20),
-                    texMana, 300, 150);
+                    texMana,      300, 150);
                 break;
             case "Caballero":
                 texEscudo = new Texture(Gdx.files.internal("Pociones/pocionEscudo.png"));
                 crearPocionActor(new PocionMana("Poción Escudo", 20),
-                    texEscudo, 300, 150);
+                    texEscudo,   300, 150);
                 break;
         }
     }
-
 
     private void crearPocionActor(Pocion pocion, Texture tex, float x, float y) {
         PocionActor actor = new PocionActor(pocion, tex);
@@ -89,9 +88,10 @@ public class DungeonScreen extends PantallaBase {
 
     @Override
     public void render(float delta) {
+        // 1) Limpiar y dibujar el stage
         super.render(delta);
 
-        // Detección de colisión poción <-> jugador
+        // 2) Detección de colisión poción <-> jugador
         Rectangle playerBounds = playerActor.getBounds();
         for (Actor a : stage.getActors()) {
             if (a instanceof PocionActor) {
@@ -103,37 +103,25 @@ public class DungeonScreen extends PantallaBase {
             }
         }
 
-        // HUD: vida y recursos
+        // 3) HUD y lógica de ráfaga del arquero
         batch.begin();
-        font.draw(batch, "Clase: " + playerClass,                          20, Gdx.graphics.getHeight() - 20);
-        font.draw(batch, "Vida: "  + playerActor.getJugador().getVida(),   20, Gdx.graphics.getHeight() - 40);
-
-        if (playerActor.getJugador() instanceof Mago) {
-            Mago m = (Mago) playerActor.getJugador();
-            font.draw(batch, "Mana: " + m.getMana(),                       20, Gdx.graphics.getHeight() - 60);
-        }
-        if (playerActor.getJugador() instanceof Caballero) {
-            Caballero c = (Caballero) playerActor.getJugador();
-            font.draw(batch, "Escudo: " + c.getEscudo(),                  20, Gdx.graphics.getHeight() - 60);
-        }
+        playerActor.dibujarHUD(batch, font);
         if (playerActor.getJugador() instanceof Arquero) {
-            Arquero ar = (Arquero) playerActor.getJugador();
-            font.draw(batch, "Flechas: " + ar.getFlechas(),               20, Gdx.graphics.getHeight() - 60);
-            ar.actualizar(delta);
+            ((Arquero)playerActor.getJugador()).actualizar(delta);
         }
         batch.end();
     }
 
     @Override
     public void dispose() {
-        super.dispose();
+        super.dispose();  // Stage y Skin
         batch.dispose();
         font.dispose();
         texPlayer.dispose();
         texHP.dispose();
         texEXP.dispose();
-        texMana.dispose();
-        texEscudo.dispose();
-        texMunicion.dispose();
+        if (texMana    != null) texMana.dispose();
+        if (texEscudo  != null) texEscudo.dispose();
+        if (texMunicion!= null) texMunicion.dispose();
     }
 }
