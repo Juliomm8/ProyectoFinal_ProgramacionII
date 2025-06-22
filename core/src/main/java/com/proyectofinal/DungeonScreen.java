@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.math.Vector2;
 
 public class DungeonScreen extends PantallaBase {
     private final String playerClass;
@@ -88,6 +90,7 @@ public class DungeonScreen extends PantallaBase {
 
     @Override
     public void render(float delta) {
+        manejarEntrada(delta);
         // 1) Limpiar y dibujar el stage
         super.render(delta);
 
@@ -123,5 +126,44 @@ public class DungeonScreen extends PantallaBase {
         if (texMana    != null) texMana.dispose();
         if (texEscudo  != null) texEscudo.dispose();
         if (texMunicion!= null) texMunicion.dispose();
+    }
+
+
+    /**
+     * Procesa las teclas WASD o flechas para mover al jugador.
+     * @param delta tiempo transcurrido desde el último frame
+     */
+    private void manejarEntrada(float delta) {
+        float velocidad = 200f; // píxeles por segundo
+
+        // 1) Calcula la dirección de movimiento
+        Vector2 dir = new Vector2();
+        if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            dir.y += 1;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            dir.y -= 1;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            dir.x -= 1;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            dir.x += 1;
+        }
+
+        // 2) Si hay movimiento, normaliza y escala por velocidad·delta
+        if (dir.len2() > 0) {
+            dir.nor().scl(velocidad * delta);
+            float nuevaX = playerActor.getX() + dir.x;
+            float nuevaY = playerActor.getY() + dir.y;
+
+            // 3) Limitar dentro de la ventana
+            nuevaX = Math.max(0, Math.min(nuevaX,
+                Gdx.graphics.getWidth()  - playerActor.getWidth()));
+            nuevaY = Math.max(0, Math.min(nuevaY,
+                Gdx.graphics.getHeight() - playerActor.getHeight()));
+
+            playerActor.setPosition(nuevaX, nuevaY);
+        }
     }
 }
