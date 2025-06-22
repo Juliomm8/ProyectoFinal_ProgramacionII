@@ -12,13 +12,18 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
  */
 public abstract class PantallaBase extends ScreenAdapter {
     protected Stage stage;
-    protected Skin skin;
+    protected Skin  skin;
 
     public PantallaBase() {
-        // Inicializa Stage y Skin para cada pantalla
+        // No inicializamos aquí la UI porque playerClass no está aún asignado
+    }
+
+    @Override
+    public void show() {
+        // Ahora inicializamos Stage, Skin y la UI, una vez que la pantalla esté lista
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
-        skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        skin  = new Skin(Gdx.files.internal("ui/uiskin.json"));
         initUI();
     }
 
@@ -46,4 +51,3 @@ public abstract class PantallaBase extends ScreenAdapter {
         skin.dispose();
     }
 }
-
