@@ -1,14 +1,10 @@
-// MainMenuScreen.java
 package com.proyectofinal;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 
-/**
- * Pantalla principal con las opciones de Jugar, Opciones y Salir.
- */
+
 public class MainMenuScreen extends PantallaBase {
     private final RPGGame game;
 
@@ -18,15 +14,7 @@ public class MainMenuScreen extends PantallaBase {
 
     @Override
     protected void initUI() {
-        // Agregar regiones del atlas al skin
-        TextureAtlas atlas = new TextureAtlas(Gdx.files.internal("ui/uiskin.atlas"));
-        skin.addRegions(atlas);
-
-        // Crear tabla y botones
-        Table table = new Table(skin);
-        table.setFillParent(true);
-        table.center();
-        stage.addActor(table);
+        Table table = crearTabla();
 
         TextButton btnJugar = new TextButton("Jugar", skin);
         btnJugar.addListener(event -> {
@@ -60,4 +48,3 @@ public class MainMenuScreen extends PantallaBase {
         table.add(btnSalir).width(200f).pad(pad);
     }
 }
-

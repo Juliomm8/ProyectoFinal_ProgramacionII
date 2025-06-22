@@ -5,22 +5,17 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-/**
- * Clase abstracta que centraliza la configuración común de todas las pantallas.
- */
 public abstract class PantallaBase extends ScreenAdapter {
     protected Stage stage;
     protected Skin  skin;
 
-    public PantallaBase() {
-        // No inicializamos aquí la UI porque playerClass no está aún asignado
-    }
+    public PantallaBase() { }
 
     @Override
     public void show() {
-        // Ahora inicializamos Stage, Skin y la UI, una vez que la pantalla esté lista
         stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
         skin  = new Skin(Gdx.files.internal("ui/uiskin.json"));
@@ -28,13 +23,21 @@ public abstract class PantallaBase extends ScreenAdapter {
     }
 
     /**
-     * Cada pantalla extiende PantallaBase y define aquí su UI específica.
+     * Crea una tabla centrada que ocupa toda la pantalla y la añade al stage.
      */
+    protected Table crearTabla() {
+        Table table = new Table(skin);
+        table.setFillParent(true);
+        table.center();
+        stage.addActor(table);
+        return table;
+    }
+
     protected abstract void initUI();
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+        Gdx.gl.glClearColor(0f,0f,0f,1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();

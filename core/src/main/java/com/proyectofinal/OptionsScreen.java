@@ -1,11 +1,9 @@
 package com.proyectofinal;
 
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 
-/**
- * Pantalla de opciones con un botón para volver al menú principal.
- */
 
 public class OptionsScreen extends PantallaBase {
     private final RPGGame game;
@@ -16,10 +14,7 @@ public class OptionsScreen extends PantallaBase {
 
     @Override
     protected void initUI() {
-        Table table = new Table(skin);
-        table.setFillParent(true);
-        table.center();
-        stage.addActor(table);
+        Table table = crearTabla();
 
         TextButton btnVolver = new TextButton("Volver", skin);
         btnVolver.addListener(event -> {
