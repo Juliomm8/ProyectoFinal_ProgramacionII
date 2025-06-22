@@ -1,24 +1,34 @@
 package com.proyectofinal;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 
+/**
+ * Pantalla principal con mundo procedural “infinito”.
+ */
 public class DungeonScreen extends PantallaBase {
     private final String playerClass;
     private PlayerActor  playerActor;
 
-    private SpriteBatch batch;
-    private BitmapFont  font;
+    private SpriteBatch        batch;
+    private BitmapFont         font;
+    private OrthographicCamera cam;
 
-    private Texture texPlayer;
-    private Texture texHP, texEXP, texMana, texEscudo, texMunicion;
+    // tu MapaProcedural con constructor(width,height,seed,spawnX,spawnY)
+    private MapaProcedural     generator;
+    private final int          tileSize = 32;
+    private Texture            texPastoV, texPastoA, texCamino;
+
+    // jugador y pociones
+    private Texture texPlayer, texHP, texEXP, texMana, texEscudo, texMunicion;
 
     public DungeonScreen(String playerClass) {
         super();
@@ -27,11 +37,13 @@ public class DungeonScreen extends PantallaBase {
 
     @Override
     protected void initUI() {
-        // 1) Batch y fuente para HUD
+        // 1) Batch, fuente y cámara
         batch = new SpriteBatch();
         font  = new BitmapFont();
+        cam   = new OrthographicCamera();
+        cam.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        // 2) Crear Jugador lógico y actor visual
+        // 2) Crear jugador y actor
         Jugador jugadorLogico;
         switch (playerClass) {
             case "Arquero":
@@ -51,18 +63,33 @@ public class DungeonScreen extends PantallaBase {
                 texPlayer     = new Texture(Gdx.files.internal("PersonajesPrincipales/Arquero/arquero.png"));
         }
         playerActor = new PlayerActor(jugadorLogico, texPlayer);
-        playerActor.setPosition(50, 50);
+        // posición de spawn en píxeles
+        float spawnPx = 50, spawnPy = 50;
+        playerActor.setPosition(spawnPx, spawnPy);
         stage.addActor(playerActor);
 
-        // 3) Carga texturas de las pociones comunes
+        // Vista a tamaño de pantalla...
+        cam.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        cam.zoom = 0.3f;  // valores entre 0.1 y 1.0 funcionan bien; prueba 0.75f, 0.5f, 0.4f, etc.
+
+        // 3) Inicializar MapaProcedural con spawn en tiles
+        int mapWidth   = 200;
+        int mapHeight  = 150;
+        long seed      = System.currentTimeMillis();
+        int spawnTileX = (int)(spawnPx / tileSize);
+        int spawnTileY = (int)(spawnPy / tileSize);
+        generator      = new MapaProcedural(mapWidth, mapHeight, seed, spawnTileX, spawnTileY);
+
+        // 4) Cargar texturas de tiles
+        texPastoV = new Texture(Gdx.files.internal("Mapa/Pasto/pastoVerde.png"));
+        texPastoA = new Texture(Gdx.files.internal("Mapa/Pasto/pastoAmarillo.png"));
+        texCamino = new Texture(Gdx.files.internal("Mapa/Piedras/piedras.png"));
+
+        // 5) Cargar y posicionar pociones
         texHP  = new Texture(Gdx.files.internal("Pociones/pocionHP.png"));
         texEXP = new Texture(Gdx.files.internal("Pociones/pocionXP.png"));
-
-        // 4) Añade siempre HP y EXP
         crearPocionActor(new PocionHP("Poción Vida", 30), texHP,  100, 150);
         crearPocionActor(new PocionEXP("Poción EXP", 1),   texEXP, 200, 150);
-
-        // 5) Según la clase, añade la tercera poción
         switch (playerClass) {
             case "Arquero":
                 texMunicion = new Texture(Gdx.files.internal("Pociones/pocionMunicion.png"));
@@ -90,23 +117,55 @@ public class DungeonScreen extends PantallaBase {
 
     @Override
     public void render(float delta) {
-        manejarEntrada(delta);
-        // 1) Limpiar y dibujar el stage
-        super.render(delta);
+        // 1) Limpiar pantalla
+        Gdx.gl.glClearColor(0f,0f,0f,1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // 2) Detección de colisión poción <-> jugador
-        Rectangle playerBounds = playerActor.getBounds();
+        // 2) Mover jugador
+        manejarEntrada(delta);
+
+        // 3) Cámara al jugador
+        cam.position.set(
+            playerActor.getX() + playerActor.getWidth()/2,
+            playerActor.getY() + playerActor.getHeight()/2,
+            0
+        );
+        cam.update();
+        batch.setProjectionMatrix(cam.combined);
+
+        // 4) Dibujar tiles visibles
+        int minX = (int)((cam.position.x - cam.viewportWidth/2)/tileSize) - 1;
+        int maxX = (int)((cam.position.x + cam.viewportWidth/2)/tileSize) + 1;
+        int minY = (int)((cam.position.y - cam.viewportHeight/2)/tileSize) - 1;
+        int maxY = (int)((cam.position.y + cam.viewportHeight/2)/tileSize) + 1;
+
+        batch.begin();
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                MapaProcedural.Tile t = generator.getTile(x, y);
+                Texture tex = t == MapaProcedural.Tile.CAMINO
+                    ? texCamino
+                    : (t == MapaProcedural.Tile.PASTO_AMARILLO ? texPastoA : texPastoV);
+                batch.draw(tex, x * tileSize, y * tileSize, tileSize, tileSize);
+            }
+        }
+        batch.end();
+
+        // 5) Stage (jugador, pociones…)
+        stage.act(delta);
+        stage.draw();
+
+        // 6) Colisiones poción <-> jugador & HUD
+        Rectangle bounds = playerActor.getBounds();
         for (Actor a : stage.getActors()) {
             if (a instanceof PocionActor) {
-                PocionActor pa = (PocionActor) a;
-                if (pa.getBounds().overlaps(playerBounds)) {
+                PocionActor pa = (PocionActor)a;
+                if (pa.getBounds().overlaps(bounds)) {
                     playerActor.getJugador().recogerPocion(pa.getPocion());
                     pa.remove();
                 }
             }
         }
-
-        // 3) HUD y lógica de ráfaga del arquero
         batch.begin();
         playerActor.dibujarHUD(batch, font);
         if (playerActor.getJugador() instanceof Arquero) {
@@ -115,55 +174,32 @@ public class DungeonScreen extends PantallaBase {
         batch.end();
     }
 
+    private void manejarEntrada(float delta) {
+        float vel = 200f;
+        Vector2 dir = new Vector2();
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) dir.y += 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) dir.y -= 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) dir.x -= 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) dir.x += 1;
+        if (dir.len2() > 0) {
+            dir.nor().scl(vel * delta);
+            playerActor.moveBy(dir.x, dir.y);
+        }
+    }
+
     @Override
     public void dispose() {
-        super.dispose();  // Stage y Skin
+        super.dispose();
         batch.dispose();
         font.dispose();
         texPlayer.dispose();
         texHP.dispose();
         texEXP.dispose();
-        if (texMana    != null) texMana.dispose();
-        if (texEscudo  != null) texEscudo.dispose();
-        if (texMunicion!= null) texMunicion.dispose();
-    }
-
-
-    /**
-     * Procesa las teclas WASD o flechas para mover al jugador.
-     * @param delta tiempo transcurrido desde el último frame
-     */
-    private void manejarEntrada(float delta) {
-        float velocidad = 200f; // píxeles por segundo
-
-        // 1) Calcula la dirección de movimiento
-        Vector2 dir = new Vector2();
-        if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            dir.y += 1;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            dir.y -= 1;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            dir.x -= 1;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            dir.x += 1;
-        }
-
-        // 2) Si hay movimiento, normaliza y escala por velocidad·delta
-        if (dir.len2() > 0) {
-            dir.nor().scl(velocidad * delta);
-            float nuevaX = playerActor.getX() + dir.x;
-            float nuevaY = playerActor.getY() + dir.y;
-
-            // 3) Limitar dentro de la ventana
-            nuevaX = Math.max(0, Math.min(nuevaX,
-                Gdx.graphics.getWidth()  - playerActor.getWidth()));
-            nuevaY = Math.max(0, Math.min(nuevaY,
-                Gdx.graphics.getHeight() - playerActor.getHeight()));
-
-            playerActor.setPosition(nuevaX, nuevaY);
-        }
+        if (texMana     != null) texMana.dispose();
+        if (texEscudo   != null) texEscudo.dispose();
+        if (texMunicion != null) texMunicion.dispose();
+        texPastoV.dispose();
+        texPastoA.dispose();
+        texCamino.dispose();
     }
 }
