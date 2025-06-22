@@ -3,7 +3,7 @@ package com.proyectofinal;
 /**
  * Subclase de Jugador especializada en disparos con flechas limitadas y ráfaga ilimitada.
  */
-public class Arquero extends Jugador {
+public class Arquero extends Jugador implements RecargableInterface {
     private float precision;
     private int flechas;
     private boolean modoIlimitado;
@@ -41,9 +41,12 @@ public class Arquero extends Jugador {
     /**
      * Recarga flechas al arquero.
      */
-    public void recargarFlechas(int cantidad) {
+    @Override
+    public void recargar(int cantidad) {
+        int antes = flechas;
         flechas += cantidad;
-
+        System.out.println(getNombre()
+            + " recarga " + cantidad + " flechas. Flechas: " + antes + " → " + flechas);
     }
 
     /**

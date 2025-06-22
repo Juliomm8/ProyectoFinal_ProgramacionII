@@ -9,15 +9,12 @@ public class PocionFlechas extends Pocion {
     }
 
     @Override
-    public void consumir(Personaje personaje) {
-        if (personaje instanceof Arquero) {
-            Arquero arquero = (Arquero) personaje;
-            // Recargar flechas al arquero
-            int before = arquero.getFlechas();
-            arquero.recargarFlechas(valor);
-            System.out.println(arquero.getNombre() + " recarga " + valor + " flechas. Flechas: " + before + " -> " + arquero.getFlechas());
+    public void consumir(Personaje p) {
+        if (p instanceof RecargableInterface) {
+            ((RecargableInterface)p).recargar(valor);
         } else {
-            System.out.println(personaje.getNombre() + " no se beneficia de esta poción.");
+            System.out.println(p.getNombre() + " no se beneficia de esta poción.");
         }
     }
 }
+

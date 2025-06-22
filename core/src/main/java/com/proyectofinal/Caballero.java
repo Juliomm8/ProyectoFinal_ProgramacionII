@@ -3,7 +3,7 @@ package com.proyectofinal;
 /**
  * Subclase de Jugador especializada en combate cuerpo a cuerpo con escudo.
  */
-public class Caballero extends Jugador {
+public class Caballero extends Jugador implements RecargableInterface{
     private int escudo;
 
     public Caballero(String nombre, int vida, int ataque) {
@@ -25,16 +25,16 @@ public class Caballero extends Jugador {
     /**
      * Añade escudo al caballero.
      */
-    public void agregarEscudo(int valor) {
-        escudo += valor;
-        System.out.println(getNombre() + " gana " + valor + " puntos de escudo. Escudo actual: " + escudo);
+    @Override
+    public void recargar(int cantidad) {
+        escudo += cantidad;
+        System.out.println(getNombre() + " gana " + cantidad + " puntos de escudo. Escudo actual: " + escudo);
     }
 
     @Override
     public void recibirDanio(int cantidad) {
         if (escudo >= cantidad) {
             escudo -= cantidad;
-            System.out.println(getNombre() + " bloquea " + cantidad + " de daño con escudo. Escudo restante: " + escudo);
         } else {
             int resto = cantidad - escudo;
             escudo = 0;

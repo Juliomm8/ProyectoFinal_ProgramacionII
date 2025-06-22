@@ -3,7 +3,7 @@ package com.proyectofinal;
 /**
  * Subclase de Jugador especializada en hechizos con dos ataques y recarga de mana.
  */
-public class Mago extends Jugador {
+public class Mago extends Jugador implements RecargableInterface {
     private int mana;
 
     public Mago(String nombre, int vida, int ataque, int mana) {
@@ -18,7 +18,8 @@ public class Mago extends Jugador {
     /**
      * Restaura mana al mago.
      */
-    public void recargarMana(int cantidad) {
+    @Override
+    public void recargar(int cantidad) {
         mana += cantidad;
         System.out.println(getNombre() + " recupera " + cantidad + " de mana. Mana actual: " + mana);
     }
