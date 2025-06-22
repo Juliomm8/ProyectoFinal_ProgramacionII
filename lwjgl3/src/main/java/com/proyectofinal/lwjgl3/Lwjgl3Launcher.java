@@ -22,7 +22,7 @@ public class Lwjgl3Launcher {
         config.setForegroundFPS(Lwjgl3ApplicationConfiguration.getDisplayMode().refreshRate + 1);
 
         // Ajusta el tamaño de ventana a tu preferencia:
-        config.setWindowedMode(1920, 1080);
+        config.setWindowedMode(2400, 1400);
         config.setResizable(false);
 
         // Iconos
