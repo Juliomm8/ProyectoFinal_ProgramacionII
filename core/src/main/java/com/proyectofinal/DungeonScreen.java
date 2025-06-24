@@ -12,16 +12,14 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-
-
 /**
  * Pantalla principal con mundo procedural "infinito", usando variantes de pasto.
  */
 public class DungeonScreen extends PantallaBase {
-    private static final int MAP_WIDTH   = 15000;
-    private static final int MAP_HEIGHT  = 15000;
-    private static final int spawnTileX  = MAP_WIDTH  / 2;  // = 7500
-    private static final int spawnTileY  = MAP_HEIGHT / 2;  // = 7500
+    private static final int MAP_WIDTH   = 100;
+    private static final int MAP_HEIGHT  = 100;
+    private static final int spawnTileX  = MAP_WIDTH  / 2;  // = 50
+    private static final int spawnTileY  = MAP_HEIGHT / 2;  // = 50
     private final long seed               = System.currentTimeMillis();
 
     private SpriteBatch       batch;
@@ -57,11 +55,7 @@ public class DungeonScreen extends PantallaBase {
 
         // 2.2) Inicializar el mapa procedural (ahora sí con width, height, seed y spawn)
         generator = new MapaProcedural(
-            MAP_WIDTH,
-            MAP_HEIGHT,
-            seed,
-            spawnTileX,
-            spawnTileY
+            MAP_WIDTH, MAP_HEIGHT, seed, spawnTileX, spawnTileY
         );
 
         // 2.3) Crear jugador y actor
@@ -229,12 +223,28 @@ public class DungeonScreen extends PantallaBase {
     private void manejarEntrada(float delta) {
         float speed = 200f * delta;
         float dx = 0f, dy = 0f;
+
+        // Verificar las teclas presionadas para mover al jugador
         if (Gdx.input.isKeyPressed(Input.Keys.W)) dy += speed;
         if (Gdx.input.isKeyPressed(Input.Keys.S)) dy -= speed;
         if (Gdx.input.isKeyPressed(Input.Keys.A)) dx -= speed;
         if (Gdx.input.isKeyPressed(Input.Keys.D)) dx += speed;
+
+        // Verificar si la nueva posición está dentro de los límites del mapa
+        float newX = playerActor.getX() + dx;
+        float newY = playerActor.getY() + dy;
+
+        // Verificar límites horizontales
+        if (newX < 0) newX = 0;
+        if (newX > (MAP_WIDTH * TILE_SIZE) - playerActor.getWidth()) newX = (MAP_WIDTH * TILE_SIZE) - playerActor.getWidth();
+
+        // Verificar límites verticales
+        if (newY < 0) newY = 0;
+        if (newY > (MAP_HEIGHT * TILE_SIZE) - playerActor.getHeight()) newY = (MAP_HEIGHT * TILE_SIZE) - playerActor.getHeight();
+
+        // Mover el jugador solo si no se sale de los límites
         if (dx != 0f || dy != 0f) {
-            playerActor.moveBy(dx, dy);
+            playerActor.setPosition(newX, newY);
         }
     }
 
