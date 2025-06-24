@@ -10,105 +10,118 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+
 
 /**
- * Pantalla principal con mundo procedural “infinito”, usando variantes de pasto.
+ * Pantalla principal con mundo procedural "infinito", usando variantes de pasto.
  */
 public class DungeonScreen extends PantallaBase {
-    private final String playerClass;
-    private PlayerActor playerActor;
+    private static final int MAP_WIDTH   = 15000;
+    private static final int MAP_HEIGHT  = 15000;
+    private static final int spawnTileX  = MAP_WIDTH  / 2;  // = 7500
+    private static final int spawnTileY  = MAP_HEIGHT / 2;  // = 7500
+    private final long seed               = System.currentTimeMillis();
 
-    private SpriteBatch batch;
-    private BitmapFont font;
+    private SpriteBatch       batch;
+    private BitmapFont        font;
     private OrthographicCamera cam;
+    private Stage             stage;
+    private PlayerActor       playerActor;
+    private MapaProcedural    generator;
+    private final String playerClass;
 
-    // Mapa procedural
-    private MapaProcedural generator;
-    private final int tileSize = 32;
-    private Texture[] texPastoV_variants;    // tamaño 4
+    private Texture[] texPastoVVariants;
     private Texture   texPastoA, texCamino, texHierbaV, texHierbaA;
 
-
-    // posición lógica del jugador en el mundo (en píxeles)
-    private float worldX, worldY;
+    // Tamaño de cada tile en píxeles (ajústalo a tu proyecto)
+    private static final int TILE_SIZE = 32;
 
     // Jugador y pociones
     private Texture texPlayer, texHP, texEXP, texMana, texEscudo, texMunicion;
 
     public DungeonScreen(String playerClass) {
-        super();
         this.playerClass = playerClass;
+        initUI();
     }
 
     @Override
     protected void initUI() {
-        // 1) Batch, fuente y cámara
+        // 2.1) Batch, fuente y cámara
         batch = new SpriteBatch();
         font  = new BitmapFont();
         cam   = new OrthographicCamera();
         cam.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        cam.zoom = 0.6f; // ajústalo al gusto
+        cam.zoom = 0.6f; // ajustable
 
-        // 2) Crear jugador y actor
+        // 2.2) Inicializar el mapa procedural (ahora sí con width, height, seed y spawn)
+        generator = new MapaProcedural(
+            MAP_WIDTH,
+            MAP_HEIGHT,
+            seed,
+            spawnTileX,
+            spawnTileY
+        );
+
+        // 2.3) Crear jugador y actor
         Jugador jugadorLogico;
         switch (playerClass) {
             case "Arquero":
                 jugadorLogico = new Arquero("Legolas", 100, 15, 0.8f, 10);
-                texPlayer     = new Texture(Gdx.files.internal("PersonajesPrincipales/Arquero/arquero.png"));
+                texPlayer     = new Texture("PersonajesPrincipales/Arquero/arquero.png");
                 break;
             case "Mago":
                 jugadorLogico = new Mago("Gandalf", 80, 12, 50);
-                texPlayer     = new Texture(Gdx.files.internal("PersonajesPrincipales/Mago/mago.png"));
+                texPlayer     = new Texture("PersonajesPrincipales/Mago/mago.png");
                 break;
             case "Caballero":
                 jugadorLogico = new Caballero("Arthur", 120, 15);
-                texPlayer     = new Texture(Gdx.files.internal("PersonajesPrincipales/Caballero/caballero.png"));
+                texPlayer     = new Texture("PersonajesPrincipales/Caballero/caballero.png");
                 break;
             default:
                 jugadorLogico = new Jugador("Héroe", 100, 10);
-                texPlayer     = new Texture(Gdx.files.internal("PersonajesPrincipales/Arquero/arquero.png"));
+                texPlayer     = new Texture("PersonajesPrincipales/Arquero/arquero.png");
         }
         playerActor = new PlayerActor(jugadorLogico, texPlayer);
-        // Posición de spawn en píxeles (por ejemplo)
-        float spawnPx = 50, spawnPy = 50;
+
+        // 2.4) Posicionar jugador en spawnTileX/Y (tiles → píxeles)
+        float spawnPx = spawnTileX * TILE_SIZE;
+        float spawnPy = spawnTileY * TILE_SIZE;
         playerActor.setPosition(spawnPx, spawnPy);
+        cam.position.set(spawnPx, spawnPy, 0f);
+        cam.update();
+
+        stage = new Stage(new ScreenViewport(cam), batch);
         stage.addActor(playerActor);
 
-        // 3) Inicializar el mapa procedural (ahora solo con semilla)
-        int mapWidth  = 200;  // o el ancho que quieras
-        int mapHeight = 150;  // o el alto que quieras
-        long seed     = System.currentTimeMillis();
-
-        generator = new MapaProcedural(mapWidth, mapHeight, seed);
-
-        // 4) Cargar texturas de tiles
-        texPastoV_variants = new Texture[4];
+        // 2.5) Cargar texturas de tiles
+        texPastoVVariants = new Texture[4];
         for (int i = 0; i < 4; i++) {
-            texPastoV_variants[i] = new Texture(
-                Gdx.files.internal("Mapa/Pasto/pastoVerde_" + i + ".png")
-            );
+            texPastoVVariants[i] = new Texture("Mapa/Pasto/pastoVerde_" + i + ".png");
         }
-        texPastoA  = new Texture(Gdx.files.internal("Mapa/Pasto/pastoAmarillo.png"));
-        texCamino  = new Texture(Gdx.files.internal("Mapa/Piedras/piedras.png"));
-        texHierbaV = new Texture(Gdx.files.internal("Mapa/Pasto/hiervaVerde.png"));
-        texHierbaA = new Texture(Gdx.files.internal("Mapa/Pasto/hiervaAmarilla.png"));
+        texPastoA  = new Texture("Mapa/Pasto/pastoAmarillo.png");
+        texCamino  = new Texture("Mapa/Piedras/piedras.png");
+        texHierbaV = new Texture("Mapa/Pasto/hiervaVerde.png");
+        texHierbaA = new Texture("Mapa/Pasto/hiervaAmarilla.png");
 
-        // 5) Cargar y colocar pociones
-        texHP  = new Texture(Gdx.files.internal("Pociones/pocionHP.png"));
-        texEXP = new Texture(Gdx.files.internal("Pociones/pocionXP.png"));
+
+        // 6) Cargar y colocar pociones (idéntico al tuyo)
+        texHP  = new Texture("Pociones/pocionHP.png");
+        texEXP = new Texture("Pociones/pocionXP.png");
         crearPocionActor(new PocionHP("Poción Vida", 30), texHP,  100, 150);
         crearPocionActor(new PocionEXP("Poción EXP",  1),  texEXP, 200, 150);
         switch (playerClass) {
             case "Arquero":
-                texMunicion = new Texture(Gdx.files.internal("Pociones/pocionMunicion.png"));
+                texMunicion = new Texture("Pociones/pocionMunicion.png");
                 crearPocionActor(new PocionFlechas("Poción Munición", 5), texMunicion, 300, 150);
                 break;
             case "Mago":
-                texMana = new Texture(Gdx.files.internal("Pociones/pocionMana.png"));
+                texMana = new Texture("Pociones/pocionMana.png");
                 crearPocionActor(new PocionMana("Poción Maná", 20), texMana, 300, 150);
                 break;
             case "Caballero":
-                texEscudo = new Texture(Gdx.files.internal("Pociones/pocionEscudo.png"));
+                texEscudo = new Texture("Pociones/pocionEscudo.png");
                 crearPocionActor(new PocionMana("Poción Escudo", 20), texEscudo, 300, 150);
                 break;
         }
@@ -127,84 +140,92 @@ public class DungeonScreen extends PantallaBase {
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // 2) Mover jugador
+        // 2) Procesar entrada y mover jugador
         manejarEntrada(delta);
 
-        // 3) Centrar la cámara “mundo” en el jugador
-        float px = playerActor.getX() + playerActor.getWidth()  / 2f;
-        float py = playerActor.getY() + playerActor.getHeight() / 2f;
+        // 3) Centrar cámara en el jugador
+        float px = playerActor.getX() + playerActor.getWidth() * 0.5f;
+        float py = playerActor.getY() + playerActor.getHeight() * 0.5f;
         cam.position.set(px, py, 0f);
         cam.update();
 
-        // 4) Sincronizar cámara de Stage
+        // 4) Sincronizar cámara del stage
         OrthographicCamera stageCam = (OrthographicCamera) stage.getViewport().getCamera();
         stageCam.position.set(cam.position);
         stageCam.zoom = cam.zoom;
         stageCam.update();
 
-        // 5) Aplicar proyección al SpriteBatch
+        // 5) Preparar batch para el mundo
         batch.setProjectionMatrix(cam.combined);
 
-        // 6) Calcular rango de tiles visibles
-        float halfW = cam.viewportWidth  / 2f;
-        float halfH = cam.viewportHeight / 2f;
-        int minX = (int)((px - halfW) / tileSize) - 1;
-        int maxX = (int)((px + halfW) / tileSize) + 1;
-        int minY = (int)((py - halfH) / tileSize) - 1;
-        int maxY = (int)((py + halfH) / tileSize) + 1;
+        // 6) Calcular rango de tiles visibles (con un margen de 1 tile para evitar huecos)
+        float halfW = cam.viewportWidth * 0.5f;
+        float halfH = cam.viewportHeight * 0.5f;
+        int minX = (int)((px - halfW) / TILE_SIZE) - 1;
+        int maxX = (int)((px + halfW) / TILE_SIZE) + 1;
+        int minY = (int)((py - halfH) / TILE_SIZE) - 1;
+        int maxY = (int)((py + halfH) / TILE_SIZE) + 1;
 
-        // 7) Dibujar mundo (tiles + overlays)
+        // 7) Dibujar tiles y overlays
         batch.begin();
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
+                // Obtener tipo de tile
                 MapaProcedural.Tile t = generator.getTile(x, y);
-                Texture baseTex;
-                if (t == MapaProcedural.Tile.CAMINO) {
-                    baseTex = texCamino;
-                } else if (t == MapaProcedural.Tile.PASTO_AMARILLO) {
-                    baseTex = texPastoA;
-                } else {
-                    // variante de pasto verde según (x,y)
-                    int idx = (x&1) + ((y&1)<<1);
-                    baseTex = texPastoV_variants[idx];
-                }
-                batch.draw(baseTex, x*tileSize, y*tileSize, tileSize, tileSize);
 
-                if (generator.hasOverlayVerde(x, y))
-                    batch.draw(texHierbaV, x*tileSize, y*tileSize, tileSize, tileSize);
-                if (generator.hasOverlayAmarillo(x, y))
-                    batch.draw(texHierbaA, x*tileSize, y*tileSize, tileSize, tileSize);
+                // Seleccionar textura base
+                Texture baseTex;
+                switch (t) {
+                    case CAMINO:
+                        baseTex = texCamino;
+                        break;
+                    case PASTO_AMARILLO:
+                        baseTex = texPastoA;
+                        break;
+                    default:
+                        int idx = (x & 1) + ((y & 1) << 1);
+                        baseTex = texPastoVVariants[idx];
+                }
+
+                // Dibujar base
+                batch.draw(baseTex, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+                // Dibujar overlays
+                if (generator.hasOverlayVerde(x, y)) {
+                    batch.draw(texHierbaV, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
+                if (generator.hasOverlayAmarillo(x, y)) {
+                    batch.draw(texHierbaA, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                }
             }
         }
-
         batch.end();
 
-        // 8) Dibujar actores (jugador + pociones) con la cámara del Stage
+        // 8) Act & draw del Stage (jugador, pociones, HUD)
         stage.act(delta);
         stage.draw();
 
-        // 9) Colisiones poción <-> jugador
-        Rectangle bounds = playerActor.getBounds();
+        // 9) Detección de colisiones poción–jugador
+        Rectangle pjBounds = playerActor.getBounds();
         for (Actor a : stage.getActors()) {
-            if (a instanceof PocionActor pa && pa.getBounds().overlaps(bounds)) {
-                playerActor.getJugador().recogerPocion(pa.getPocion());
-                pa.remove();
+            if (a instanceof PocionActor) {
+                PocionActor pa = (PocionActor) a;
+                if (pa.getBounds().overlaps(pjBounds)) {
+                    playerActor.getJugador().recogerPocion(pa.getPocion());
+                    pa.remove();
+                }
             }
         }
 
-        // 10) HUD y lógica extra del arquero
+        // 10) HUD y actualizaciones extra
         batch.begin();
         playerActor.dibujarHUD(batch, font);
-        if (playerActor.getJugador() instanceof Arquero ar) {
-            ar.actualizar(delta);
+        if (playerActor.getJugador() instanceof Arquero) {
+            ((Arquero) playerActor.getJugador()).actualizar(delta);
         }
         batch.end();
     }
 
-
-    /**
-     * Usa isKeyPressed para mover el actor directamente.
-     */
     private void manejarEntrada(float delta) {
         float speed = 200f * delta;
         float dx = 0f, dy = 0f;
@@ -212,19 +233,26 @@ public class DungeonScreen extends PantallaBase {
         if (Gdx.input.isKeyPressed(Input.Keys.S)) dy -= speed;
         if (Gdx.input.isKeyPressed(Input.Keys.A)) dx -= speed;
         if (Gdx.input.isKeyPressed(Input.Keys.D)) dx += speed;
-
-        if (dx != 0 || dy != 0) {
+        if (dx != 0f || dy != 0f) {
             playerActor.moveBy(dx, dy);
         }
     }
 
     @Override
     public void dispose() {
-        super.dispose(); batch.dispose(); font.dispose();
-        texPlayer.dispose(); texHP.dispose(); texEXP.dispose();
-        if (texMana!=null) texMana.dispose(); if (texEscudo!=null) texEscudo.dispose();
-        if (texMunicion!=null) texMunicion.dispose();
-        for (Texture t: texPastoV_variants) t.dispose();
-        texPastoA.dispose(); texCamino.dispose(); texHierbaV.dispose(); texHierbaA.dispose();
+        super.dispose();
+        batch.dispose();
+        font.dispose();
+        texPlayer.dispose();
+        texHP.dispose();
+        texEXP.dispose();
+        if (texMana   != null) texMana.dispose();
+        if (texEscudo != null) texEscudo.dispose();
+        if (texMunicion != null) texMunicion.dispose();
+        for (Texture t : texPastoVVariants) t.dispose();
+        texPastoA.dispose();
+        texCamino.dispose();
+        texHierbaV.dispose();
+        texHierbaA.dispose();
     }
 }

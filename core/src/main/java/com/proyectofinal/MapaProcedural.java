@@ -21,15 +21,19 @@ public class MapaProcedural {
     private final boolean[][]     overlayVerde;
     private final boolean[][]     overlayAmarillo;
     private final Random          rand;
+    private final long            seed;
 
     /**
-     * @param width  ancho en tiles
-     * @param height alto en tiles
-     * @param seed   semilla de aleatoriedad
+     * @param width   ancho en tiles
+     * @param height  alto en tiles
+     * @param seed    semilla de aleatoriedad
+     * @param spawnX  columna del spawn (donde pasa el camino)
+     * @param spawnY  fila del spawn
      */
-    public MapaProcedural(int width, int height, long seed) {
+    public MapaProcedural(int width, int height, long seed, int spawnX, int spawnY) {
         this.width           = width;
         this.height          = height;
+        this.seed            = seed;
         this.rand            = new Random(seed);
         this.base            = new Tile[height][width];
         this.overlayVerde    = new boolean[height][width];
@@ -37,24 +41,26 @@ public class MapaProcedural {
 
         rellenarVerde();
         generarParchesAmarillo();
-        generarCaminos(4, 1);  // 4 caminos, grosor=1 tile
+        generarCaminoPorSpawn(spawnX, spawnY, 1);  // grosor = 1
         generarOverlays();
     }
 
     private void rellenarVerde() {
-        for (int y = 0; y < height; y++)
-            for (int x = 0; x < width; x++)
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
                 base[y][x] = Tile.PASTO_VERDE;
+            }
+        }
     }
 
     private void generarParchesAmarillo() {
-        int numParches   = 6;
-        int minTam       = (width * height) / 500;  // ~0.2%
-        int maxTam       = (width * height) / 200;  // ~0.5%
+        int numParches   = 10 + rand.nextInt(100);
+        int minTam       = (width * height) / 200;  // 0.5%
+        int maxTam       = (width * height) / 100;  // 1%
         for (int i = 0; i < numParches; i++) {
-            int sx  = rand.nextInt(width), sy = rand.nextInt(height);
-            int tam = minTam + rand.nextInt(maxTam - minTam + 1);
-
+            int sx    = rand.nextInt(width);
+            int sy    = rand.nextInt(height);
+            int tam   = minTam + rand.nextInt(maxTam - minTam + 1);
             List<GridPoint2> frontier = new ArrayList<>();
             frontier.add(new GridPoint2(sx, sy));
             base[sy][sx] = Tile.PASTO_AMARILLO;
@@ -63,7 +69,6 @@ public class MapaProcedural {
                 GridPoint2 p = frontier.remove(rand.nextInt(frontier.size()));
                 Integer[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
                 Collections.shuffle(Arrays.asList(dirs), rand);
-
                 for (Integer[] d : dirs) {
                     int nx = p.x + d[0], ny = p.y + d[1];
                     if (nx >= 0 && nx < width && ny >= 0 && ny < height
@@ -78,32 +83,25 @@ public class MapaProcedural {
     }
 
     /**
-     * Genera varios caminos rectos finos.
-     * @param numCaminos cuántas líneas generar
-     * @param grosor     grosor de cada línea en tiles
+     * Crea un camino recto de grosor "grosor" que cruza el spawn (spawnX, spawnY).
      */
-    private void generarCaminos(int numCaminos, int grosor) {
+    private void generarCaminoPorSpawn(int spawnX, int spawnY, int grosor) {
+        boolean vertical = rand.nextBoolean();
         int mitad = grosor / 2;
-        for (int i = 0; i < numCaminos; i++) {
-            if (rand.nextBoolean()) {
-                // vertical
-                int col = rand.nextInt(width);
-                for (int dx = -mitad; dx <= mitad; dx++) {
-                    int cc = col + dx;
-                    if (cc < 0 || cc >= width) continue;
-                    for (int y = 0; y < height; y++) {
-                        base[y][cc] = Tile.CAMINO;
-                    }
+        if (vertical) {
+            for (int dx = -mitad; dx <= mitad; dx++) {
+                int col = spawnX + dx;
+                if (col < 0 || col >= width) continue;
+                for (int y = 0; y < height; y++) {
+                    base[y][col] = Tile.CAMINO;
                 }
-            } else {
-                // horizontal
-                int row = rand.nextInt(height);
-                for (int dy = -mitad; dy <= mitad; dy++) {
-                    int rr = row + dy;
-                    if (rr < 0 || rr >= height) continue;
-                    for (int x = 0; x < width; x++) {
-                        base[rr][x] = Tile.CAMINO;
-                    }
+            }
+        } else {
+            for (int dy = -mitad; dy <= mitad; dy++) {
+                int row = spawnY + dy;
+                if (row < 0 || row >= height) continue;
+                for (int x = 0; x < width; x++) {
+                    base[row][x] = Tile.CAMINO;
                 }
             }
         }
@@ -112,29 +110,29 @@ public class MapaProcedural {
     private void generarOverlays() {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if (base[y][x] == Tile.PASTO_VERDE
-                    && rand.nextDouble() < 0.05) {
+                if (base[y][x] == Tile.PASTO_VERDE && rand.nextDouble() < 0.05)
                     overlayVerde[y][x] = true;
-                }
-                if (base[y][x] == Tile.PASTO_AMARILLO
-                    && rand.nextDouble() < 0.05) {
+                if (base[y][x] == Tile.PASTO_AMARILLO && rand.nextDouble() < 0.05)
                     overlayAmarillo[y][x] = true;
-                }
             }
         }
     }
 
-    /** Devuelve el tile en (x,y) o PASTO_VERDE si está fuera de rango */
+    /**
+     * Obtiene el tile en (x,y), o PASTO_VERDE si está fuera de rango.
+     */
     public Tile getTile(int x, int y) {
-        if (x < 0 || x >= width || y < 0 || y >= height)
-            return Tile.PASTO_VERDE;
+        if (x < 0 || x >= width || y < 0 || y >= height) return Tile.PASTO_VERDE;
         return base[y][x];
     }
 
     public boolean hasOverlayVerde(int x, int y) {
-        return x>=0&&x<width&&y>=0&&y<height && overlayVerde[y][x];
+        return x>=0 && x<width && y>=0 && y<height && overlayVerde[y][x];
     }
+
     public boolean hasOverlayAmarillo(int x, int y) {
-        return x>=0&&x<width&&y>=0&&y<height && overlayAmarillo[y][x];
+        return x>=0 && x<width && y>=0 && y<height && overlayAmarillo[y][x];
     }
+
+    public long getSeed() { return seed; }
 }
