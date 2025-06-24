@@ -16,8 +16,8 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
  * Pantalla principal con mundo procedural "infinito", usando variantes de pasto.
  */
 public class DungeonScreen extends PantallaBase {
-    private static final int MAP_WIDTH   = 100;
-    private static final int MAP_HEIGHT  = 100;
+    private static final int MAP_WIDTH   = 150;
+    private static final int MAP_HEIGHT  = 150;
     private static final int spawnTileX  = MAP_WIDTH  / 2;  // = 50
     private static final int spawnTileY  = MAP_HEIGHT / 2;  // = 50
     private final long seed               = System.currentTimeMillis();
