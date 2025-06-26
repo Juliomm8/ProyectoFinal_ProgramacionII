@@ -5,7 +5,7 @@ package com.proyectofinal;
  */
 public class PocionMana extends Pocion {
     public PocionMana(String nombre, int valor) {
-        super(nombre, "Mana", valor);
+        super(nombre, "Mana", valor, 1);
     }
 
     @Override

@@ -2,12 +2,13 @@ package com.proyectofinal;
 
 /**
  * Pruebas de consumo de pociones para las distintas clases.
- */
+
+
 public class TestPociones {
     public static void main(String[] args) {
         // --- Prueba de HP y EXP en Jugador ---
-        Jugador jugador = new Jugador("Héroe", 100, 20);
-        Pocion pocionHP  = new PocionHP("Poción de Vida", 30);
+        Jugador jugador = new Jugador("Héroe", 100, 20, 100f, 100f, 32f, 32f, 1);
+        Pocion pocionHP = new PocionHP("Poción de Vida", 30);
         Pocion pocionEXP = new PocionEXP("Poción de EXP", 1);
 
         System.out.println("Vida inicial: " + jugador.getVida());
@@ -21,7 +22,7 @@ public class TestPociones {
         System.out.println();
 
         // --- Prueba de PocionMana con Mago ---
-        Mago mago = new Mago("Gandalf", 80, 12, 5);
+        Mago mago = new Mago("Gandalf", 80, 12, 5,2,2,2,2);
         PocionMana pocMana = new PocionMana("Poción de Maná", 20);
 
         System.out.println("Mana inicial de " + mago.getNombre() + ": " + mago.getMana());
@@ -30,7 +31,7 @@ public class TestPociones {
         System.out.println();
 
         // --- Prueba de PocionMana con Caballero ---
-        Caballero cab = new Caballero("Arthur", 120, 15);
+        Caballero cab = new Caballero("Arthur", 120, 15,2,2,2,2,2);
 
         System.out.println("Escudo inicial de " + cab.getNombre() + ": " + cab.getEscudo());
         pocMana.consumir(cab);
@@ -38,7 +39,7 @@ public class TestPociones {
         System.out.println();
 
         // --- Prueba de PocionFlechas con Arquero ---
-        Arquero arquero = new Arquero("Legolas", 70, 15, 0.85f, 10);
+        Arquero arquero = new Arquero("Legolas", 70, 15, 0.85f, 10,2,2,2,2);
         PocionFlechas pocFlecha = new PocionFlechas("Poción de Flechas", 5);
 
         System.out.println("Flechas iniciales de " + arquero.getNombre() + ": " + arquero.getFlechas());
@@ -46,3 +47,4 @@ public class TestPociones {
         System.out.println("Flechas tras Poción Flechas: " + arquero.getFlechas());
     }
 }
+ */

@@ -8,11 +8,13 @@ public abstract class Pocion {
     protected String nombre;
     protected String tipo;  // Ejemplo: "HP", "EXP", "Mana"
     protected int valor;     // La cantidad de HP, EXP o Mana que otorga
+    private int cantidad;
 
-    public Pocion(String nombre, String tipo, int valor) {
+    public Pocion(String nombre, String tipo, int valor, int cantidad) {
         this.nombre = nombre;
         this.tipo = tipo;
         this.valor = valor;
+        this.cantidad = cantidad;
     }
 
     public String getNombre() {
@@ -25,6 +27,10 @@ public abstract class Pocion {
 
     public int getValor() {
         return valor;
+    }
+
+    public int getCantidad() {
+        return cantidad;
     }
 
     // Método abstracto que será implementado por cada tipo de poción

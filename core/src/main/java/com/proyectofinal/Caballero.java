@@ -6,8 +6,8 @@ package com.proyectofinal;
 public class Caballero extends Jugador implements RecargableInterface{
     private int escudo;
 
-    public Caballero(String nombre, int vida, int ataque) {
-        super(nombre, vida, ataque);
+    public Caballero(String nombre, int vida, int ataque, float x, float y, float width, float height, int escudoInicial) {
+        super(nombre, vida, ataque, x, y, width, height, escudoInicial);
         this.escudo = 0;
     }
 

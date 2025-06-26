@@ -33,6 +33,8 @@ public class DungeonScreen extends PantallaBase {
     private Texture[] texPastoVVariants;
     private Texture   texPastoA, texCamino, texHierbaV, texHierbaA;
 
+    private Jugador jugador;
+
     // Tamaño de cada tile en píxeles (ajústalo a tu proyecto)
     private static final int TILE_SIZE = 32;
 
@@ -41,7 +43,25 @@ public class DungeonScreen extends PantallaBase {
 
     public DungeonScreen(String playerClass) {
         this.playerClass = playerClass;
+        jugador = new Jugador("Héroe", 100, 10, 100f, 100f, 32f, 32f, 1);  // Esto pasa todos los parámetros necesarios
         initUI();
+    }
+
+    public void update(float delta) {
+        float direccionX = 0, direccionY = 0;
+
+        // Detectar las teclas presionadas para mover al jugador
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) direccionX = 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) direccionX = -1;
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) direccionY = 1;
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) direccionY = -1;
+
+        // Llamar al método de movimiento del jugador
+        jugador.mover(direccionX, direccionY, delta);
+
+        // Actualizar la posición del jugador en la pantalla
+        // Si es necesario, puedes llamar a setPosition para ajustar la posición en el mundo
+        playerActor.setPosition(jugador.getX(), jugador.getY());
     }
 
     @Override
@@ -59,27 +79,30 @@ public class DungeonScreen extends PantallaBase {
         );
 
         // 2.3) Crear jugador y actor
+
         Jugador jugadorLogico;
         switch (playerClass) {
             case "Arquero":
-                jugadorLogico = new Arquero("Legolas", 100, 15, 0.8f, 10);
-                texPlayer     = new Texture("PersonajesPrincipales/Arquero/arquero.png");
+                jugadorLogico = new Arquero("Legolas", 100, 15, 0.8f, 10, 32f, 32f, 20, 15);
+                texPlayer = new Texture("PersonajesPrincipales/Arquero/arquero.png");
                 break;
             case "Mago":
-                jugadorLogico = new Mago("Gandalf", 80, 12, 50);
-                texPlayer     = new Texture("PersonajesPrincipales/Mago/mago.png");
+                jugadorLogico = new Mago("Gandalf", 80, 12, 50, 0.8f, 32f, 32f, 1);
+                texPlayer = new Texture("PersonajesPrincipales/Mago/mago.png");
                 break;
             case "Caballero":
-                jugadorLogico = new Caballero("Arthur", 120, 15);
-                texPlayer     = new Texture("PersonajesPrincipales/Caballero/caballero.png");
+                jugadorLogico = new Caballero("Arthur", 120, 15, 50, 0.8f, 32f, 32f, 1);
+                texPlayer = new Texture("PersonajesPrincipales/Caballero/caballero.png");
                 break;
             default:
-                jugadorLogico = new Jugador("Héroe", 100, 10);
-                texPlayer     = new Texture("PersonajesPrincipales/Arquero/arquero.png");
+                jugadorLogico = new Jugador("Héroe", 100, 10, 100f, 100f, 32f, 32f, 1);
+                texPlayer = new Texture("PersonajesPrincipales/Arquero/arquero.png");
         }
-        playerActor = new PlayerActor(jugadorLogico, texPlayer);
+        playerActor = new PlayerActor(jugadorLogico, texPlayer);  // Asegúrate de que esta línea se ejecute
 
-        // 2.4) Posicionar jugador en spawnTileX/Y (tiles → píxeles)
+
+
+        // Asegúrate de que playerActor esté inicializado antes de usarlo
         float spawnPx = spawnTileX * TILE_SIZE;
         float spawnPy = spawnTileY * TILE_SIZE;
         playerActor.setPosition(spawnPx, spawnPy);
@@ -119,14 +142,16 @@ public class DungeonScreen extends PantallaBase {
                 crearPocionActor(new PocionMana("Poción Escudo", 20), texEscudo, 300, 150);
                 break;
         }
+        // 9) Detección de colisiones poción–jugador
+        Rectangle pjBounds = playerActor.getBounds();
     }
-
 
     private void crearPocionActor(Pocion pocion, Texture tex, float x, float y) {
         PocionActor actor = new PocionActor(pocion, tex);
         actor.setPosition(x, y);
         stage.addActor(actor);
     }
+
 
     @Override
     public void render(float delta) {
@@ -218,7 +243,20 @@ public class DungeonScreen extends PantallaBase {
             ((Arquero) playerActor.getJugador()).actualizar(delta);
         }
         batch.end();
+
+        batch.begin();
+        // Primero renderizar piedras (estarán por debajo)
+        for (Piedra piedra : generator.getPiedras()) {
+            piedra.render(batch);  // Usar el método render de cada piedra
+        }
+
+        // Luego renderizar árboles (estarán por encima de las piedras)
+        for (Arbol arbol : generator.getArboles()) {
+            arbol.render(batch);  // Usar el método render de cada árbol
+        }
+        batch.end();  // Se corrigió el error de `batch. End();` por `batch.end();`
     }
+
 
     private void manejarEntrada(float delta) {
         float speed = 200f * delta;
@@ -242,9 +280,25 @@ public class DungeonScreen extends PantallaBase {
         if (newY < 0) newY = 0;
         if (newY > (MAP_HEIGHT * TILE_SIZE) - playerActor.getHeight()) newY = (MAP_HEIGHT * TILE_SIZE) - playerActor.getHeight();
 
-        // Mover el jugador solo si no se sale de los límites
+        // Crear un rectángulo para la posición futura del jugador
+        Rectangle futurePosition = new Rectangle(newX, newY, playerActor.getWidth(), playerActor.getHeight());
+
+        // Verificar colisiones con troncos de árboles
+        boolean colisionConArbol = false;
+        for (Arbol arbol : generator.getArboles()) {
+            if (futurePosition.overlaps(arbol.getCollider())) {
+                colisionConArbol = true;
+                break;
+            }
+        }
+
+        // Las piedras no tienen collider, así que no hay verificación de colisiones
+
+        // Mover el jugador solo si no se sale de los límites y no colisiona con un árbol
         if (dx != 0f || dy != 0f) {
-            playerActor.setPosition(newX, newY);
+            if (!colisionConArbol) {
+                playerActor.setPosition(newX, newY);
+            }
         }
     }
 

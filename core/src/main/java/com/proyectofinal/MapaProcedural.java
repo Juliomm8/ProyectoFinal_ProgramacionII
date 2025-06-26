@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Arrays;
 
+
 /**
  * Genera un mapa con:
  *  - parches compactos de pasto amarillo,
@@ -24,6 +25,12 @@ public class MapaProcedural {
     private final boolean[][]     overlayAmarillo;
     private final Random          rand;
     private final long            seed;
+
+    private List<Arbol> arboles = new ArrayList<>();  // Lista para almacenar los árboles generados
+    private List<Piedra> piedras = new ArrayList<>();  // Lista para almacenar las piedras generadas
+    private static final int TILE_SIZE = 32;  // Tamaño de cada celda en el mapa (ajusta el valor según tu diseño)
+    private static final int MIN_DIST = 128;  // Distancia mínima entre los árboles (ajusta el valor según lo necesites)
+    private static final int MIN_DIST_PIEDRAS = 64;  // Distancia mínima entre piedras
 
     /**
      * @param width   ancho en tiles
@@ -45,6 +52,7 @@ public class MapaProcedural {
         generarParchesAmarillo();
         generarCaminoPorSpawn(spawnX, spawnY, 2);  // grosor = 2
         generarOverlays();
+        generarElementos();  // Llama a la generación de elementos en el mapa
     }
 
     private void rellenarVerde() {
@@ -173,7 +181,7 @@ public class MapaProcedural {
         }
     }
 
-    // Método para generar caminos múltiples de grosor 3, sin superposición
+    // Metodo para generar caminos múltiples de grosor 3, sin superposición
     private void generarCaminosAleatorios(int cantidadDeCaminos) {
         for (int i = 0; i < cantidadDeCaminos; i++) {
             // Generar una posición aleatoria de inicio
@@ -217,7 +225,7 @@ public class MapaProcedural {
         return true;
     }
 
-    // Método para generar un camino específico de grosor 3, con dirección y longitud
+    // Metodo para generar un camino específico de grosor 3, con dirección y longitud
     private void generarCamino(int startX, int startY, int longitud, boolean vertical) {
         int mitad = 1;  // Para grosor de 3, "mitad" es 1 (cubriendo tres tiles: startX-1, startX, startX+1)
 
@@ -252,6 +260,107 @@ public class MapaProcedural {
                     overlayAmarillo[y][x] = true;
             }
         }
+    }
+
+
+    // Método para obtener una textura de árbol aleatoria
+    private Texture obtenerArbolAleatorio() {
+        int arbolId = (int) (Math.random() * 4);  // Ejemplo de 4 tipos de árboles
+        switch (arbolId) {
+            case 0:
+                return new Texture("assets/Mapa/Pasto/arbol_0.png");
+            case 1:
+                return new Texture("assets/Mapa/Pasto/arbol_1.png");
+            case 2:
+                return new Texture("assets/Mapa/Pasto/arbol_2.png");
+            case 3:
+                return new Texture("assets/Mapa/Pasto/arbol_3.png");
+            default:
+                return new Texture("assets/Mapa/Pasto/arbol_0.png");  // Valor por defecto
+        }
+    }
+
+    // Método para obtener la textura de piedra
+    private Texture obtenerTexturaPiedra() {
+        return new Texture("assets/Mapa/Piedras/piedra_Pasto.png");
+    }
+
+    private void generarElementos() {
+        // Primero, generamos los árboles
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // Generar solo si es pasto verde y con la probabilidad ajustada
+                if (base[y][x] == Tile.PASTO_VERDE && Math.random() < 0.005) {  // 0.5% de probabilidad
+                    // Comprobar si la posición está lo suficientemente alejada de otros árboles
+                    boolean espacioDisponible = true;
+
+                    for (Arbol arbolExistente : arboles) {
+                        // Comprobar si la distancia entre el nuevo árbol y el existente es menor que MIN_DIST
+                        if (Math.abs(arbolExistente.getCollider().x - x * TILE_SIZE) < MIN_DIST &&
+                            Math.abs(arbolExistente.getCollider().y - y * TILE_SIZE) < MIN_DIST) {
+                            espacioDisponible = false;
+                            break;
+                        }
+                    }
+
+                    // Si hay espacio, generar el árbol
+                    if (espacioDisponible) {
+                        Texture arbolTex = obtenerArbolAleatorio();  // Obtener textura aleatoria
+                        Arbol arbol = new Arbol(arbolTex);
+                        arbol.colocar(x * TILE_SIZE, y * TILE_SIZE);  // Coloca el árbol en la posición
+                        arboles.add(arbol);  // Agrega el árbol a la lista de elementos
+                    }
+                }
+            }
+        }
+
+        // Ahora, generamos las piedras solo en pasto verde
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // Generar solo si es pasto verde y con probabilidad más alta
+                if (base[y][x] == Tile.PASTO_VERDE && Math.random() < 0.01) {  // 1% de probabilidad
+                    // Comprobar si la posición está lo suficientemente alejada de otros elementos
+                    boolean espacioDisponible = true;
+
+                    // Verificar distancia con árboles
+                    for (Arbol arbolExistente : arboles) {
+                        if (Math.abs(arbolExistente.getCollider().x - x * TILE_SIZE) < MIN_DIST &&
+                            Math.abs(arbolExistente.getCollider().y - y * TILE_SIZE) < MIN_DIST) {
+                            espacioDisponible = false;
+                            break;
+                        }
+                    }
+
+                    // Verificar distancia con otras piedras
+                    if (espacioDisponible) {
+                        for (Piedra piedraExistente : piedras) {
+                            if (Math.abs(piedraExistente.getCollider().x - x * TILE_SIZE) < MIN_DIST_PIEDRAS &&
+                                Math.abs(piedraExistente.getCollider().y - y * TILE_SIZE) < MIN_DIST_PIEDRAS) {
+                                espacioDisponible = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Si hay espacio disponible, generar la piedra
+                    if (espacioDisponible) {
+                        Texture piedraTex = obtenerTexturaPiedra();
+                        Piedra piedra = new Piedra(piedraTex);
+                        piedra.colocar(x * TILE_SIZE, y * TILE_SIZE);
+                        piedras.add(piedra);
+                    }
+                }
+            }
+        }
+    }
+
+
+    public List<Arbol> getArboles() {
+        return arboles;
+    }
+
+    public List<Piedra> getPiedras() {
+        return piedras;
     }
 
     /**

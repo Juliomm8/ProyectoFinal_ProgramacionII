@@ -56,3 +56,4 @@ public class SeleccionPersonajeScreen extends PantallaBase {
         table.add(btnCaballero).width(200f).pad(pad);
     }
 }
+

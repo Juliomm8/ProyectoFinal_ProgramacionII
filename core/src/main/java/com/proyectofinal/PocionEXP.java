@@ -6,7 +6,7 @@ package com.proyectofinal;
 public class PocionEXP extends Pocion {
 
     public PocionEXP(String nombre, int valor) {
-        super(nombre, "EXP", valor);
+        super(nombre, "EXP", valor, 1);
     }
 
     @Override
