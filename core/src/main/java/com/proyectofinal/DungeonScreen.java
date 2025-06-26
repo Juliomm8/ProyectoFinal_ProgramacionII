@@ -185,8 +185,9 @@ public class DungeonScreen extends PantallaBase {
         int minY = (int)((py - halfH) / TILE_SIZE) - 1;
         int maxY = (int)((py + halfH) / TILE_SIZE) + 1;
 
-        // 7) Dibujar tiles y overlays
+        // -------- DIBUJO DE FONDO Y OBJETOS DEL SUELO --------
         batch.begin();
+        // 7) Dibujar tiles y overlays (SIEMPRE primero)
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
                 // Obtener tipo de tile
@@ -205,7 +206,6 @@ public class DungeonScreen extends PantallaBase {
                         int idx = (x & 1) + ((y & 1) << 1);
                         baseTex = texPastoVVariants[idx];
                 }
-
                 // Dibujar base
                 batch.draw(baseTex, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
@@ -218,13 +218,25 @@ public class DungeonScreen extends PantallaBase {
                 }
             }
         }
+
+        // 8) DIBUJAR PIEDRAS DEL SUELO (debajo del jugador)
+        for (Piedra piedra : generator.getPiedras()) {
+            piedra.render(batch); // Las piedras están bajo el jugador
+        }
         batch.end();
 
-        // 8) Act & draw del Stage (jugador, pociones, HUD)
+        // 9) Dibujar stage (jugador y pociones, SIEMPRE encima de las piedras)
         stage.act(delta);
         stage.draw();
 
-        // 9) Detección de colisiones poción–jugador
+        // 10) DIBUJAR ÁRBOLES (encima del jugador, si quieres ese efecto)
+        batch.begin();
+        for (Arbol arbol : generator.getArboles()) {
+            arbol.render(batch); // Si los árboles deben tapar al jugador, ponlos aquí
+        }
+        batch.end();
+
+        // 11) Detección de colisiones poción–jugador
         Rectangle pjBounds = playerActor.getBounds();
         for (Actor a : stage.getActors()) {
             if (a instanceof PocionActor) {
@@ -236,25 +248,13 @@ public class DungeonScreen extends PantallaBase {
             }
         }
 
-        // 10) HUD y actualizaciones extra
+        // 12) HUD y actualizaciones extra (SIEMPRE arriba de todo)
         batch.begin();
         playerActor.dibujarHUD(batch, font);
         if (playerActor.getJugador() instanceof Arquero) {
             ((Arquero) playerActor.getJugador()).actualizar(delta);
         }
         batch.end();
-
-        batch.begin();
-        // Primero renderizar piedras (estarán por debajo)
-        for (Piedra piedra : generator.getPiedras()) {
-            piedra.render(batch);  // Usar el método render de cada piedra
-        }
-
-        // Luego renderizar árboles (estarán por encima de las piedras)
-        for (Arbol arbol : generator.getArboles()) {
-            arbol.render(batch);  // Usar el método render de cada árbol
-        }
-        batch.end();  // Se corrigió el error de `batch. End();` por `batch.end();`
     }
 
 
