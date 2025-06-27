@@ -3,6 +3,7 @@ package com.proyectofinal;
 import java.util.Random;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.math.GridPoint2;
 import java.util.List;
 import java.util.ArrayList;
@@ -265,24 +266,34 @@ public class MapaProcedural {
 
     // Método para obtener una textura de árbol aleatoria
     private Texture obtenerArbolAleatorio() {
-        int arbolId = (int) (Math.random() * 4);  // Ejemplo de 4 tipos de árboles
-        switch (arbolId) {
-            case 0:
-                return new Texture("assets/Mapa/Pasto/arbol_0.png");
-            case 1:
-                return new Texture("assets/Mapa/Pasto/arbol_1.png");
-            case 2:
-                return new Texture("assets/Mapa/Pasto/arbol_2.png");
-            case 3:
-                return new Texture("assets/Mapa/Pasto/arbol_3.png");
-            default:
-                return new Texture("assets/Mapa/Pasto/arbol_0.png");  // Valor por defecto
+        try {
+            int arbolId = (int) (Math.random() * 4);  // Ejemplo de 4 tipos de árboles
+            switch (arbolId) {
+                case 0:
+                    return new Texture("Mapa/Pasto/arbol_0.png");
+                case 1:
+                    return new Texture("Mapa/Pasto/arbol_1.png");
+                case 2:
+                    return new Texture("Mapa/Pasto/arbol_2.png");
+                case 3:
+                    return new Texture("Mapa/Pasto/arbol_3.png");
+                default:
+                    return new Texture("Mapa/Pasto/arbol_0.png");  // Valor por defecto
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar textura de árbol: " + e.getMessage());
+            return new Texture(32, 32, Pixmap.Format.RGBA8888); // Textura vacía como fallback
         }
     }
 
     // Método para obtener la textura de piedra
     private Texture obtenerTexturaPiedra() {
-        return new Texture("assets/Mapa/Piedras/piedra_Pasto.png");
+        try {
+            return new Texture("Mapa/Piedras/piedra_Pasto.png");
+        } catch (Exception e) {
+            System.err.println("Error al cargar textura de piedra: " + e.getMessage());
+            return new Texture(32, 32, Pixmap.Format.RGBA8888); // Textura vacía como fallback
+        }
     }
 
     private void generarElementos() {
