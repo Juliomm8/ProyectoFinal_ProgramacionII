@@ -14,13 +14,14 @@ public abstract class Enemigo {
 
     // Coordenadas y propiedades básicas
     protected float x, y;
-    protected int vida, danio;
+    protected int vida;
+    public int danio; // Hecho público para acceso desde DungeonScreen
     protected float velocidad;
     protected boolean estaVivo = true;
     protected Rectangle hitbox = new Rectangle();
 
     // Propiedades de animación
-    protected float stateTime = 0;
+    public float stateTime = 0; // Hecho público para acceso desde DungeonScreen
     public EstadoEnemigo estadoActual = EstadoEnemigo.IDLE;
 
     // Animaciones
@@ -44,6 +45,15 @@ public abstract class Enemigo {
         cargarAnimaciones();
     }
 
+    public float getY() {
+        return y;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+
     protected abstract void cargarAnimaciones();
 
     protected void actualizarHitbox() {
@@ -59,7 +69,7 @@ public abstract class Enemigo {
         return estaVivo;
     }
 
-    public void recibirDanio(int cantidad) {
+    public void recibirDano(int cantidad) {
         if (!estaVivo) return;
 
         vida -= cantidad;

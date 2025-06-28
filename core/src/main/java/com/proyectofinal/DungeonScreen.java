@@ -46,7 +46,7 @@ public class DungeonScreen extends PantallaBase {
     private Texture texPlayer, texHP, texEXP, texMana, texEscudo, texMunicion;
 
     // Añadir esta lista para manejar los enemigos
-    private List<Minotauro> enemigos;
+    private List<Enemigo> enemigos;
     private static final int NUMERO_INICIAL_MINOTAUROS = 10;
     private static final float DISTANCIA_MINIMA_SPAWN = 500f; // Distancia mínima al jugador para spawn
     private static final float TIEMPO_ENTRE_SPAWNS = 2f; // Tiempo entre oleadas de spawn (segundos)
@@ -246,8 +246,6 @@ public class DungeonScreen extends PantallaBase {
                     enemigos.add(minotauro);
                     minotaurosGenerados++;
                     minotauro.update(0.016f, playerActor.getX(), playerActor.getY());
-                    enemigos.add(minotauro);
-                    minotaurosGenerados++;
                 }
             }
         }
@@ -337,36 +335,47 @@ public class DungeonScreen extends PantallaBase {
         }
         batch.end();
 
+        // 2.1) Manejar input/movimiento del jugador
+        manejarEntrada(delta);
+
+// 2.2) ¡Actualizar lógica de ataque y animación!
+        playerActor.update(delta, enemigos);
+
+// 2.3) Actuar y dibujar el Stage
+        stage.act(delta);
+        stage.draw();
+
         // 9) Dibujar stage (jugador y pociones, SIEMPRE encima de las piedras)
         stage.act(delta);
         stage.draw();
 
-        // Renderizar minotauros
+
+        // Renderizar enemigos
         batch.begin();
-        for (Minotauro minotauro : enemigos) {
-            minotauro.render(batch);
+        for (Enemigo enemigo : enemigos) {
+            enemigo.render(batch);
         }
         batch.end();
 
         // Verificar colisiones con el jugador y aplicar daño
         Rectangle jugadorBounds = playerActor.getBounds();
-        Iterator<Minotauro> iterMinotauros = enemigos.iterator();
-        while (iterMinotauros.hasNext()) {
-            Minotauro minotauro = iterMinotauros.next();
+        Iterator<Enemigo> iterEnemigos = enemigos.iterator();
+        while (iterEnemigos.hasNext()) {
+            Enemigo enemigo = iterEnemigos.next();
 
-            // Comprobar si el minotauro está vivo
-            if (!minotauro.estaVivo()) {
+            // Comprobar si el enemigo está vivo
+            if (!enemigo.estaVivo()) {
                 // Verificar si la animación de muerte ha terminado
-                if (minotauro.deathAnimation.isAnimationFinished(minotauro.stateTime)) {
-                    iterMinotauros.remove();
+                if (enemigo.deathAnimation != null && enemigo.deathAnimation.isAnimationFinished(enemigo.stateTime)) {
+                    iterEnemigos.remove();
                 }
                 continue;
             }
 
-            // Verificar colisión y aplicar daño si el minotauro está atacando
-            if (minotauro.getHitbox().overlaps(jugadorBounds) &&
-                minotauro.estadoActual == Enemigo.EstadoEnemigo.ATTACKING) {
-                playerActor.getJugador().recibirDanio(minotauro.getDanio());
+            // Verificar colisión y aplicar daño si el enemigo está atacando
+            if (enemigo.getHitbox().overlaps(jugadorBounds) &&
+                enemigo.estadoActual == Enemigo.EstadoEnemigo.ATTACKING) {
+                playerActor.getJugador().recibirDanio(enemigo.danio);
             }
         }
 
@@ -448,16 +457,16 @@ public class DungeonScreen extends PantallaBase {
             tiempoUltimoSpawn = 0f;
         }
 
-        // Actualizar todos los minotauros
-        Iterator<Minotauro> iterator = enemigos.iterator();
+        // Actualizar todos los enemigos
+        Iterator<Enemigo> iterator = enemigos.iterator();
         while (iterator.hasNext()) {
-            Minotauro minotauro = iterator.next();
-            if (minotauro.estaVivo()) {
-                minotauro.update(delta, playerActor.getX(), playerActor.getY());
+            Enemigo enemigo = iterator.next();
+            if (enemigo.estaVivo()) {
+                enemigo.update(delta, playerActor.getX(), playerActor.getY());
             } else {
                 // Si la animación de muerte ha terminado
-                if (minotauro.deathAnimation.isAnimationFinished(minotauro.stateTime)) {
-                    iterator.remove(); // Eliminar minotauros muertos
+                if (enemigo.deathAnimation != null && enemigo.deathAnimation.isAnimationFinished(enemigo.stateTime)) {
+                    iterator.remove(); // Eliminar enemigos muertos
                 }
             }
         }
@@ -480,8 +489,8 @@ public class DungeonScreen extends PantallaBase {
         texHierbaV.dispose();
         texHierbaA.dispose();
         // Liberar recursos de los enemigos si tienen texturas propias
-        for (Minotauro minotauro : enemigos) {
-            // Si tienes texturas que liberar en los minotauros, hazlo aquí
+        for (Enemigo enemigo : enemigos) {
+            // Si tienes texturas que liberar en los enemigos, hazlo aquí
         }
     }
 }

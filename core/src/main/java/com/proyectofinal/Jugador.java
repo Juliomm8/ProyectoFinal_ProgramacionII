@@ -1,26 +1,45 @@
 package com.proyectofinal;
 
-import com.badlogic.gdx.math.Rectangle;  // Para Rectangle
+import com.badlogic.gdx.math.Rectangle;
 
 /**
  * Representa al jugador con inventario de pociones y nivel.
  */
 public class Jugador extends Personaje {
-    private float x, y; // Posición del jugador
-    private float width, height; // Tamaño del jugador
-    private int nivel; // Nivel del jugador
+    private float x, y;             // Posición del jugador
+    private float width, height;    // Tamaño y collider
+    private int nivel;              // Nivel del jugador
+    protected String direccion;     // "IZQUIERDA" o "DERECHA"
 
-    // Constructor de la clase Jugador
-    public Jugador(String nombre, int vida, int ataque, float x, float y, float width, float height, int nivel) {
-        super(nombre, vida, ataque);  // Llamada al constructor de la superclase (Personaje)
+    /**
+     * @param nombre    Nombre del jugador
+     * @param vida      Puntos de vida iniciales
+     * @param ataque    Daño base de ataque
+     * @param x         Posición X inicial
+     * @param y         Posición Y inicial
+     * @param width     Ancho del collider
+     * @param height    Alto del collider
+     * @param nivel     Nivel inicial
+     */
+    public Jugador(String nombre,
+                   int vida,
+                   int ataque,
+                   float x,
+                   float y,
+                   float width,
+                   float height,
+                   int nivel) {
+        super(nombre, vida, ataque);
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        this.nivel = nivel; // Establecer el nivel
+        this.nivel = nivel;
+        this.direccion = "DERECHA"; // valor por defecto
     }
 
-    // Métodos getter
+    // ——————————— Getters ———————————
+
     public String getNombre() {
         return nombre;
     }
@@ -29,7 +48,8 @@ public class Jugador extends Personaje {
         return vida;
     }
 
-    public int getAtaque() {
+    /** Daño base que inflige el jugador. */
+    public int getDanoBase() {
         return ataque;
     }
 
@@ -45,54 +65,66 @@ public class Jugador extends Personaje {
         return nivel;
     }
 
-    // Métodos setter
+    // ——————————— Setters y utilidad ———————————
+
+    /** Actualiza la posición del jugador. */
     public void setPosition(float x, float y) {
         this.x = x;
         this.y = y;
     }
 
-    // Método para obtener el collider del jugador
+    /** Collider para detección de colisiones. */
     public Rectangle getCollider() {
-        return new Rectangle(x, y, width, height);  // Collider para el jugador
+        return new Rectangle(x, y, width, height);
     }
 
-    // Método para mover al jugador
-    public void mover(float direccionX, float direccionY, float delta) {
-        // Velocidad en función del delta para hacer el movimiento frame rate independiente
-        float speed = 200f * delta; // Ajusta el valor de la velocidad según sea necesario
-        // Nueva posición del jugador
-        this.x += direccionX * speed;
-        this.y += direccionY * speed;
-    }
-
-    // Método para recibir daño
-    public void recibirDanio(int dano) {
-        this.vida -= dano;
-        if (this.vida < 0) {
-            this.vida = 0;  // Evita que la vida sea negativa
+    /**
+     * Mueve al jugador.
+     * @param dirX  -1 izquierda, +1 derecha, 0 sin horizontal
+     * @param dirY  -1 abajo, +1 arriba, 0 sin vertical
+     * @param delta Delta time para velocidad independiente de FPS
+     */
+    public void mover(float dirX, float dirY, float delta) {
+        float speed = 200f * delta;
+        this.x += dirX * speed;
+        this.y += dirY * speed;
+        // Actualizar dirección horizontal
+        if (dirX < 0) {
+            direccion = "IZQUIERDA";
+        } else if (dirX > 0) {
+            direccion = "DERECHA";
         }
     }
 
-    // Método para atacar (retorna el valor de daño)
-    public int atacar() {
-        return this.ataque;
+    // ——————————— Interacciones ———————————
+
+    /**
+     * Recibe daño directo, resta a la vida.
+     */
+    @Override
+    public void recibirDanio(int danio) {
+        vida -= danio;
+        if (vida < 0) vida = 0;
     }
 
-    // Método para recoger poción
+    /**
+     * Recoge una poción y aplica su efecto.
+     */
     public void recogerPocion(Pocion pocion) {
+        int cantidad = pocion.getCantidad();
         if (pocion instanceof PocionHP) {
-            this.vida += pocion.getCantidad();  // Sumar la cantidad de la poción a la vida
+            vida = Math.min(vida + cantidad, vida);
         } else if (pocion instanceof PocionEXP) {
-            this.nivel += pocion.getCantidad(); // Sumar la cantidad de la poción al nivel
+            nivel += cantidad;
         } else if (pocion instanceof PocionMana) {
-            // Aquí podrías agregar lógica para el caso de PocionMana
+            // Lógica para maná
         } else if (pocion instanceof PocionFlechas) {
-            // Aquí podrías agregar lógica para el caso de PocionFlechas
+            // Lógica para flechas
         }
     }
 
-    // Método para subir nivel
+    /** Sube un nivel. */
     public void subirNivel() {
-        this.nivel++;  // Aumenta el nivel del jugador
+        nivel++;
     }
 }
