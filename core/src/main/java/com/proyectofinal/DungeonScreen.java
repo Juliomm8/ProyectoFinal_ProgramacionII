@@ -269,7 +269,7 @@ public class DungeonScreen extends PantallaBase {
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // 2) Procesar entrada y mover jugador
+        // 2) Manejar entrada genérica (spawn y actualización de enemigos)
         manejarEntrada(delta);
 
         // 3) Centrar cámara en el jugador
@@ -278,134 +278,92 @@ public class DungeonScreen extends PantallaBase {
         cam.position.set(px, py, 0f);
         cam.update();
 
-        // 4) Sincronizar cámara del stage
-        OrthographicCamera stageCam = (OrthographicCamera) stage.getViewport().getCamera();
+        // 4) Sincronizar cámara del Stage
+        OrthographicCamera stageCam = (OrthographicCamera)stage.getViewport().getCamera();
         stageCam.position.set(cam.position);
         stageCam.zoom = cam.zoom;
         stageCam.update();
 
-        // 5) Preparar batch para el mundo
+        // 5) Dibujar el mundo (tiles y piedras)
         batch.setProjectionMatrix(cam.combined);
-
-        // 6) Calcular rango de tiles visibles (con un margen de 1 tile para evitar huecos)
+        batch.begin();
+        // Dibujar tiles con margen de 1
         float halfW = cam.viewportWidth * 0.5f;
         float halfH = cam.viewportHeight * 0.5f;
-        int minX = (int)((px - halfW) / TILE_SIZE) - 1;
-        int maxX = (int)((px + halfW) / TILE_SIZE) + 1;
-        int minY = (int)((py - halfH) / TILE_SIZE) - 1;
-        int maxY = (int)((py + halfH) / TILE_SIZE) + 1;
-
-        // -------- DIBUJO DE FONDO Y OBJETOS DEL SUELO --------
-        batch.begin();
-        // 7) Dibujar tiles y overlays (SIEMPRE primero)
+        int minX = (int)((px - halfW)  / TILE_SIZE) - 1;
+        int maxX = (int)((px + halfW)  / TILE_SIZE) + 1;
+        int minY = (int)((py - halfH)  / TILE_SIZE) - 1;
+        int maxY = (int)((py + halfH)  / TILE_SIZE) + 1;
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
-                // Obtener tipo de tile
                 MapaProcedural.Tile t = generator.getTile(x, y);
-
-                // Seleccionar textura base
-                Texture baseTex;
-                switch (t) {
-                    case CAMINO:
-                        baseTex = texCamino;
-                        break;
-                    case PASTO_AMARILLO:
-                        baseTex = texPastoA;
-                        break;
-                    default:
-                        int idx = (x & 1) + ((y & 1) << 1);
-                        baseTex = texPastoVVariants[idx];
-                }
-                // Dibujar base
-                batch.draw(baseTex, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-                // Dibujar overlays
-                if (generator.hasOverlayVerde(x, y)) {
+                Texture base = (t == MapaProcedural.Tile.CAMINO ? texCamino
+                    : t == MapaProcedural.Tile.PASTO_AMARILLO ? texPastoA
+                    : texPastoVVariants[(x & 1) + ((y & 1) << 1)]);
+                batch.draw(base, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                if (generator.hasOverlayVerde(x, y))
                     batch.draw(texHierbaV, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                }
-                if (generator.hasOverlayAmarillo(x, y)) {
+                if (generator.hasOverlayAmarillo(x, y))
                     batch.draw(texHierbaA, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                }
             }
         }
-
-        // 8) DIBUJAR PIEDRAS DEL SUELO (debajo del jugador)
-        for (Piedra piedra : generator.getPiedras()) {
-            piedra.render(batch); // Las piedras están bajo el jugador
+        for (Piedra p : generator.getPiedras()) {
+            p.render(batch);
         }
         batch.end();
 
-        // 2.1) Manejar input/movimiento del jugador
-        manejarEntrada(delta);
-
-// 2.2) ¡Actualizar lógica de ataque y animación!
+        // 6) Actualizar lógica y dibujar al jugador + pociones
         playerActor.update(delta, enemigos);
-
-// 2.3) Actuar y dibujar el Stage
         stage.act(delta);
         stage.draw();
 
-        // 9) Dibujar stage (jugador y pociones, SIEMPRE encima de las piedras)
-        stage.act(delta);
-        stage.draw();
-
-
-        // Renderizar enemigos
+        // 7) Dibujar enemigos sobre el suelo
         batch.begin();
-        for (Enemigo enemigo : enemigos) {
-            enemigo.render(batch);
+        for (Enemigo e : enemigos) {
+            e.render(batch);
         }
         batch.end();
 
-        // Verificar colisiones con el jugador y aplicar daño
-        Rectangle jugadorBounds = playerActor.getBounds();
-        Iterator<Enemigo> iterEnemigos = enemigos.iterator();
-        while (iterEnemigos.hasNext()) {
-            Enemigo enemigo = iterEnemigos.next();
-
-            // Comprobar si el enemigo está vivo
-            if (!enemigo.estaVivo()) {
-                // Verificar si la animación de muerte ha terminado
-                if (enemigo.deathAnimation != null && enemigo.deathAnimation.isAnimationFinished(enemigo.stateTime)) {
-                    iterEnemigos.remove();
-                }
-                continue;
-            }
-
-            // Verificar colisión y aplicar daño si el enemigo está atacando
-            if (enemigo.getHitbox().overlaps(jugadorBounds) &&
-                enemigo.estadoActual == Enemigo.EstadoEnemigo.ATTACKING) {
-                playerActor.getJugador().recibirDanio(enemigo.danio);
-            }
-        }
-
-        // 10) DIBUJAR ÁRBOLES (encima del jugador, si quieres ese efecto)
-        batch.begin();
-        for (Arbol arbol : generator.getArboles()) {
-            arbol.render(batch); // Si los árboles deben tapar al jugador, ponlos aquí
-        }
-        batch.end();
-
-        // 11) Detección de colisiones poción–jugador
+        // 8) Colisiones enemigo→jugador
         Rectangle pjBounds = playerActor.getBounds();
-        for (Actor a : stage.getActors()) {
-            if (a instanceof PocionActor) {
-                PocionActor pa = (PocionActor) a;
-                if (pa.getBounds().overlaps(pjBounds)) {
-                    playerActor.getJugador().recogerPocion(pa.getPocion());
-                    pa.remove();
+        Iterator<Enemigo> itE = enemigos.iterator();
+        while (itE.hasNext()) {
+            Enemigo e = itE.next();
+            if (!e.estaVivo()) {
+                if (e.deathAnimation != null && e.deathAnimation.isAnimationFinished(e.stateTime)) {
+                    itE.remove();
                 }
+            } else if (e.getHitbox().overlaps(pjBounds)
+                && e.estadoActual == Enemigo.EstadoEnemigo.ATTACKING) {
+                playerActor.getJugador().recibirDanio(e.danio);
             }
         }
 
-        // 12) HUD y actualizaciones extra (SIEMPRE arriba de todo)
+        // 9) Colisiones poción→jugador
+        pjBounds = playerActor.getBounds();
+        for (Actor a : stage.getActors()) {
+            if (a instanceof PocionActor pa && pa.getBounds().overlaps(pjBounds)) {
+                playerActor.getJugador().recogerPocion(pa.getPocion());
+                pa.remove();
+            }
+        }
+
+        // 10) Dibujar árboles
+        batch.begin();
+        for (Arbol ar : generator.getArboles()) {
+            ar.render(batch);
+        }
+        batch.end();
+
+        // 11) HUD y lógica específica de clase
         batch.begin();
         playerActor.dibujarHUD(batch, font);
-        if (playerActor.getJugador() instanceof Arquero) {
-            ((Arquero) playerActor.getJugador()).actualizar(delta);
+        if (playerActor.getJugador() instanceof Arquero arq) {
+            arq.actualizar(delta);
         }
         batch.end();
     }
+
 
     private void manejarEntrada(float delta) {
         float speed = 200f * delta;
@@ -474,23 +432,52 @@ public class DungeonScreen extends PantallaBase {
 
     @Override
     public void dispose() {
-        super.dispose();
-        batch.dispose();
-        font.dispose();
-        texPlayer.dispose();
-        texHP.dispose();
-        texEXP.dispose();
-        if (texMana   != null) texMana.dispose();
-        if (texEscudo != null) texEscudo.dispose();
-        if (texMunicion != null) texMunicion.dispose();
-        for (Texture t : texPastoVVariants) t.dispose();
-        texPastoA.dispose();
-        texCamino.dispose();
-        texHierbaV.dispose();
-        texHierbaA.dispose();
-        // Liberar recursos de los enemigos si tienen texturas propias
-        for (Enemigo enemigo : enemigos) {
-            // Si tienes texturas que liberar en los enemigos, hazlo aquí
+        try {
+            super.dispose();
+
+            // Liberar recursos básicos
+            if (batch != null) batch.dispose();
+            if (font != null) font.dispose();
+
+            // Liberar texturas de jugador y pociones
+            if (texPlayer != null) texPlayer.dispose();
+            if (texHP != null) texHP.dispose();
+            if (texEXP != null) texEXP.dispose();
+            if (texMana != null) texMana.dispose();
+            if (texEscudo != null) texEscudo.dispose();
+            if (texMunicion != null) texMunicion.dispose();
+
+            // Liberar texturas de terreno
+            if (texPastoVVariants != null) {
+                for (Texture t : texPastoVVariants) {
+                    if (t != null) t.dispose();
+                }
+            }
+            if (texPastoA != null) texPastoA.dispose();
+            if (texCamino != null) texCamino.dispose();
+            if (texHierbaV != null) texHierbaV.dispose();
+            if (texHierbaA != null) texHierbaA.dispose();
+
+            // Liberar recursos del PlayerActor
+            if (playerActor != null) {
+                playerActor.dispose();
+            }
+
+            // Liberar recursos del generador de mapa
+            if (generator != null) {
+                generator.dispose();
+            }
+
+            // Liberar recursos de los enemigos
+            if (enemigos != null) {
+                for (Enemigo enemigo : enemigos) {
+                    if (enemigo != null && enemigo instanceof com.badlogic.gdx.utils.Disposable) {
+                        ((com.badlogic.gdx.utils.Disposable)enemigo).dispose();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al liberar recursos en DungeonScreen: " + e.getMessage());
         }
     }
 }

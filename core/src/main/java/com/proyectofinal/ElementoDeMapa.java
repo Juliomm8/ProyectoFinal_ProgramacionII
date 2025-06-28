@@ -3,8 +3,9 @@ package com.proyectofinal;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.utils.Disposable;
 
-public abstract class ElementoDeMapa {
+public abstract class ElementoDeMapa implements Disposable {
     protected Texture texture;  // Textura del objeto
     protected Rectangle collider;  // Collider del objeto
     protected float posX, posY;  // Posición para renderizado
@@ -23,5 +24,16 @@ public abstract class ElementoDeMapa {
     // Método para obtener el collider del objeto
     public Rectangle getCollider() {
         return collider;
+    }
+
+    /**
+     * Libera los recursos utilizados por este elemento
+     */
+    @Override
+    public void dispose() {
+        if (texture != null) {
+            texture.dispose();
+            texture = null;
+        }
     }
 }

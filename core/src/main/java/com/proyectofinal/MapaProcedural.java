@@ -391,4 +391,23 @@ public class MapaProcedural {
     }
 
     public long getSeed() { return seed; }
+
+    /**
+     * Libera los recursos utilizados por el mapa
+     */
+    public void dispose() {
+        // Liberar texturas de árboles
+        for (Arbol arbol : arboles) {
+            if (arbol.texture != null) {
+                arbol.texture.dispose();
+            }
+        }
+
+        // Liberar texturas de piedras
+        for (Piedra piedra : piedras) {
+            if (piedra.texture != null) {
+                piedra.texture.dispose();
+            }
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.proyectofinal;
 
 import com.badlogic.gdx.math.Rectangle;
+import java.util.List;
 
 /**
  * Representa al jugador con inventario de pociones y nivel.
@@ -86,14 +87,29 @@ public class Jugador extends Personaje {
      */
     public void mover(float dirX, float dirY, float delta) {
         float speed = 200f * delta;
+
+        // Aplicar movimiento en ambas direcciones
         this.x += dirX * speed;
         this.y += dirY * speed;
-        // Actualizar dirección horizontal
+
+        // Actualizar dirección solo si hay movimiento horizontal
+        // Esto permite que el sprite mantenga su orientación durante movimientos verticales
         if (dirX < 0) {
             direccion = "IZQUIERDA";
         } else if (dirX > 0) {
             direccion = "DERECHA";
         }
+        // Nota: No cambiamos la dirección si dirX es 0, manteniendo la orientación anterior
+    }
+
+    /**
+     * Método de ataque genérico para el jugador.
+     * Las subclases pueden sobrescribir este método para implementar su lógica específica.
+     * @param enemigos Lista de enemigos que pueden ser afectados por el ataque
+     */
+    public void atacar(List<? extends Enemigo> enemigos) {
+        // Implementación genérica que puede ser sobrescrita
+        System.out.println(nombre + " realiza un ataque básico");
     }
 
     // ——————————— Interacciones ———————————

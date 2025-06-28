@@ -11,7 +11,7 @@ public class Arquero extends Jugador implements RecargableInterface {
 
 
     public Arquero(String nombre, int vida, int ataque, float x, float y, float width, float height, int flechasIniciales, float precision) {
-        super(nombre, vida, ataque, x, y, width, height, flechasIniciales);  // Llamada al constructor de Jugador
+        super(nombre, vida, ataque, x, y, width, height, 1);  // Llamada al constructor de Jugador
         this.precision = precision;
         this.flechas = flechasIniciales;
         this.modoIlimitado = false;

@@ -2,7 +2,7 @@ package com.proyectofinal;
 
 /**
  * Pruebas de consumo de pociones para las distintas clases.
-
+ */
 
 public class TestPociones {
     public static void main(String[] args) {
@@ -47,4 +47,4 @@ public class TestPociones {
         System.out.println("Flechas tras Poción Flechas: " + arquero.getFlechas());
     }
 }
- */
+
