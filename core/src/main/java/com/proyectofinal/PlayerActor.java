@@ -30,12 +30,19 @@ public class PlayerActor extends Image {
     private static final float ATTACK_FRAME_DUR = 0.07f;
     private static final int ATTACK_IMPACT = 4;
 
-    // Corrida/Movimiento (Caballero y Mago)
+    // Corrida/Movimiento (Caballero, Mago y Arquero)
     private boolean corriendo = false;
     private float tiempoCorrida = 0f;
     private int frameRun = 0;
     private TextureRegion[] runFrames;
     private static final float RUN_FRAME_DUR = 0.08f;
+
+    // Idle/Reposo
+    private boolean enReposo = true;
+    private float tiempoIdle = 0f;
+    private int frameIdle = 0;
+    private TextureRegion[] idleFrames;
+    private static final float IDLE_FRAME_DUR = 0.2f; // Más lento (0.2 segundos por frame)
 
     public PlayerActor(Jugador jugador, Texture idleTexture) {
         super(new TextureRegionDrawable(new TextureRegion(idleTexture)));
@@ -45,6 +52,13 @@ public class PlayerActor extends Image {
 
         // Carga animaciones según clase
         if (jugador instanceof Caballero) {
+            // Idle Caballero
+            idleFrames = new TextureRegion[8];
+            for (int i = 0; i < idleFrames.length; i++) {
+                idleFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Caballero/Caballero_Idle/Idle_" + i + ".png")
+                );
+            }
             // Ataque Caballero
             attackFrames = new TextureRegion[9];
             for (int i = 0; i < attackFrames.length; i++) {
@@ -60,6 +74,13 @@ public class PlayerActor extends Image {
                 );
             }
         } else if (jugador instanceof Mago) {
+            // Idle Mago
+            idleFrames = new TextureRegion[6];
+            for (int i = 0; i < idleFrames.length; i++) {
+                idleFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Mago/Mago_Idle/Idle_" + i + ".png")
+                );
+            }
             // Corrida Mago
             runFrames = new TextureRegion[8];
             for (int i = 0; i < runFrames.length; i++) {
@@ -69,6 +90,13 @@ public class PlayerActor extends Image {
             }
             attackFrames = null; // Mago sin animación de ataque
         } else if (jugador instanceof Arquero) {
+            // Idle Arquero
+            idleFrames = new TextureRegion[5];
+            for (int i = 0; i < idleFrames.length; i++) {
+                idleFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Arquero/Arquero_Idle/Idle_" + i + ".png")
+                );
+            }
             // Corrida Arquero
             runFrames = new TextureRegion[8];
             for (int i = 0; i < runFrames.length; i++) {
@@ -117,19 +145,32 @@ public class PlayerActor extends Image {
                 // Animar corriendo si hay movimiento HORIZONTAL o si es MAGO o ARQUERO (para cualquier dirección)
                 if ((dirX != 0 || (dirY != 0 && (jugador instanceof Mago || jugador instanceof Arquero))) && runFrames != null && runFrames.length > 0) {
                     corriendo = true;
+                    enReposo = false;
                     tiempoCorrida += delta;
                     frameRun = (int)(tiempoCorrida / RUN_FRAME_DUR) % runFrames.length;
                 } else {
                     // En movimiento vertical para no-Mago, mantener la dirección pero no animar corriendo
                     corriendo = false;
+                    enReposo = true;
                     tiempoCorrida = 0;
                     frameRun = 0;
                 }
             } else {
-                // Sin ningún movimiento
+                // Sin ningún movimiento - activar animación Idle
                 corriendo = false;
+                enReposo = true;
                 tiempoCorrida = 0;
                 frameRun = 0;
+            }
+
+            // Actualizar animación de reposo (Idle) si corresponde
+            if (enReposo && idleFrames != null && idleFrames.length > 0) {
+                tiempoIdle += delta;
+                frameIdle = (int)(tiempoIdle / IDLE_FRAME_DUR) % idleFrames.length;
+            } else {
+                // Si no está en reposo, reiniciar contador pero mantener el frame actual
+                // para que al volver a idle la animación sea fluida
+                tiempoIdle = 0;
             }
         } else {
             // Durante ataque no se muestra animación de corrida
@@ -190,16 +231,25 @@ public class PlayerActor extends Image {
             } else if (corriendo && runFrames != null && frameRun < runFrames.length) {
                 // Frame de animación de carrera
                 drawFrame = runFrames[frameRun];
+            } else if (enReposo && idleFrames != null && frameIdle < idleFrames.length) {
+                // Frame de animación idle para Caballero
+                drawFrame = idleFrames[frameIdle];
             }
         } else if (jugador instanceof Mago) {
             if (corriendo && runFrames != null && frameRun < runFrames.length) {
                 // Frame de animación de carrera para Mago
                 drawFrame = runFrames[frameRun];
+            } else if (enReposo && idleFrames != null && frameIdle < idleFrames.length) {
+                // Frame de animación idle para Mago
+                drawFrame = idleFrames[frameIdle];
             }
         } else if (jugador instanceof Arquero) {
             if (corriendo && runFrames != null && frameRun < runFrames.length) {
                 // Frame de animación de carrera para Arquero
                 drawFrame = runFrames[frameRun];
+            } else if (enReposo && idleFrames != null && frameIdle < idleFrames.length) {
+                // Frame de animación idle para Arquero
+                drawFrame = idleFrames[frameIdle];
             }
         }
 
@@ -256,6 +306,14 @@ public class PlayerActor extends Image {
                 for (int i = 0; i < runFrames.length; i++) {
                     if (runFrames[i] != null && runFrames[i].getTexture() != null) {
                         runFrames[i].getTexture().dispose();
+                    }
+                }
+            }
+            // Liberar texturas de animación idle
+            if (idleFrames != null) {
+                for (int i = 0; i < idleFrames.length; i++) {
+                    if (idleFrames[i] != null && idleFrames[i].getTexture() != null) {
+                        idleFrames[i].getTexture().dispose();
                     }
                 }
             }
