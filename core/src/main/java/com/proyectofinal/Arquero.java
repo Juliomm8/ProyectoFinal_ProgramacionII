@@ -1,5 +1,7 @@
 package com.proyectofinal;
 
+import java.util.List;
+
 /**
  * Subclase de Jugador especializada en disparos con flechas limitadas y ráfaga ilimitada.
  */
@@ -37,6 +39,14 @@ public class Arquero extends Jugador implements RecargableInterface {
         } else {
             System.out.println(getNombre() + " no tiene flechas.");
         }
+    }
+
+    /**
+     * Método de ataque que recibe lista de enemigos.
+     * La lógica de impacto se maneja en FlechaActor.
+     */
+    public void atacar(List<? extends Enemigo> enemigos) {
+        ataque1(); // Simplemente delegamos al método existente
     }
 
     /**

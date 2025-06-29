@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.math.Rectangle;
@@ -29,6 +30,23 @@ public class PlayerActor extends Image {
     private TextureRegion[] attackFrames;
     private static final float ATTACK_FRAME_DUR = 0.07f;
     private static final int ATTACK_IMPACT = 4;
+
+    // Animaciones específicas por clase
+    private TextureRegion[] magoAttackFrames;    // Frames de ataque del Mago
+    private TextureRegion[] arqueroAttackFrames; // Frames de ataque del Arquero
+
+    // Proyectiles
+    private TextureRegion[] hechizoFrames;       // Frames del hechizo volando
+    private TextureRegion[] hechizoImpactoFrames; // Frames del impacto del hechizo
+    private TextureRegion[] flechaFrames;        // Frames de la flecha volando
+    private TextureRegion[] flechaImpactoFrames;  // Frames del impacto de la flecha
+
+    // Stage para añadir proyectiles
+    private Stage stage;  // Se inyectará desde fuera
+
+    // Constantes para ataques
+    private static final int MAGO_ATTACK_IMPACT = 3;    // Frame donde el Mago hace el impacto
+    private static final int ARQUERO_ATTACK_IMPACT = 9; // Frame donde el Arquero dispara la flecha
 
     // Corrida/Movimiento (Caballero, Mago y Arquero)
     private boolean corriendo = false;
@@ -88,7 +106,33 @@ public class PlayerActor extends Image {
                     new Texture("PersonajesPrincipales/Mago/Mago_Run/Run_" + i + ".png")
                 );
             }
-            attackFrames = null; // Mago sin animación de ataque
+
+            // Ataque Mago
+            magoAttackFrames = new TextureRegion[7];
+            for (int i = 0; i < magoAttackFrames.length; i++) {
+                magoAttackFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Mago/Mago_Attack1/Attack1_" + i + ".png")
+                );
+            }
+
+            // Frames de hechizo volando
+            hechizoFrames = new TextureRegion[5];
+            for (int i = 0; i < hechizoFrames.length; i++) {
+                hechizoFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Mago/Hechizo/" + i + ".png")
+                );
+            }
+
+            // Frames de impacto del hechizo (usamos los mismos para simplificar)
+            hechizoImpactoFrames = new TextureRegion[5];
+            for (int i = 0; i < hechizoImpactoFrames.length; i++) {
+                hechizoImpactoFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Mago/Hechizo/" + i + ".png")
+                );
+            }
+
+            // No usamos attackFrames para mago, sino su versión específica
+            attackFrames = null;
         } else if (jugador instanceof Arquero) {
             // Idle Arquero
             idleFrames = new TextureRegion[5];
@@ -104,7 +148,33 @@ public class PlayerActor extends Image {
                     new Texture("PersonajesPrincipales/Arquero/Arquero_Run/Run_" + i + ".png")
                 );
             }
-            attackFrames = null; // Arquero maneja sus ataques de otra forma
+
+            // Ataque Arquero (tensar arco)
+            arqueroAttackFrames = new TextureRegion[11];
+            for (int i = 0; i < arqueroAttackFrames.length; i++) {
+                arqueroAttackFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Arquero/Arquero_Attack1/Attack1_" + i + ".png")
+                );
+            }
+
+            // Frames de flecha volando
+            flechaFrames = new TextureRegion[3];
+            for (int i = 0; i < flechaFrames.length; i++) {
+                flechaFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Arquero/Flecha/Flecha_Attack/" + i + ".png")
+                );
+            }
+
+            // Frames de impacto de flecha
+            flechaImpactoFrames = new TextureRegion[5];
+            for (int i = 0; i < flechaImpactoFrames.length; i++) {
+                flechaImpactoFrames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Arquero/Flecha/Flecha_Hit/" + i + ".png")
+                );
+            }
+
+            // No usamos attackFrames para arquero, sino su versión específica
+            attackFrames = null;
         }
     }
 
@@ -114,6 +184,61 @@ public class PlayerActor extends Image {
      */
     public Jugador getJugador() {
         return jugador;
+    }
+
+    /**
+     * Establece el stage donde se añadirán los proyectiles.
+     */
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
+
+    /**
+     * Crea y añade un hechizo al stage desde la posición del mago.
+     */
+    private void generarHechizo() {
+        if (stage == null || !(jugador instanceof Mago mago)) return;
+
+        // Posición ligeramente adelantada según dirección
+        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : 0;
+
+        HechizoActor hechizo = new HechizoActor(
+            hechizoFrames,
+            hechizoImpactoFrames,
+            getX() + offsetX,
+            getY() + getHeight()/2 - 16, // Centrar verticalmente
+            jugador.direccion,
+            mago.getDanoBase()
+        );
+
+        stage.addActor(hechizo);
+    }
+
+    /**
+     * Crea y añade una flecha al stage desde la posición del arquero.
+     */
+    private void generarFlecha() {
+        if (stage == null || !(jugador instanceof Arquero arquero)) return;
+
+        // Si no tiene flechas disponibles, no disparar
+        if (arquero.getFlechas() <= 0) return;
+
+        // Consumir una flecha
+        arquero.ataque1();
+
+        // Posición ligeramente adelantada según dirección
+        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : 0;
+
+        FlechaActor flecha = new FlechaActor(
+            flechaFrames,
+            flechaImpactoFrames,
+            getX() + offsetX,
+            getY() + getHeight()/2 - 16, // Centrar verticalmente
+            jugador.direccion,
+            arquero.getDanoBase()
+        );
+
+        stage.addActor(flecha);
     }
 
     @Override
@@ -179,8 +304,11 @@ public class PlayerActor extends Image {
             frameRun = 0;
         }
 
-        // Detectar ataque según el tipo de personaje
-        if (!atacando && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        // Detectar ataque según el tipo de personaje (SPACE o clic izquierdo)
+        boolean ataqueDetectado = Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
+                                 Gdx.input.justTouched();
+
+        if (!atacando && ataqueDetectado) {
             if (jugador instanceof Caballero caballero && caballero.puedeAtacar()) {
                 caballero.registrarAtaque();
                 atacando = true;
@@ -188,32 +316,66 @@ public class PlayerActor extends Image {
                 frameAttack = 0;
                 impactoHecho = false;
             } else if (jugador instanceof Mago mago) {
-                // Mago no tiene animación de ataque por ahora, solo ejecuta la acción
-                if (enemigos != null) {
-                    mago.atacar(enemigos);
-                }
+                // Iniciar animación de ataque del mago
+                atacando = true;
+                tiempoAnimAtaque = 0f;
+                frameAttack = 0;
+                impactoHecho = false;
             } else if (jugador instanceof Arquero arquero) {
-                // El arquero tiene su propio manejo de ataques
-                if (enemigos != null) {
-                    arquero.atacar(enemigos);
-                } else {
-                    arquero.ataque1(); // Uso alternativo si no hay enemigos
+                // Iniciar animación de ataque del arquero si tiene flechas
+                if (arquero.getFlechas() > 0) {
+                    atacando = true;
+                    tiempoAnimAtaque = 0f;
+                    frameAttack = 0;
+                    impactoHecho = false;
                 }
             }
         }
 
-        // Avanzar animación de ataque si está atacando y tiene frames de ataque
-        if (atacando && attackFrames != null && attackFrames.length > 0) {
+        // Avanzar animación de ataque según la clase de personaje
+        if (atacando) {
             tiempoAnimAtaque += delta;
             int idx = (int)(tiempoAnimAtaque / ATTACK_FRAME_DUR);
-            if (idx >= attackFrames.length) {
-                atacando = false;
-            } else {
-                frameAttack = idx;
-                if (idx == ATTACK_IMPACT && !impactoHecho && jugador instanceof Caballero caballero && enemigos != null) {
-                    caballero.atacar(enemigos);
-                    impactoHecho = true;
+
+            if (jugador instanceof Caballero && attackFrames != null) {
+                // Lógica para Caballero (usando attackFrames)
+                if (idx >= attackFrames.length) {
+                    atacando = false;
+                } else {
+                    frameAttack = idx;
+                    if (idx == ATTACK_IMPACT && !impactoHecho && enemigos != null) {
+                        ((Caballero)jugador).atacar(enemigos);
+                        impactoHecho = true;
+                    }
                 }
+            } else if (jugador instanceof Mago && magoAttackFrames != null) {
+                // Lógica para Mago
+                if (idx >= magoAttackFrames.length) {
+                    atacando = false;
+                    // Al terminar la animación, generar el hechizo
+                    generarHechizo();
+                } else {
+                    frameAttack = idx;
+                    if (idx == MAGO_ATTACK_IMPACT && !impactoHecho && enemigos != null) {
+                        ((Mago)jugador).atacar(enemigos);
+                        impactoHecho = true;
+                    }
+                }
+            } else if (jugador instanceof Arquero && arqueroAttackFrames != null) {
+                // Lógica para Arquero
+                if (idx >= arqueroAttackFrames.length) {
+                    atacando = false;
+                    // Al terminar la animación, generar la flecha
+                    generarFlecha();
+                } else {
+                    frameAttack = idx;
+                    if (idx == ARQUERO_ATTACK_IMPACT && !impactoHecho) {
+                        impactoHecho = true;
+                    }
+                }
+            } else {
+                // Si no tiene frames de ataque, terminar rápido
+                atacando = false;
             }
         }
     }
@@ -236,7 +398,10 @@ public class PlayerActor extends Image {
                 drawFrame = idleFrames[frameIdle];
             }
         } else if (jugador instanceof Mago) {
-            if (corriendo && runFrames != null && frameRun < runFrames.length) {
+            if (atacando && magoAttackFrames != null && frameAttack < magoAttackFrames.length) {
+                // Frame de animación de ataque para Mago
+                drawFrame = magoAttackFrames[frameAttack];
+            } else if (corriendo && runFrames != null && frameRun < runFrames.length) {
                 // Frame de animación de carrera para Mago
                 drawFrame = runFrames[frameRun];
             } else if (enReposo && idleFrames != null && frameIdle < idleFrames.length) {
@@ -244,7 +409,10 @@ public class PlayerActor extends Image {
                 drawFrame = idleFrames[frameIdle];
             }
         } else if (jugador instanceof Arquero) {
-            if (corriendo && runFrames != null && frameRun < runFrames.length) {
+            if (atacando && arqueroAttackFrames != null && frameAttack < arqueroAttackFrames.length) {
+                // Frame de animación de ataque para Arquero
+                drawFrame = arqueroAttackFrames[frameAttack];
+            } else if (corriendo && runFrames != null && frameRun < runFrames.length) {
                 // Frame de animación de carrera para Arquero
                 drawFrame = runFrames[frameRun];
             } else if (enReposo && idleFrames != null && frameIdle < idleFrames.length) {
@@ -314,6 +482,60 @@ public class PlayerActor extends Image {
                 for (int i = 0; i < idleFrames.length; i++) {
                     if (idleFrames[i] != null && idleFrames[i].getTexture() != null) {
                         idleFrames[i].getTexture().dispose();
+                    }
+                }
+            }
+
+            // Liberar texturas de animación de ataque del mago
+            if (magoAttackFrames != null) {
+                for (int i = 0; i < magoAttackFrames.length; i++) {
+                    if (magoAttackFrames[i] != null && magoAttackFrames[i].getTexture() != null) {
+                        magoAttackFrames[i].getTexture().dispose();
+                    }
+                }
+            }
+
+            // Liberar texturas de animación de ataque del arquero
+            if (arqueroAttackFrames != null) {
+                for (int i = 0; i < arqueroAttackFrames.length; i++) {
+                    if (arqueroAttackFrames[i] != null && arqueroAttackFrames[i].getTexture() != null) {
+                        arqueroAttackFrames[i].getTexture().dispose();
+                    }
+                }
+            }
+
+            // Liberar texturas de hechizo
+            if (hechizoFrames != null) {
+                for (int i = 0; i < hechizoFrames.length; i++) {
+                    if (hechizoFrames[i] != null && hechizoFrames[i].getTexture() != null) {
+                        hechizoFrames[i].getTexture().dispose();
+                    }
+                }
+            }
+
+            // Liberar texturas de impacto de hechizo
+            if (hechizoImpactoFrames != null) {
+                for (int i = 0; i < hechizoImpactoFrames.length; i++) {
+                    if (hechizoImpactoFrames[i] != null && hechizoImpactoFrames[i].getTexture() != null) {
+                        hechizoImpactoFrames[i].getTexture().dispose();
+                    }
+                }
+            }
+
+            // Liberar texturas de flecha
+            if (flechaFrames != null) {
+                for (int i = 0; i < flechaFrames.length; i++) {
+                    if (flechaFrames[i] != null && flechaFrames[i].getTexture() != null) {
+                        flechaFrames[i].getTexture().dispose();
+                    }
+                }
+            }
+
+            // Liberar texturas de impacto de flecha
+            if (flechaImpactoFrames != null) {
+                for (int i = 0; i < flechaImpactoFrames.length; i++) {
+                    if (flechaImpactoFrames[i] != null && flechaImpactoFrames[i].getTexture() != null) {
+                        flechaImpactoFrames[i].getTexture().dispose();
                     }
                 }
             }
