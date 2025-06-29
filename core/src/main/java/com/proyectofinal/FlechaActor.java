@@ -1,5 +1,6 @@
 package com.proyectofinal;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
@@ -10,51 +11,78 @@ import java.util.List;
  * Actor que representa una flecha disparada por el Arquero.
  */
 public class FlechaActor extends Actor {
-    // Propiedades de la flecha
-    private TextureRegion[] framesVuelo;    // Frames de animación de la flecha volando
-    private TextureRegion[] framesImpacto;  // Frames de animación del impacto
-    private float velocidad = 200f;         // Velocidad en píxeles por segundo
-    private String direccion;               // Dirección: "IZQUIERDA" o "DERECHA"
-    private float tiempoAnimacion = 0;      // Tiempo para animación
-    private int frameActual = 0;            // Frame actual
-    private static final float FRAME_DURACION = 0.1f; // Duración de cada frame
+    // Frames de animación
+    private TextureRegion[] framesVuelo;
+    private TextureRegion[] framesImpacto;
 
-    private boolean impactando = false;     // Si está en fase de impacto
-    private int dano;                       // Daño que causa la flecha
-    private float tiempoImpacto = 0;        // Tiempo de la animación de impacto
-    private boolean finalizado = false;     // Si ha terminado y debe eliminarse
+    // Movimiento y direcciones
+    private float velocidad = 200f;         // px/s
+    private String direccion;               // "IZQUIERDA" o "DERECHA"
 
-    private Rectangle hitbox;               // Área de colisión
+    // Animación
+    private float tiempoAnimacion = 0f;
+    private int frameActual = 0;
+    private static final float FRAME_DURACION = 0.1f;
+
+    // Impacto
+    private boolean impactando = false;
+    private float tiempoImpacto = 0f;
+    private boolean finalizado = false;
+
+    // Daño y colisiones
+    private int dano;
+    private Rectangle hitbox;
 
     /**
-     * Constructor de la flecha con animaciones y posición inicial.
+     * Constructor de la flecha.
      */
-    public FlechaActor(TextureRegion[] framesVuelo, TextureRegion[] framesImpacto,
-                       float x, float y, String direccion, int dano) {
+    public FlechaActor(TextureRegion[] framesVuelo,
+                       TextureRegion[] framesImpacto,
+                       float x, float y,
+                       String direccion,
+                       int dano,
+                       float velocidad,
+                       float escala) {
         this.framesVuelo = framesVuelo;
         this.framesImpacto = framesImpacto;
-        this.direccion = direccion;
-        this.dano = dano;
+        this.direccion    = direccion;
+        this.dano         = dano;
+        this.velocidad    = velocidad;
 
         setPosition(x, y);
-        setSize(32, 32); // Tamaño estándar
+        setSize(32 * escala, 32 * escala);
 
-        // Crear hitbox delgada para la flecha
-        hitbox = new Rectangle(x + 10, y + 12, 12, 8);
+        hitbox = new Rectangle(x + 10 * escala, y + 12 * escala, 12 * escala, 8 * escala);
 
-        // Voltear frames si es necesario
-        if ("IZQUIERDA".equals(direccion)) {
-            for (TextureRegion frame : framesVuelo) {
-                if (!frame.isFlipX()) {
-                    frame.flip(true, false);
-                }
-            }
-            for (TextureRegion frame : framesImpacto) {
-                if (!frame.isFlipX()) {
-                    frame.flip(true, false);
-                }
+        // Correctamente manejar la orientación según la dirección
+        // Aseguramos que las flechas estén correctamente orientadas
+        // Por defecto las flechas están mirando a la DERECHA
+        boolean debeEstarVolteado = "IZQUIERDA".equals(direccion);
+
+        for (TextureRegion f : framesVuelo) {
+            // Solo volteamos si no coincide con la orientación deseada
+            if (f.isFlipX() != debeEstarVolteado) {
+                f.flip(true, false);
             }
         }
+
+        for (TextureRegion f : framesImpacto) {
+            // Solo volteamos si no coincide con la orientación deseada
+            if (f.isFlipX() != debeEstarVolteado) {
+                f.flip(true, false);
+            }
+        }
+    }
+
+    /**
+     * Constructor simplificado para mantener compatibilidad.
+     */
+    public FlechaActor(TextureRegion[] framesVuelo,
+                       TextureRegion[] framesImpacto,
+                       float x, float y,
+                       String direccion,
+                       int dano) {
+        this(framesVuelo, framesImpacto, x, y, direccion, dano, 200f, 1.0f);
     }
 
     @Override
@@ -62,89 +90,73 @@ public class FlechaActor extends Actor {
         super.act(delta);
 
         if (finalizado) {
-            // Si terminó la animación de impacto, eliminar el actor
             remove();
             return;
         }
 
         if (impactando) {
-            // Avanzar animación de impacto
+            // Avanza animación de impacto
             tiempoImpacto += delta;
             frameActual = (int)(tiempoImpacto / FRAME_DURACION);
             if (frameActual >= framesImpacto.length) {
-                finalizado = true; // Terminar cuando finalice la animación de impacto
+                finalizado = true;
             }
         } else {
-            // Mover la flecha en la dirección adecuada
-            float movimiento = velocidad * delta;
-            float nuevaX = getX();
+            // Mueve la flecha
+            float mov = velocidad * delta;
+            float nx  = getX() + ("DERECHA".equals(direccion) ? mov : -mov);
+            setPosition(nx, getY());
 
-            if ("DERECHA".equals(direccion)) {
-                nuevaX += movimiento;
-            } else {
-                nuevaX -= movimiento;
-            }
+            hitbox.setPosition(nx + 10, getY() + 12);
 
-            setPosition(nuevaX, getY());
-
-            // Actualizar hitbox
-            hitbox.setPosition(nuevaX + 10, getY() + 12);
-
-            // Avanzar animación de vuelo
+            // Avanza animación de vuelo
             tiempoAnimacion += delta;
             frameActual = (int)(tiempoAnimacion / FRAME_DURACION) % framesVuelo.length;
+
+            // Ampliar el rango de movimiento para que la flecha viaje más lejos antes de ser eliminada
+            // Se aumenta el margen para permitir disparos desde más lejos
+            float margenExtra = 500f; // Margen adicional para permitir disparos desde fuera de la pantalla
+            if (nx < -getWidth() - margenExtra || nx > Gdx.graphics.getWidth() + margenExtra) {
+                finalizado = true;
+            }
         }
     }
 
     /**
-     * Verifica colisiones con enemigos y aplica daño.
+     * Comprueba colisiones contra la lista de enemigos.
      */
     public void comprobarColisiones(List<? extends Enemigo> enemigos) {
-        if (impactando || finalizado) return; // Ya impactó o terminó
+        if (impactando || finalizado) return;
 
-        for (Enemigo enemigo : enemigos) {
-            Rectangle enemigoRect = new Rectangle(enemigo.getX(), enemigo.getY(), 32, 32);
-            if (hitbox.overlaps(enemigoRect)) {
-                // Colisión detectada
-                enemigo.recibirDano(dano);
-                iniciarImpacto();
+        for (Enemigo e : enemigos) {
+            Rectangle r = new Rectangle(e.getX(), e.getY(), 32, 32);
+            if (hitbox.overlaps(r)) {
+                e.recibirDano(dano);
+                impactando    = true;
+                tiempoImpacto = 0f;
+                frameActual   = 0;
                 break;
             }
         }
     }
 
-    /**
-     * Inicia la animación de impacto.
-     */
-    public void iniciarImpacto() {
-        impactando = true;
-        tiempoImpacto = 0;
-        frameActual = 0;
-    }
-
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        TextureRegion frameToDraw;
-
+        TextureRegion frame;
         if (impactando) {
-            // Mostrar frame de impacto
             if (frameActual < framesImpacto.length) {
-                frameToDraw = framesImpacto[frameActual];
+                frame = framesImpacto[frameActual];
             } else {
-                return; // No dibujar si ya terminó
+                return;
             }
         } else {
-            // Mostrar frame de vuelo
-            frameToDraw = framesVuelo[frameActual];
+            frame = framesVuelo[frameActual];
         }
-
-        batch.draw(frameToDraw, getX(), getY(), getWidth(), getHeight());
+        batch.draw(frame, getX(), getY(), getWidth(), getHeight());
     }
 
-    /**
-     * Liberar recursos al eliminar el actor.
-     */
+    /** No liberamos texturas aquí; lo hace el creador de recursos. */
     public void dispose() {
-        // Las texturas se manejan externamente, no las liberamos aquí
+        // vacío
     }
 }

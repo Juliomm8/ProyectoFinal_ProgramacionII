@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -31,22 +32,29 @@ public class PlayerActor extends Image {
     private static final float ATTACK_FRAME_DUR = 0.07f;
     private static final int ATTACK_IMPACT = 4;
 
+    // Tipo de ataque activo
+    private enum TipoAtaque { NORMAL, ESPECIAL }
+    private TipoAtaque tipoAtaqueActual = TipoAtaque.NORMAL;
+
     // Animaciones específicas por clase
-    private TextureRegion[] magoAttackFrames;    // Frames de ataque del Mago
-    private TextureRegion[] arqueroAttackFrames; // Frames de ataque del Arquero
+    private TextureRegion[] magoAttack1Frames;    // Frames de ataque básico del Mago
+    private TextureRegion[] magoAttack2Frames;    // Frames de ataque especial del Mago
+    private TextureRegion[] arqueroAttackFrames;  // Frames de ataque del Arquero
 
     // Proyectiles
-    private TextureRegion[] hechizoFrames;       // Frames del hechizo volando
+    private TextureRegion[] hechizoFrames;        // Frames del hechizo volando
     private TextureRegion[] hechizoImpactoFrames; // Frames del impacto del hechizo
-    private TextureRegion[] flechaFrames;        // Frames de la flecha volando
+    private TextureRegion[] flechaFrames;         // Frames de la flecha volando
     private TextureRegion[] flechaImpactoFrames;  // Frames del impacto de la flecha
 
     // Stage para añadir proyectiles
     private Stage stage;  // Se inyectará desde fuera
 
     // Constantes para ataques
-    private static final int MAGO_ATTACK_IMPACT = 3;    // Frame donde el Mago hace el impacto
+    private static final int MAGO_ATTACK1_IMPACT = 3;   // Frame donde el Mago hace el impacto básico
+    private static final int MAGO_ATTACK2_IMPACT = 4;   // Frame donde el Mago hace el impacto especial
     private static final int ARQUERO_ATTACK_IMPACT = 9; // Frame donde el Arquero dispara la flecha
+    private static final int COSTO_HECHIZO_ESPECIAL = 20; // Costo de mana del hechizo especial
 
     // Corrida/Movimiento (Caballero, Mago y Arquero)
     private boolean corriendo = false;
@@ -107,11 +115,19 @@ public class PlayerActor extends Image {
                 );
             }
 
-            // Ataque Mago
-            magoAttackFrames = new TextureRegion[7];
-            for (int i = 0; i < magoAttackFrames.length; i++) {
-                magoAttackFrames[i] = new TextureRegion(
+            // Ataque básico Mago (Attack1)
+            magoAttack1Frames = new TextureRegion[7];
+            for (int i = 0; i < magoAttack1Frames.length; i++) {
+                magoAttack1Frames[i] = new TextureRegion(
                     new Texture("PersonajesPrincipales/Mago/Mago_Attack1/Attack1_" + i + ".png")
+                );
+            }
+
+            // Ataque especial Mago (Attack2)
+            magoAttack2Frames = new TextureRegion[8];
+            for (int i = 0; i < magoAttack2Frames.length; i++) {
+                magoAttack2Frames[i] = new TextureRegion(
+                    new Texture("PersonajesPrincipales/Mago/Mago_Attack2/Attack2_" + i + ".png")
                 );
             }
 
@@ -131,7 +147,7 @@ public class PlayerActor extends Image {
                 );
             }
 
-            // No usamos attackFrames para mago, sino su versión específica
+            // No usamos attackFrames para mago, sino sus versiones específicas
             attackFrames = null;
         } else if (jugador instanceof Arquero) {
             // Idle Arquero
@@ -200,17 +216,44 @@ public class PlayerActor extends Image {
         if (stage == null || !(jugador instanceof Mago mago)) return;
 
         // Posición ligeramente adelantada según dirección
-        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : 0;
+        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : -16; // Ajuste para izquierda
+
+        // Clonamos los frames para evitar problemas de orientación compartida
+        TextureRegion[] hechizoFramesClone = new TextureRegion[hechizoFrames.length];
+        TextureRegion[] hechizoImpactoFramesClone = new TextureRegion[hechizoImpactoFrames.length];
+
+        for (int i = 0; i < hechizoFrames.length; i++) {
+            hechizoFramesClone[i] = new TextureRegion(hechizoFrames[i]);
+        }
+
+        for (int i = 0; i < hechizoImpactoFrames.length; i++) {
+            hechizoImpactoFramesClone[i] = new TextureRegion(hechizoImpactoFrames[i]);
+        }
+
+        // Parámetros según tipo de ataque
+        boolean esAtaqueEspecial = (tipoAtaqueActual == TipoAtaque.ESPECIAL);
+        float escala = esAtaqueEspecial ? 1.5f : 1.0f;      // Hechizo más grande para ataque especial
+
+        // Velocidad aumentada para mayor alcance
+        float velocidad = esAtaqueEspecial ? 500f : 400f;   // Duplicamos velocidad para ambos ataques
+
+        boolean atraviesa = esAtaqueEspecial;               // Solo el especial atraviesa enemigos
+        int danoHechizo = mago.getDanoBase() * (esAtaqueEspecial ? 2 : 1); // Doble daño si es especial
 
         HechizoActor hechizo = new HechizoActor(
-            hechizoFrames,
-            hechizoImpactoFrames,
+            hechizoFramesClone,
+            hechizoImpactoFramesClone,
             getX() + offsetX,
-            getY() + getHeight()/2 - 16, // Centrar verticalmente
+            getY() + getHeight()/2 - 8, // Mejorado centrado vertical
             jugador.direccion,
-            mago.getDanoBase()
+            danoHechizo,
+            velocidad,
+            escala,
+            atraviesa
         );
 
+        // Añadir el hechizo asegurando que esté por delante del personaje en Z
+        hechizo.setZIndex(1000); // Asegurar que se dibuje por encima
         stage.addActor(hechizo);
     }
 
@@ -223,22 +266,58 @@ public class PlayerActor extends Image {
         // Si no tiene flechas disponibles, no disparar
         if (arquero.getFlechas() <= 0) return;
 
-        // Consumir una flecha
-        arquero.ataque1();
+        // Consumir una flecha (ya no lo hacemos aquí, lo hace el arquero.atacar)
+        // arquero.ataque1();
 
         // Posición ligeramente adelantada según dirección
-        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : 0;
+        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : -16; // Ajuste para izquierda
+
+        // Clonamos los frames para evitar problemas de orientación compartida
+        TextureRegion[] flechaFramesClone = new TextureRegion[flechaFrames.length];
+        TextureRegion[] flechaImpactoFramesClone = new TextureRegion[flechaImpactoFrames.length];
+
+        for (int i = 0; i < flechaFrames.length; i++) {
+            flechaFramesClone[i] = new TextureRegion(flechaFrames[i]);
+        }
+
+        for (int i = 0; i < flechaImpactoFrames.length; i++) {
+            flechaImpactoFramesClone[i] = new TextureRegion(flechaImpactoFrames[i]);
+        }
+
+        // Velocidad aumentada para que el proyectil sea más rápido
+        float velocidadFlecha = 600f; // Velocidad duplicada para mayor alcance
 
         FlechaActor flecha = new FlechaActor(
-            flechaFrames,
-            flechaImpactoFrames,
+            flechaFramesClone,
+            flechaImpactoFramesClone,
             getX() + offsetX,
-            getY() + getHeight()/2 - 16, // Centrar verticalmente
+            getY() + getHeight()/2 - 8, // Mejorado centrado vertical
             jugador.direccion,
-            arquero.getDanoBase()
+            arquero.getDanoBase(),
+            velocidadFlecha,
+            0.5f    // Tamaño reducido al 50%
         );
 
+        // Añadir la flecha asegurando que esté por delante del personaje en Z
+        flecha.setZIndex(1000); // Asegurar que se dibuje por encima
         stage.addActor(flecha);
+    }
+
+    /**
+     * Comprueba colisiones de todos los proyectiles en el stage con los enemigos.
+     * Debe ser llamado desde la pantalla principal del juego.
+     */
+    public void comprobarColisionesProyectiles(List<? extends Enemigo> enemigos) {
+        if (stage == null || enemigos == null || enemigos.isEmpty()) return;
+
+        // Comprobamos todos los proyectiles activos en el stage
+        for (Actor actor : stage.getActors()) {
+            if (actor instanceof FlechaActor) {
+                ((FlechaActor) actor).comprobarColisiones(enemigos);
+            } else if (actor instanceof HechizoActor) {
+                ((HechizoActor) actor).comprobarColisiones(enemigos);
+            }
+        }
     }
 
     @Override
@@ -304,30 +383,48 @@ public class PlayerActor extends Image {
             frameRun = 0;
         }
 
-        // Detectar ataque según el tipo de personaje (SPACE o clic izquierdo)
-        boolean ataqueDetectado = Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
-                                 Gdx.input.justTouched();
+        // Detectar ataques según tipo de personaje y botón
+        boolean ataqueIzquierdoDetectado = Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
+                                         (Gdx.input.justTouched() && Gdx.input.isButtonPressed(Input.Buttons.LEFT));
+        boolean ataqueDerechoDetectado = Gdx.input.isButtonPressed(Input.Buttons.RIGHT) && Gdx.input.justTouched();
 
-        if (!atacando && ataqueDetectado) {
-            if (jugador instanceof Caballero caballero && caballero.puedeAtacar()) {
-                caballero.registrarAtaque();
-                atacando = true;
-                tiempoAnimAtaque = 0f;
-                frameAttack = 0;
-                impactoHecho = false;
-            } else if (jugador instanceof Mago mago) {
-                // Iniciar animación de ataque del mago
-                atacando = true;
-                tiempoAnimAtaque = 0f;
-                frameAttack = 0;
-                impactoHecho = false;
-            } else if (jugador instanceof Arquero arquero) {
-                // Iniciar animación de ataque del arquero si tiene flechas
-                if (arquero.getFlechas() > 0) {
+        // Solo procesar ataques si no está ya atacando
+        if (!atacando) {
+            if (ataqueIzquierdoDetectado) {
+                // Ataque básico (botón izquierdo o SPACE)
+                if (jugador instanceof Caballero caballero && caballero.puedeAtacar()) {
+                    caballero.registrarAtaque();
                     atacando = true;
                     tiempoAnimAtaque = 0f;
                     frameAttack = 0;
                     impactoHecho = false;
+                    tipoAtaqueActual = TipoAtaque.NORMAL;
+                } else if (jugador instanceof Mago) {
+                    // Ataque básico del mago (no consume mana)
+                    atacando = true;
+                    tiempoAnimAtaque = 0f;
+                    frameAttack = 0;
+                    impactoHecho = false;
+                    tipoAtaqueActual = TipoAtaque.NORMAL;
+                } else if (jugador instanceof Arquero arquero) {
+                    // Ataque del arquero, comprobando flechas
+                    if (arquero.getFlechas() > 0) {
+                        atacando = true;
+                        tiempoAnimAtaque = 0f;
+                        frameAttack = 0;
+                        impactoHecho = false;
+                        tipoAtaqueActual = TipoAtaque.NORMAL;
+                    }
+                }
+            } else if (ataqueDerechoDetectado && jugador instanceof Mago mago) {
+                // Ataque especial del mago (botón derecho)
+                if (mago.getMana() >= COSTO_HECHIZO_ESPECIAL) {
+                    atacando = true;
+                    tiempoAnimAtaque = 0f;
+                    frameAttack = 0;
+                    impactoHecho = false;
+                    tipoAtaqueActual = TipoAtaque.ESPECIAL;
+                    mago.consumirMana(COSTO_HECHIZO_ESPECIAL);
                 }
             }
         }
@@ -348,25 +445,68 @@ public class PlayerActor extends Image {
                         impactoHecho = true;
                     }
                 }
-            } else if (jugador instanceof Mago && magoAttackFrames != null) {
-                // Lógica para Mago
-                if (idx >= magoAttackFrames.length) {
-                    atacando = false;
-                    // Al terminar la animación, generar el hechizo
-                    generarHechizo();
-                } else {
-                    frameAttack = idx;
-                    if (idx == MAGO_ATTACK_IMPACT && !impactoHecho && enemigos != null) {
-                        ((Mago)jugador).atacar(enemigos);
-                        impactoHecho = true;
+            } else if (jugador instanceof Mago) {
+                // Lógica para Mago según tipo de ataque
+                if (tipoAtaqueActual == TipoAtaque.NORMAL && magoAttack1Frames != null) {
+                    // Ataque básico del mago
+                    if (idx >= magoAttack1Frames.length) {
+                        // IMPORTANTE: Primero generar el hechizo y luego marcar como no atacando
+                        // para evitar que la animación se quede trabada
+                        generarHechizo();
+                        atacando = false;
+                        impactoHecho = false;
+                        tiempoAnimAtaque = 0;
+                    } else {
+                        frameAttack = idx;
+                        if (idx == MAGO_ATTACK1_IMPACT && !impactoHecho) {
+                            impactoHecho = true;
+                        }
                     }
+                } else if (tipoAtaqueActual == TipoAtaque.ESPECIAL && magoAttack2Frames != null) {
+                    // Ataque especial del mago
+                    if (idx >= magoAttack2Frames.length) {
+                        // IMPORTANTE: Primero generar el hechizo y luego marcar como no atacando
+                        // para evitar que la animación se quede trabada
+                        generarHechizo();
+                        atacando = false;
+                        impactoHecho = false;
+                        tiempoAnimAtaque = 0;
+                    } else {
+                        frameAttack = idx;
+                        if (idx == MAGO_ATTACK2_IMPACT && !impactoHecho) {
+                            impactoHecho = true;
+                        }
+                    }
+                } else {
+                    // Por seguridad, pero también generamos el hechizo básico
+                    // en caso de que algo fallara y la animación se quedara trabada
+                    if (tipoAtaqueActual == TipoAtaque.NORMAL) {
+                        generarHechizo();
+                    }
+                    atacando = false;
+                    impactoHecho = false;
+                    tiempoAnimAtaque = 0;
                 }
             } else if (jugador instanceof Arquero && arqueroAttackFrames != null) {
                 // Lógica para Arquero
                 if (idx >= arqueroAttackFrames.length) {
-                    atacando = false;
-                    // Al terminar la animación, generar la flecha
+                    // IMPORTANTE: Primero consumir flecha y generarla, y luego marcar como no atacando
+                    // para evitar que la animación se quede trabada
+
+                    // Llamar a atacar para consumir flecha
+                    if (enemigos != null) {
+                        ((Arquero)jugador).atacar(enemigos);
+                    } else {
+                        ((Arquero)jugador).ataque1();
+                    }
+
+                    // Generar la flecha visualmente
                     generarFlecha();
+
+                    // Resetear estado de ataque
+                    atacando = false;
+                    impactoHecho = false;
+                    tiempoAnimAtaque = 0;
                 } else {
                     frameAttack = idx;
                     if (idx == ARQUERO_ATTACK_IMPACT && !impactoHecho) {
@@ -398,9 +538,17 @@ public class PlayerActor extends Image {
                 drawFrame = idleFrames[frameIdle];
             }
         } else if (jugador instanceof Mago) {
-            if (atacando && magoAttackFrames != null && frameAttack < magoAttackFrames.length) {
-                // Frame de animación de ataque para Mago
-                drawFrame = magoAttackFrames[frameAttack];
+            if (atacando) {
+                // Seleccionar el frame de ataque según tipo
+                if (tipoAtaqueActual == TipoAtaque.NORMAL &&
+                    magoAttack1Frames != null && frameAttack < magoAttack1Frames.length) {
+                    // Frame de animación de ataque básico para Mago
+                    drawFrame = magoAttack1Frames[frameAttack];
+                } else if (tipoAtaqueActual == TipoAtaque.ESPECIAL &&
+                         magoAttack2Frames != null && frameAttack < magoAttack2Frames.length) {
+                    // Frame de animación de ataque especial para Mago
+                    drawFrame = magoAttack2Frames[frameAttack];
+                }
             } else if (corriendo && runFrames != null && frameRun < runFrames.length) {
                 // Frame de animación de carrera para Mago
                 drawFrame = runFrames[frameRun];
@@ -486,11 +634,20 @@ public class PlayerActor extends Image {
                 }
             }
 
-            // Liberar texturas de animación de ataque del mago
-            if (magoAttackFrames != null) {
-                for (int i = 0; i < magoAttackFrames.length; i++) {
-                    if (magoAttackFrames[i] != null && magoAttackFrames[i].getTexture() != null) {
-                        magoAttackFrames[i].getTexture().dispose();
+            // Liberar texturas de animación de ataque básico del mago
+            if (magoAttack1Frames != null) {
+                for (int i = 0; i < magoAttack1Frames.length; i++) {
+                    if (magoAttack1Frames[i] != null && magoAttack1Frames[i].getTexture() != null) {
+                        magoAttack1Frames[i].getTexture().dispose();
+                    }
+                }
+            }
+
+            // Liberar texturas de animación de ataque especial del mago
+            if (magoAttack2Frames != null) {
+                for (int i = 0; i < magoAttack2Frames.length; i++) {
+                    if (magoAttack2Frames[i] != null && magoAttack2Frames[i].getTexture() != null) {
+                        magoAttack2Frames[i].getTexture().dispose();
                     }
                 }
             }

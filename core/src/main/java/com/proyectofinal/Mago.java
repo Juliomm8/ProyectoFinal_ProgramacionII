@@ -65,4 +65,13 @@ public class Mago extends Jugador implements RecargableInterface {
             System.out.println(getNombre() + " no tiene suficiente mana para hechizo de área.");
         }
     }
+
+    public void consumirMana(int costoHechizoEspecial) {
+        if (mana >= costoHechizoEspecial) {
+            mana -= costoHechizoEspecial;
+            System.out.println(getNombre() + " consume " + costoHechizoEspecial + " mana.");
+        } else {
+            System.out.println(getNombre() + " no tiene suficiente mana para consumir el hechizo especial.");
+        }
+    }
 }
