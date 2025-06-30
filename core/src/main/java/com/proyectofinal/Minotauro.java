@@ -32,60 +32,60 @@ public class Minotauro extends Enemigo {
                     new Texture(Gdx.files.internal("Enemigos/Minotauro/Idle/" + i + ".png"))
                 );
             }
-        idleAnimation = new Animation<>(FRAME_DURATION, idleFrames);
+            idleAnimation = new Animation<>(FRAME_DURATION, idleFrames);
 
-        // Cargar animación Walk
-        TextureRegion[] walkFrames = new TextureRegion[5];
-        for (int i = 0; i < 5; i++) {
-            walkFrames[i] = new TextureRegion(
-                new Texture(Gdx.files.internal("Enemigos/Minotauro/Walk/" + i + ".png"))
-            );
-        }
-        walkAnimation = new Animation<>(FRAME_DURATION, walkFrames);
+            // Cargar animación Walk
+            TextureRegion[] walkFrames = new TextureRegion[5];
+            for (int i = 0; i < 5; i++) {
+                walkFrames[i] = new TextureRegion(
+                    new Texture(Gdx.files.internal("Enemigos/Minotauro/Walk/" + i + ".png"))
+                );
+            }
+            walkAnimation = new Animation<>(FRAME_DURATION, walkFrames);
 
-        // Cargar animación Run
-        TextureRegion[] runFrames = new TextureRegion[8];
-        for (int i = 0; i < 8; i++) {
-            runFrames[i] = new TextureRegion(
-                new Texture(Gdx.files.internal("Enemigos/Minotauro/Run/" + i + ".png"))
-            );
-        }
-        runAnimation = new Animation<>(FRAME_DURATION, runFrames);
+            // Cargar animación Run
+            TextureRegion[] runFrames = new TextureRegion[8];
+            for (int i = 0; i < 8; i++) {
+                runFrames[i] = new TextureRegion(
+                    new Texture(Gdx.files.internal("Enemigos/Minotauro/Run/" + i + ".png"))
+                );
+            }
+            runAnimation = new Animation<>(FRAME_DURATION, runFrames);
 
-        // Cargar animaciones de ataque
-        TextureRegion[] attackFrames = new TextureRegion[9];
-        for (int i = 0; i < 9; i++) {
-            attackFrames[i] = new TextureRegion(
-                new Texture(Gdx.files.internal("Enemigos/Minotauro/Attack/" + i + ".png"))
-            );
-        }
-        attackAnimation = new Animation<>(FRAME_DURATION, attackFrames);
+            // Cargar animaciones de ataque
+            TextureRegion[] attackFrames = new TextureRegion[9];
+            for (int i = 0; i < 9; i++) {
+                attackFrames[i] = new TextureRegion(
+                    new Texture(Gdx.files.internal("Enemigos/Minotauro/Attack/" + i + ".png"))
+                );
+            }
+            attackAnimation = new Animation<>(FRAME_DURATION, attackFrames);
 
-        TextureRegion[] attack2Frames = new TextureRegion[9];
-        for (int i = 0; i < 9; i++) {
-            attack2Frames[i] = new TextureRegion(
-                new Texture(Gdx.files.internal("Enemigos/Minotauro/Attack2/" + i + ".png"))
-            );
-        }
-        attack2Animation = new Animation<>(FRAME_DURATION, attack2Frames);
+            TextureRegion[] attack2Frames = new TextureRegion[9];
+            for (int i = 0; i < 9; i++) {
+                attack2Frames[i] = new TextureRegion(
+                    new Texture(Gdx.files.internal("Enemigos/Minotauro/Attack2/" + i + ".png"))
+                );
+            }
+            attack2Animation = new Animation<>(FRAME_DURATION, attack2Frames);
 
-        // Cargar animación Hit
-        TextureRegion[] hitFrames = new TextureRegion[3];
-        for (int i = 0; i < 3; i++) {
-            hitFrames[i] = new TextureRegion(
-                new Texture(Gdx.files.internal("Enemigos/Minotauro/Hit/" + i + ".png"))
-            );
-        }
-        hitAnimation = new Animation<>(FRAME_DURATION, hitFrames);
+            // Cargar animación Hit
+            TextureRegion[] hitFrames = new TextureRegion[3];
+            for (int i = 0; i < 3; i++) {
+                hitFrames[i] = new TextureRegion(
+                    new Texture(Gdx.files.internal("Enemigos/Minotauro/Hit/" + i + ".png"))
+                );
+            }
+            hitAnimation = new Animation<>(FRAME_DURATION, hitFrames);
 
-        // Cargar animación Death
-        TextureRegion[] deathFrames = new TextureRegion[6];
-        for (int i = 0; i < 6; i++) {
-            deathFrames[i] = new TextureRegion(
-                new Texture(Gdx.files.internal("Enemigos/Minotauro/Death/" + i + ".png"))
-            );
-        }
-        deathAnimation = new Animation<>(FRAME_DURATION, deathFrames);
+            // Cargar animación Death
+            TextureRegion[] deathFrames = new TextureRegion[6];
+            for (int i = 0; i < 6; i++) {
+                deathFrames[i] = new TextureRegion(
+                    new Texture(Gdx.files.internal("Enemigos/Minotauro/Death/" + i + ".png"))
+                );
+            }
+            deathAnimation = new Animation<>(FRAME_DURATION, deathFrames);
         } catch (Exception e) {
             System.err.println("Error al cargar las animaciones del Minotauro: " + e.getMessage());
             // Crear texturas de fallback/placeholder en caso de error

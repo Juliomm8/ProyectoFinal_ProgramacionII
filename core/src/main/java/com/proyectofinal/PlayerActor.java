@@ -211,6 +211,7 @@ public class PlayerActor extends Image {
 
     /**
      * Crea y añade un hechizo al stage desde la posición del mago.
+     * Distingue automáticamente entre hechizo básico y especial según tipoAtaqueActual.
      */
     private void generarHechizo() {
         if (stage == null || !(jugador instanceof Mago mago)) return;
@@ -230,16 +231,16 @@ public class PlayerActor extends Image {
             hechizoImpactoFramesClone[i] = new TextureRegion(hechizoImpactoFrames[i]);
         }
 
-        // Parámetros según tipo de ataque
+        // Determinar parámetros según tipo de ataque
         boolean esAtaqueEspecial = (tipoAtaqueActual == TipoAtaque.ESPECIAL);
-        float escala = esAtaqueEspecial ? 1.5f : 1.0f;      // Hechizo más grande para ataque especial
 
-        // Velocidad aumentada para mayor alcance
-        float velocidad = esAtaqueEspecial ? 500f : 400f;   // Duplicamos velocidad para ambos ataques
-
-        boolean atraviesa = esAtaqueEspecial;               // Solo el especial atraviesa enemigos
+        // Configuración del hechizo según tipo
+        float escala = esAtaqueEspecial ? 1.5f : 1.0f;     // Hechizo más grande para ataque especial
+        float velocidad = esAtaqueEspecial ? 500f : 400f;  // Mayor velocidad para hechizo especial
+        boolean atraviesa = esAtaqueEspecial;              // Solo el especial atraviesa enemigos
         int danoHechizo = mago.getDanoBase() * (esAtaqueEspecial ? 2 : 1); // Doble daño si es especial
 
+        // Crear el hechizo con las propiedades determinadas
         HechizoActor hechizo = new HechizoActor(
             hechizoFramesClone,
             hechizoImpactoFramesClone,
@@ -255,6 +256,13 @@ public class PlayerActor extends Image {
         // Añadir el hechizo asegurando que esté por delante del personaje en Z
         hechizo.setZIndex(1000); // Asegurar que se dibuje por encima
         stage.addActor(hechizo);
+
+        // Mostrar información sobre el tipo de hechizo lanzado
+        if (esAtaqueEspecial) {
+            System.out.println("Lanzado hechizo ESPECIAL - Escala: " + escala + ", Daño: " + danoHechizo + ", Atraviesa: " + atraviesa);
+        } else {
+            System.out.println("Lanzado hechizo básico - Escala: " + escala + ", Daño: " + danoHechizo);
+        }
     }
 
     /**
@@ -346,14 +354,14 @@ public class PlayerActor extends Image {
             if (dirX != 0 || dirY != 0) {
                 jugador.mover(dirX, dirY, delta);
 
-                // Animar corriendo si hay movimiento HORIZONTAL o si es MAGO o ARQUERO (para cualquier dirección)
-                if ((dirX != 0 || (dirY != 0 && (jugador instanceof Mago || jugador instanceof Arquero))) && runFrames != null && runFrames.length > 0) {
+                // Animar corriendo si hay cualquier movimiento (horizontal o vertical) para todos los personajes
+                if ((dirX != 0 || dirY != 0) && runFrames != null && runFrames.length > 0) {
                     corriendo = true;
                     enReposo = false;
                     tiempoCorrida += delta;
                     frameRun = (int)(tiempoCorrida / RUN_FRAME_DUR) % runFrames.length;
                 } else {
-                    // En movimiento vertical para no-Mago, mantener la dirección pero no animar corriendo
+                    // Sin movimiento
                     corriendo = false;
                     enReposo = true;
                     tiempoCorrida = 0;
@@ -385,7 +393,7 @@ public class PlayerActor extends Image {
 
         // Detectar ataques según tipo de personaje y botón
         boolean ataqueIzquierdoDetectado = Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
-                                         (Gdx.input.justTouched() && Gdx.input.isButtonPressed(Input.Buttons.LEFT));
+            (Gdx.input.justTouched() && Gdx.input.isButtonPressed(Input.Buttons.LEFT));
         boolean ataqueDerechoDetectado = Gdx.input.isButtonPressed(Input.Buttons.RIGHT) && Gdx.input.justTouched();
 
         // Solo procesar ataques si no está ya atacando
@@ -425,6 +433,7 @@ public class PlayerActor extends Image {
                     impactoHecho = false;
                     tipoAtaqueActual = TipoAtaque.ESPECIAL;
                     mago.consumirMana(COSTO_HECHIZO_ESPECIAL);
+                    System.out.println("Mago lanza hechizo especial. Mana restante: " + mago.getMana());
                 }
             }
         }
@@ -452,7 +461,7 @@ public class PlayerActor extends Image {
                     if (idx >= magoAttack1Frames.length) {
                         // IMPORTANTE: Primero generar el hechizo y luego marcar como no atacando
                         // para evitar que la animación se quede trabada
-                        generarHechizo();
+                        generarHechizo(); // Generará hechizo básico porque tipoAtaqueActual es NORMAL
                         atacando = false;
                         impactoHecho = false;
                         tiempoAnimAtaque = 0;
@@ -465,9 +474,8 @@ public class PlayerActor extends Image {
                 } else if (tipoAtaqueActual == TipoAtaque.ESPECIAL && magoAttack2Frames != null) {
                     // Ataque especial del mago
                     if (idx >= magoAttack2Frames.length) {
-                        // IMPORTANTE: Primero generar el hechizo y luego marcar como no atacando
-                        // para evitar que la animación se quede trabada
-                        generarHechizo();
+                        // IMPORTANTE: Primero generar el hechizo especial y luego marcar como no atacando
+                        generarHechizo(); // Generará hechizo especial porque tipoAtaqueActual es ESPECIAL
                         atacando = false;
                         impactoHecho = false;
                         tiempoAnimAtaque = 0;
@@ -478,11 +486,9 @@ public class PlayerActor extends Image {
                         }
                     }
                 } else {
-                    // Por seguridad, pero también generamos el hechizo básico
+                    // Por seguridad, generamos el hechizo según el tipo de ataque actual
                     // en caso de que algo fallara y la animación se quedara trabada
-                    if (tipoAtaqueActual == TipoAtaque.NORMAL) {
-                        generarHechizo();
-                    }
+                    generarHechizo(); // Utilizará el tipo de ataque actual (NORMAL o ESPECIAL)
                     atacando = false;
                     impactoHecho = false;
                     tiempoAnimAtaque = 0;
@@ -545,7 +551,7 @@ public class PlayerActor extends Image {
                     // Frame de animación de ataque básico para Mago
                     drawFrame = magoAttack1Frames[frameAttack];
                 } else if (tipoAtaqueActual == TipoAtaque.ESPECIAL &&
-                         magoAttack2Frames != null && frameAttack < magoAttack2Frames.length) {
+                    magoAttack2Frames != null && frameAttack < magoAttack2Frames.length) {
                     // Frame de animación de ataque especial para Mago
                     drawFrame = magoAttack2Frames[frameAttack];
                 }

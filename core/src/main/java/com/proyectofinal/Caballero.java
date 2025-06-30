@@ -80,4 +80,9 @@ public class Caballero extends Jugador implements RecargableInterface {
             super.recibirDanio(resto);
         }
     }
+
+    public void aumentarEscudo(int valor) {
+        escudo += valor;
+        System.out.println(getNombre() + " aumenta su escudo en " + valor + " puntos.");
+    }
 }
