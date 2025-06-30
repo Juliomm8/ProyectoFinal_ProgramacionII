@@ -292,6 +292,7 @@ public class PlayerActor extends Image {
 
     /**
      * Crea y añade una flecha al stage desde la posición del arquero.
+     * La flecha se creará con un tamaño adecuado y velocidad alta.
      */
     private void generarFlecha() {
         if (stage == null || !(jugador instanceof Arquero arquero)) return;
@@ -326,7 +327,7 @@ public class PlayerActor extends Image {
             getX() + offsetX,
             getY() + getHeight()/2 - 8, // Mejorado centrado vertical
             jugador.direccion,
-            arquero.getDanoBase(),
+            9999, // Daño que mata de un solo golpe
             velocidadFlecha,
             0.5f    // Tamaño reducido al 50%
         );
@@ -339,6 +340,52 @@ public class PlayerActor extends Image {
         // Añadir la flecha asegurando que esté por delante del personaje en Z
         flecha.setZIndex(1000); // Asegurar que se dibuje por encima
         stage.addActor(flecha);
+
+        System.out.println("Flecha generada con daño letal");
+    }
+
+    /**
+     * Método para generar un hechizo básico desde la posición del mago
+     */
+    private void generarHechizoBasico() {
+        if (stage == null || !(jugador instanceof Mago mago)) return;
+
+        // Posición ligeramente adelantada según dirección
+        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : -16;
+
+        // Clonar frames para evitar problemas de orientación
+        TextureRegion[] hechizoFramesClone = new TextureRegion[hechizoFrames.length];
+        TextureRegion[] hechizoImpactoFramesClone = new TextureRegion[hechizoImpactoFrames.length];
+
+        for (int i = 0; i < hechizoFrames.length; i++) {
+            hechizoFramesClone[i] = new TextureRegion(hechizoFrames[i]);
+        }
+
+        for (int i = 0; i < hechizoImpactoFrames.length; i++) {
+            hechizoImpactoFramesClone[i] = new TextureRegion(hechizoImpactoFrames[i]);
+        }
+
+        // Crear hechizo básico (no atraviesa enemigos)
+        HechizoActor hechizo = new HechizoActor(
+            hechizoFramesClone,
+            hechizoImpactoFramesClone,
+            getX() + offsetX,
+            getY() + getHeight()/2 - 8,
+            jugador.direccion,
+            9999, // Daño que mata de un solo golpe
+            500f, // Velocidad
+            0.5f, // Escala
+            false // No atraviesa enemigos
+        );
+
+        if (viewport != null) {
+            hechizo.setViewport(viewport);
+        }
+
+        hechizo.setZIndex(1000);
+        stage.addActor(hechizo);
+
+        System.out.println("Hechizo básico generado con daño letal");
     }
 
     /**

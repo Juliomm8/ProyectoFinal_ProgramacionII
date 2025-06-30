@@ -104,6 +104,23 @@ public class Minotauro extends Enemigo {
         }
     }
 
+    /**
+     * Recibe daño y cambia inmediatamente a estado de muerte.
+     * Cualquier ataque mata al Minotauro de un solo golpe.
+     */
+    @Override
+    public void recibirDano(int cantidad) {
+        // Forzar vida = 0 independientemente de la cantidad de daño
+        vida = 0; // Corregido: forzar a 0 en lugar de 10
+        estaVivo = false;
+
+        // Cambiar a estado de muerte y reiniciar contador de animación
+        estadoActual = EstadoEnemigo.DYING;
+        stateTime = 0f;
+
+        System.out.println("¡Minotauro abatido de un solo golpe! Reproduciendo animación de muerte...");
+    }
+
     @Override
     public void update(float deltaTime, float playerX, float playerY) {
         stateTime += deltaTime;
@@ -157,8 +174,22 @@ public class Minotauro extends Enemigo {
     private boolean mirandoDerecha = true;
     private float ultimoX = 0;
 
+    // Flag para marcar que el enemigo debe ser eliminado del stage
+    private boolean marcarParaEliminar = false;
+
+    /**
+     * Comprueba si este enemigo debe ser eliminado del stage
+     * @return true si debe eliminarse
+     */
+    public boolean debeEliminarse() {
+        return marcarParaEliminar;
+    }
+
     @Override
     public void render(SpriteBatch batch) {
+        // Si ya está marcado para eliminar, no renderizar
+        if (marcarParaEliminar) return;
+
         TextureRegion frameActual;
 
         switch (estadoActual) {
@@ -182,6 +213,13 @@ public class Minotauro extends Enemigo {
                 break;
             case DYING:
                 frameActual = deathAnimation.getKeyFrame(stateTime, false);
+
+                // Comprobar si la animación de muerte ha terminado
+                if (deathAnimation.isAnimationFinished(stateTime)) {
+                    System.out.println("Animación de muerte completada. Marcando Minotauro para eliminar.");
+                    marcarParaEliminar = true;
+                    return; // No renderizar más
+                }
                 break;
             default:
                 frameActual = idleAnimation.getKeyFrame(stateTime, true);

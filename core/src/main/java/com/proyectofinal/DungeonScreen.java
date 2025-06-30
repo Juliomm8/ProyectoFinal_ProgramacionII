@@ -257,6 +257,22 @@ public class DungeonScreen extends PantallaBase {
         // para simular el comportamiento de Vampire Survivors
     }
 
+    /**
+     * Actualiza la gestión de enemigos en cada frame
+     * @param delta tiempo transcurrido desde el último frame
+     */
+    private void actualizarEnemigos(float delta) {
+        // Eliminar enemigos muertos que han completado su animación
+        int eliminados = GestionEnemigos.actualizarEnemigos(enemigos);
+        if (eliminados > 0) {
+            System.out.println("Eliminados " + eliminados + " enemigos muertos");
+        }
+
+        // Comprobar colisiones de proyectiles con enemigos
+        GestionEnemigos.comprobarColisionesProyectiles(stage, enemigos);
+    }
+
+
     private void crearPocionActor(Pocion pocion, Texture tex, float x, float y) {
         PocionActor actor = new PocionActor(pocion, tex);
         actor.setPosition(x, y);

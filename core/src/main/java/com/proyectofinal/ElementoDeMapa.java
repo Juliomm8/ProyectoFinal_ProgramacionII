@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Disposable;
 
 public abstract class ElementoDeMapa implements Disposable {
+    // Método abstracto para actualizar el elemento
+    public abstract void actualizar(float delta);
     protected Texture texture;  // Textura del objeto
     protected Rectangle collider;  // Collider del objeto
     protected float posX, posY;  // Posición para renderizado

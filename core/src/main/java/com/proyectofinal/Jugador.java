@@ -11,6 +11,8 @@ public class Jugador extends Personaje {
     private float width, height;    // Tamaño y collider
     private int nivel;              // Nivel del jugador
     protected String direccion;     // "IZQUIERDA" o "DERECHA"
+    public float getWidth()  { return width; }
+    public float getHeight() { return height; }
 
     /**
      * @param nombre    Nombre del jugador
@@ -142,5 +144,13 @@ public class Jugador extends Personaje {
     /** Sube un nivel. */
     public void subirNivel() {
         nivel++;
+    }
+
+    /**
+     * Método para actualización por frame. Debe ser implementado por subclases.
+     * @param delta tiempo entre frames para cálculos independientes de FPS
+     */
+    public void actualizar(float delta) {
+        // Implementación base vacía, las subclases deben sobrescribir este método
     }
 }

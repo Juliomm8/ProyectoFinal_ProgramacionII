@@ -11,6 +11,11 @@ public class Piedra extends ElementoDeMapa {
     }
 
     @Override
+    public void actualizar(float delta) {
+
+    }
+
+    @Override
     public void colocar(float x, float y) {
         // Guardamos la posición original para renderizado
         this.posX = x;

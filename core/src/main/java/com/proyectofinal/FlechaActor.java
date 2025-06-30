@@ -156,20 +156,33 @@ public class FlechaActor extends Actor {
 
     /**
      * Comprueba colisiones y aplica daño.
+     * Si hay impacto, inicia la animación de impacto y luego elimina la flecha.
      */
     public void comprobarColisiones(List<? extends Enemigo> enemigos) {
         if (enemigos == null) return; // Protección contra null
         if (impactando || finalizado) return;
 
         for (Enemigo e : enemigos) {
-            if (e == null) continue; // Protección contra null
+            if (e == null || !e.estaVivo) continue; // Protección contra null y enemigos ya muertos
 
-            Rectangle r = new Rectangle(e.getX(), e.getY(), 32, 32);
+            // Crear un rectángulo ligeramente más grande para facilitar la colisión
+            Rectangle r = new Rectangle(e.getX(), e.getY(), 48, 48); // Aumentado de 32 a 48
             if (hitbox.overlaps(r)) {
-                e.recibirDano(dano);
-                impactando     = true;
-                tiempoImpacto  = 0f;
-                frameActual    = 0;
+                // Forzar muerte instantánea del enemigo
+                e.recibirDano(9999); // Valor muy alto para asegurar muerte inmediata
+
+                // Configurar para mostrar animación de impacto
+                impactando = true;
+                tiempoImpacto = 0f;
+                frameActual = 0;
+
+                // Posicionar la animación de impacto en el punto de colisión
+                // Ajustamos para centrar mejor el impacto
+                float impactoX = e.getX() + 16 - (getWidth()/2);
+                float impactoY = e.getY() + 16 - (getHeight()/2);
+                setPosition(impactoX, impactoY);
+
+                System.out.println("¡Flecha impactó al enemigo! Reproduciendo animación de impacto");
                 break; // La flecha impacta y se detiene
             }
         }

@@ -7,6 +7,15 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
 public abstract class Enemigo {
+    protected float width, height;
+
+    public float getHeight() {
+    return height;
+    }
+    public float getWidth() {
+    return width;
+    }
+
     // Estados del enemigo
     public enum EstadoEnemigo {
         IDLE, WALKING, RUNNING, ATTACKING, ATTACKING2, HIT, DYING

@@ -169,21 +169,38 @@ public class HechizoActor extends Actor {
 
     /**
      * Comprueba colisiones y aplica daño.
+     * El hechizo básico (no atraviesa) se elimina inmediatamente al impactar.
+     * El hechizo especial (atraviesa) muestra animación de impacto y continúa.
      */
     public void comprobarColisiones(List<? extends Enemigo> enemigos) {
         if (enemigos == null) return; // Protección contra null
-        if (impactando && !atraviesaEnemigos) return;
         if (finalizado) return;
+        // Quitamos el check de impactando para permitir múltiples impactos con hechizo especial
 
         for (Enemigo e : enemigos) {
-            if (e == null) continue; // Protección contra null
+            if (e == null || !e.estaVivo) continue; // Protección contra null y enemigos ya muertos
 
-            Rectangle r = new Rectangle(e.getX(), e.getY(), 32, 32);
+            // Crear un rectángulo ligeramente más grande para facilitar la colisión
+            Rectangle r = new Rectangle(e.getX(), e.getY(), 48, 48); // Aumentado de 32 a 48
             if (hitbox.overlaps(r)) {
-                e.recibirDano(dano);
-                impactando     = true;
-                tiempoImpacto  = 0f;
-                frameActual    = 0;
+                // Forzar vida = 0 en el enemigo (muerte a un solo golpe)
+                e.recibirDano(9999); // Valor muy alto para asegurar muerte inmediata
+
+                // Comportamiento diferente según tipo de hechizo
+                if (atraviesaEnemigos) {
+                    // Hechizo especial: muestra animación de impacto y continúa
+                    System.out.println("¡Hechizo especial impactó y atraviesa!");
+                    impactando = true;
+                    tiempoImpacto = 0f;
+                    frameActual = 0;
+                } else {
+                    // Hechizo básico: eliminar inmediatamente sin animación de impacto
+                    System.out.println("¡Hechizo básico impactó! Eliminando...");
+                    finalizado = true;
+                    remove();
+                    return; // Salir inmediatamente
+                }
+
                 if (!atraviesaEnemigos) break;
             }
         }
