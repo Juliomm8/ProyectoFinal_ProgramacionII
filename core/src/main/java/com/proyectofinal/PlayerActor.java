@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.List;
 
@@ -50,6 +51,9 @@ public class PlayerActor extends Image {
     // Stage para añadir proyectiles
     private Stage stage;  // Se inyectará desde fuera
 
+    // Viewport para determinar límites de la pantalla
+    private Viewport viewport; // Se inyectará desde fuera
+
     // Constantes para ataques
     private static final int MAGO_ATTACK1_IMPACT = 3;   // Frame donde el Mago hace el impacto básico
     private static final int MAGO_ATTACK2_IMPACT = 4;   // Frame donde el Mago hace el impacto especial
@@ -70,11 +74,20 @@ public class PlayerActor extends Image {
     private TextureRegion[] idleFrames;
     private static final float IDLE_FRAME_DUR = 0.2f; // Más lento (0.2 segundos por frame)
 
-    public PlayerActor(Jugador jugador, Texture idleTexture) {
+            /**
+             * Dirección actual para la que están orientados los frames
+             * Usada para detectar cambios de dirección y voltear frames solo cuando sea necesario
+             */
+            private String direccionActualFrames = "DERECHA"; // Por defecto, los sprites miran a la derecha
+
+            public PlayerActor(Jugador jugador, Texture idleTexture) {
         super(new TextureRegionDrawable(new TextureRegion(idleTexture)));
         this.jugador = jugador;
         this.idleRegion = new TextureRegion(idleTexture);
         setSize(32, 32);
+
+        // Inicializar con la dirección del jugador
+        direccionActualFrames = jugador.direccion;
 
         // Carga animaciones según clase
         if (jugador instanceof Caballero) {
@@ -210,6 +223,13 @@ public class PlayerActor extends Image {
     }
 
     /**
+     * Establece el viewport para determinar límites de la pantalla.
+     */
+    public void setViewport(Viewport viewport) {
+        this.viewport = viewport;
+    }
+
+    /**
      * Crea y añade un hechizo al stage desde la posición del mago.
      * Distingue automáticamente entre hechizo básico y especial según tipoAtaqueActual.
      */
@@ -252,6 +272,11 @@ public class PlayerActor extends Image {
             escala,
             atraviesa
         );
+
+        // Configurar viewport si está disponible
+        if (viewport != null) {
+            hechizo.setViewport(viewport);
+        }
 
         // Añadir el hechizo asegurando que esté por delante del personaje en Z
         hechizo.setZIndex(1000); // Asegurar que se dibuje por encima
@@ -306,6 +331,11 @@ public class PlayerActor extends Image {
             0.5f    // Tamaño reducido al 50%
         );
 
+        // Configurar viewport si está disponible
+        if (viewport != null) {
+            flecha.setViewport(viewport);
+        }
+
         // Añadir la flecha asegurando que esté por delante del personaje en Z
         flecha.setZIndex(1000); // Asegurar que se dibuje por encima
         stage.addActor(flecha);
@@ -328,15 +358,75 @@ public class PlayerActor extends Image {
         }
     }
 
+    /**
+     * Lista de enemigos en la pantalla actual, necesaria para procesar ataques correctamente.
+     * Debe ser configurada por la pantalla principal del juego.
+     */
+    private List<? extends Enemigo> enemigosActuales;
+
+    /**
+     * Establece la lista de enemigos para procesar colisiones y ataques.
+     * @param enemigos Lista de enemigos en la pantalla actual
+     */
+    public void setEnemigos(List<? extends Enemigo> enemigos) {
+        this.enemigosActuales = enemigos;
+    }
+
     @Override
     public void act(float delta) {
         super.act(delta);
-        update(delta, null);
+        // Usamos la lista de enemigos configurada en lugar de null
+        update(delta, enemigosActuales);
     }
 
     /**
      * Actualiza input, movimiento, ataque y animaciones.
      */
+    /**
+     * Voltea todos los frames de animación cuando el jugador cambia de dirección
+     * Esto evita tener que voltear cada frame individualmente en cada ciclo de renderizado
+     */
+    private void actualizarDireccionFrames() {
+        // Si la dirección no ha cambiado, no hacer nada
+        if (direccionActualFrames.equals(jugador.direccion)) return;
+
+        // La dirección ha cambiado, volteamos todos los frames
+        boolean debeEstarVolteado = "IZQUIERDA".equals(jugador.direccion);
+
+        // Actualizar frames según tipo de personaje
+        if (jugador instanceof Caballero) {
+            voltearFrames(idleFrames, debeEstarVolteado);
+            voltearFrames(runFrames, debeEstarVolteado);
+            voltearFrames(attackFrames, debeEstarVolteado);
+        } else if (jugador instanceof Mago) {
+            voltearFrames(idleFrames, debeEstarVolteado);
+            voltearFrames(runFrames, debeEstarVolteado);
+            voltearFrames(magoAttack1Frames, debeEstarVolteado);
+            voltearFrames(magoAttack2Frames, debeEstarVolteado);
+        } else if (jugador instanceof Arquero) {
+            voltearFrames(idleFrames, debeEstarVolteado);
+            voltearFrames(runFrames, debeEstarVolteado);
+            voltearFrames(arqueroAttackFrames, debeEstarVolteado);
+        }
+
+        // Actualizar dirección actual de los frames
+        direccionActualFrames = jugador.direccion;
+        System.out.println("Dirección de frames cambiada a: " + direccionActualFrames);
+    }
+
+    /**
+     * Voltea horizontalmente un array de frames si es necesario
+     */
+    private void voltearFrames(TextureRegion[] frames, boolean debeEstarVolteado) {
+        if (frames == null) return;
+
+        for (TextureRegion frame : frames) {
+            if (frame != null && frame.isFlipX() != debeEstarVolteado) {
+                frame.flip(true, false); // Voltear horizontalmente
+            }
+        }
+    }
+
     public void update(float delta, List<? extends Enemigo> enemigos) {
         // Detectar movimiento horizontal (tanto flechas como A/D)
         float dirX = 0;
@@ -354,18 +444,38 @@ public class PlayerActor extends Image {
             if (dirX != 0 || dirY != 0) {
                 jugador.mover(dirX, dirY, delta);
 
+                // Verificar si cambió la dirección y actualizar frames si es necesario
+                if (!direccionActualFrames.equals(jugador.direccion)) {
+                    actualizarDireccionFrames();
+                }
+
                 // Animar corriendo si hay cualquier movimiento (horizontal o vertical) para todos los personajes
                 if ((dirX != 0 || dirY != 0) && runFrames != null && runFrames.length > 0) {
-                    corriendo = true;
-                    enReposo = false;
-                    tiempoCorrida += delta;
-                    frameRun = (int)(tiempoCorrida / RUN_FRAME_DUR) % runFrames.length;
+                    // Transición a estado de corriendo
+                    if (!corriendo) {
+                        // Solo si es una transición, reiniciamos contadores
+                        corriendo = true;
+                        enReposo = false;
+                        tiempoCorrida = 0f;
+                        frameRun = 0;
+                        System.out.println("Transición: Reposo -> Corriendo");
+                    } else {
+                        // Ya estaba corriendo, seguimos la animación
+                        tiempoCorrida += delta;
+                        frameRun = (int)(tiempoCorrida / RUN_FRAME_DUR) % runFrames.length;
+                    }
                 } else {
-                    // Sin movimiento
-                    corriendo = false;
-                    enReposo = true;
-                    tiempoCorrida = 0;
-                    frameRun = 0;
+                    // Transición a estado de reposo
+                    if (!enReposo) {
+                        // Solo si es una transición, reiniciamos contadores
+                        corriendo = false;
+                        enReposo = true;
+                        tiempoCorrida = 0f;
+                        frameRun = 0;
+                        tiempoIdle = 0f;
+                        frameIdle = 0;
+                        System.out.println("Transición: Corriendo -> Reposo");
+                    }
                 }
             } else {
                 // Sin ningún movimiento - activar animación Idle
@@ -402,11 +512,23 @@ public class PlayerActor extends Image {
                 // Ataque básico (botón izquierdo o SPACE)
                 if (jugador instanceof Caballero caballero && caballero.puedeAtacar()) {
                     caballero.registrarAtaque();
-                    atacando = true;
-                    tiempoAnimAtaque = 0f;
-                    frameAttack = 0;
-                    impactoHecho = false;
-                    tipoAtaqueActual = TipoAtaque.NORMAL;
+
+                    // Transición a estado de ataque
+                    if (!atacando) {
+                        System.out.println("Transición: " + (corriendo ? "Corriendo" : "Reposo") + " -> Atacando (Caballero)");
+                        // Guardar estado anterior para restaurarlo después del ataque
+                        boolean estabaEnReposo = enReposo;
+                        boolean estabaCorriendo = corriendo;
+
+                        // Configurar estado de ataque
+                        atacando = true;
+                        corriendo = false;
+                        enReposo = false;
+                        tiempoAnimAtaque = 0f;
+                        frameAttack = 0;
+                        impactoHecho = false;
+                        tipoAtaqueActual = TipoAtaque.NORMAL;
+                    }
                 } else if (jugador instanceof Mago) {
                     // Ataque básico del mago (no consume mana)
                     atacando = true;
@@ -449,8 +571,14 @@ public class PlayerActor extends Image {
                     atacando = false;
                 } else {
                     frameAttack = idx;
-                    if (idx == ATTACK_IMPACT && !impactoHecho && enemigos != null) {
-                        ((Caballero)jugador).atacar(enemigos);
+                    if (idx == ATTACK_IMPACT && !impactoHecho) {
+                        // Verificar que tenemos enemigos para evitar NPE
+                        if (enemigos != null && !enemigos.isEmpty()) {
+                            ((Caballero)jugador).atacar(enemigos);
+                        } else {
+                            // Si no hay enemigos, solo registramos el ataque sin procesarlo
+                            System.out.println("Caballero ataca pero no hay enemigos cercanos");
+                        }
                         impactoHecho = true;
                     }
                 }
@@ -575,17 +703,9 @@ public class PlayerActor extends Image {
             }
         }
 
-        // Verificar que tenemos un frame válido antes de intentar voltear
+        // Dibujar el frame actual si es válido
+        // Ya no necesitamos voltear aquí pues se hace en actualizarDireccionFrames()
         if (drawFrame != null) {
-            // Verificar si necesitamos voltear el sprite según dirección
-            boolean debeEstarVolteado = "IZQUIERDA".equals(jugador.direccion);
-
-            // Solo voltear si el estado actual no coincide con lo que debería ser
-            if (drawFrame.isFlipX() != debeEstarVolteado) {
-                drawFrame.flip(true, false); // Voltear horizontalmente
-            }
-
-            // Dibujar el frame actual con el tamaño correcto
             batch.draw(drawFrame, x, y, w, h);
         }
     }
@@ -607,6 +727,17 @@ public class PlayerActor extends Image {
 
     public Rectangle getBounds() {
         return new Rectangle(getX(), getY(), getWidth(), getHeight());
+    }
+
+    /**
+     * Sobrescribe el método remove() de Actor para asegurar que se limpien recursos.
+     * @return true si el actor fue removido correctamente
+     */
+    @Override
+    public boolean remove() {
+        // Liberar recursos antes de remover
+        dispose();
+        return super.remove();
     }
 
     /**

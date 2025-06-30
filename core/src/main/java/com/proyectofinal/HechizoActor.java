@@ -3,12 +3,15 @@ package com.proyectofinal;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.viewport.Viewport;
+
 import java.util.List;
 
 /**
  * Actor que representa un hechizo lanzado por el Mago.
+ * Versión mejorada con soporte para viewport y mejor manejo de límites.
  */
 public class HechizoActor extends Actor {
     // Frames de animación
@@ -36,6 +39,9 @@ public class HechizoActor extends Actor {
     // Opciones
     private float escala = 1f;
     private boolean atraviesaEnemigos = false;
+
+    // Viewport para cálculo de límites
+    private Viewport viewport;
 
     /**
      * Constructor del hechizo.
@@ -96,6 +102,13 @@ public class HechizoActor extends Actor {
         }
     }
 
+    /**
+     * Establece el viewport para determinar límites de la pantalla
+     */
+    public void setViewport(Viewport viewport) {
+        this.viewport = viewport;
+    }
+
     @Override
     public void act(float delta) {
         super.act(delta);
@@ -131,11 +144,25 @@ public class HechizoActor extends Actor {
             tiempoAnimacion += delta;
             frameActual = (int)(tiempoAnimacion / FRAME_DURACION) % framesVuelo.length;
 
-            // Ampliar el rango de movimiento para que el hechizo viaje más lejos antes de ser eliminado
-            // Se aumenta el margen para permitir lanzar hechizos desde más lejos
-            float margenExtra = 500f; // Margen adicional para permitir disparos desde fuera de la pantalla
-            if (nx < -getWidth() - margenExtra || nx > Gdx.graphics.getWidth() + margenExtra) {
+            // Calcular límites del mundo con margen adicional
+            float margenExtra = 100f; // Margen más pequeño para mejor rendimiento
+            float limiteIzquierdo, limiteDerecho;
+
+            if (viewport != null) {
+                // Usar dimensiones del viewport
+                limiteIzquierdo = -getWidth() - margenExtra;
+                limiteDerecho = viewport.getWorldWidth() + margenExtra;
+            } else {
+                // Fallback a tamaño de pantalla
+                limiteIzquierdo = -getWidth() - margenExtra;
+                limiteDerecho = Gdx.graphics.getWidth() + margenExtra;
+            }
+
+            // Comprobar si está fuera de límites
+            if (nx < limiteIzquierdo || nx > limiteDerecho) {
                 finalizado = true;
+                System.out.println("Hechizo fuera de límites: " + nx +
+                    " (límites: " + limiteIzquierdo + ", " + limiteDerecho + ")");
             }
         }
     }
@@ -144,10 +171,13 @@ public class HechizoActor extends Actor {
      * Comprueba colisiones y aplica daño.
      */
     public void comprobarColisiones(List<? extends Enemigo> enemigos) {
+        if (enemigos == null) return; // Protección contra null
         if (impactando && !atraviesaEnemigos) return;
         if (finalizado) return;
 
         for (Enemigo e : enemigos) {
+            if (e == null) continue; // Protección contra null
+
             Rectangle r = new Rectangle(e.getX(), e.getY(), 32, 32);
             if (hitbox.overlaps(r)) {
                 e.recibirDano(dano);
@@ -161,6 +191,8 @@ public class HechizoActor extends Actor {
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
+        if (batch == null) return; // Protección contra null
+
         TextureRegion frame;
         if (impactando) {
             if (frameActual < framesImpacto.length) {
@@ -171,7 +203,16 @@ public class HechizoActor extends Actor {
         } else {
             frame = framesVuelo[frameActual];
         }
-        batch.draw(frame, getX(), getY(), getWidth(), getHeight());
+
+        if (frame != null) {
+            batch.draw(frame, getX(), getY(), getWidth(), getHeight());
+        }
+    }
+
+    @Override
+    public boolean remove() {
+        // Llamar al método de la superclase
+        return super.remove();
     }
 
     /** No liberamos texturas aquí; lo hace quien creó los recursos. */

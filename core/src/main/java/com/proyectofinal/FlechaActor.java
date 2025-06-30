@@ -3,23 +3,26 @@ package com.proyectofinal;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.viewport.Viewport;
+
 import java.util.List;
 
 /**
- * Actor que representa una flecha disparada por el Arquero.
+ * Actor que representa una flecha lanzada por el Arquero.
+ * Versión mejorada con soporte para viewport y mejor manejo de límites.
  */
 public class FlechaActor extends Actor {
     // Frames de animación
     private TextureRegion[] framesVuelo;
     private TextureRegion[] framesImpacto;
 
-    // Movimiento y direcciones
-    private float velocidad = 200f;         // px/s
-    private String direccion;               // "IZQUIERDA" o "DERECHA"
+    // Movimiento y dirección
+    private float velocidad = 150f;        // px/s
+    private String direccion;              // "IZQUIERDA" o "DERECHA"
 
-    // Animación
+    // Animación de vuelo
     private float tiempoAnimacion = 0f;
     private int frameActual = 0;
     private static final float FRAME_DURACION = 0.1f;
@@ -29,12 +32,27 @@ public class FlechaActor extends Actor {
     private float tiempoImpacto = 0f;
     private boolean finalizado = false;
 
-    // Daño y colisiones
+    // Daño y colisión
     private int dano;
     private Rectangle hitbox;
 
+    // Opciones
+    private float escala = 1f;
+
+    // Viewport para cálculo de límites
+    private Viewport viewport;
+
     /**
      * Constructor de la flecha.
+     *
+     * @param framesVuelo     frames de vuelo
+     * @param framesImpacto   frames de impacto
+     * @param x               posición inicial X
+     * @param y               posición inicial Y
+     * @param direccion       "IZQUIERDA" o "DERECHA"
+     * @param dano            daño que inflige
+     * @param velocidad       velocidad en px/s
+     * @param escala          escala de tamaño
      */
     public FlechaActor(TextureRegion[] framesVuelo,
                        TextureRegion[] framesImpacto,
@@ -43,20 +61,24 @@ public class FlechaActor extends Actor {
                        int dano,
                        float velocidad,
                        float escala) {
-        this.framesVuelo = framesVuelo;
-        this.framesImpacto = framesImpacto;
-        this.direccion    = direccion;
-        this.dano         = dano;
-        this.velocidad    = velocidad;
+        this.framesVuelo     = framesVuelo;
+        this.framesImpacto   = framesImpacto;
+        this.direccion       = direccion;
+        this.dano            = dano;
+        this.velocidad       = velocidad;
+        this.escala          = escala;
 
         setPosition(x, y);
         setSize(32 * escala, 32 * escala);
 
-        hitbox = new Rectangle(x + 10 * escala, y + 12 * escala, 12 * escala, 8 * escala);
+        hitbox = new Rectangle(
+            x + 8 * escala,
+            y + 8 * escala,
+            16 * escala,
+            16 * escala
+        );
 
         // Correctamente manejar la orientación según la dirección
-        // Aseguramos que las flechas estén correctamente orientadas
-        // Por defecto las flechas están mirando a la DERECHA
         boolean debeEstarVolteado = "IZQUIERDA".equals(direccion);
 
         for (TextureRegion f : framesVuelo) {
@@ -75,14 +97,10 @@ public class FlechaActor extends Actor {
     }
 
     /**
-     * Constructor simplificado para mantener compatibilidad.
+     * Establece el viewport para determinar límites de la pantalla
      */
-    public FlechaActor(TextureRegion[] framesVuelo,
-                       TextureRegion[] framesImpacto,
-                       float x, float y,
-                       String direccion,
-                       int dano) {
-        this(framesVuelo, framesImpacto, x, y, direccion, dano, 200f, 1.0f);
+    public void setViewport(Viewport viewport) {
+        this.viewport = viewport;
     }
 
     @Override
@@ -95,53 +113,72 @@ public class FlechaActor extends Actor {
         }
 
         if (impactando) {
-            // Avanza animación de impacto
+            // Animación de impacto
             tiempoImpacto += delta;
             frameActual = (int)(tiempoImpacto / FRAME_DURACION);
             if (frameActual >= framesImpacto.length) {
                 finalizado = true;
             }
         } else {
-            // Mueve la flecha
+            // Mover flecha
             float mov = velocidad * delta;
             float nx  = getX() + ("DERECHA".equals(direccion) ? mov : -mov);
             setPosition(nx, getY());
 
-            hitbox.setPosition(nx + 10, getY() + 12);
+            hitbox.setPosition(nx + 8 * escala, getY() + 8 * escala);
 
-            // Avanza animación de vuelo
+            // Animación de vuelo
             tiempoAnimacion += delta;
             frameActual = (int)(tiempoAnimacion / FRAME_DURACION) % framesVuelo.length;
 
-            // Ampliar el rango de movimiento para que la flecha viaje más lejos antes de ser eliminada
-            // Se aumenta el margen para permitir disparos desde más lejos
-            float margenExtra = 500f; // Margen adicional para permitir disparos desde fuera de la pantalla
-            if (nx < -getWidth() - margenExtra || nx > Gdx.graphics.getWidth() + margenExtra) {
+            // Calcular límites del mundo con margen adicional
+            float margenExtra = 100f; // Margen más pequeño para mejor rendimiento
+            float limiteIzquierdo, limiteDerecho;
+
+            if (viewport != null) {
+                // Usar dimensiones del viewport
+                limiteIzquierdo = -getWidth() - margenExtra;
+                limiteDerecho = viewport.getWorldWidth() + margenExtra;
+            } else {
+                // Fallback a tamaño de pantalla
+                limiteIzquierdo = -getWidth() - margenExtra;
+                limiteDerecho = Gdx.graphics.getWidth() + margenExtra;
+            }
+
+            // Comprobar si está fuera de límites
+            if (nx < limiteIzquierdo || nx > limiteDerecho) {
                 finalizado = true;
+                System.out.println("Flecha fuera de límites: " + nx +
+                    " (límites: " + limiteIzquierdo + ", " + limiteDerecho + ")");
             }
         }
     }
 
     /**
-     * Comprueba colisiones contra la lista de enemigos.
+     * Comprueba colisiones y aplica daño.
      */
     public void comprobarColisiones(List<? extends Enemigo> enemigos) {
+        if (enemigos == null) return; // Protección contra null
         if (impactando || finalizado) return;
 
         for (Enemigo e : enemigos) {
+            if (e == null) continue; // Protección contra null
+
             Rectangle r = new Rectangle(e.getX(), e.getY(), 32, 32);
             if (hitbox.overlaps(r)) {
                 e.recibirDano(dano);
-                impactando    = true;
-                tiempoImpacto = 0f;
-                frameActual   = 0;
-                break;
+                impactando     = true;
+                tiempoImpacto  = 0f;
+                frameActual    = 0;
+                break; // La flecha impacta y se detiene
             }
         }
     }
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
+        if (batch == null) return; // Protección contra null
+
         TextureRegion frame;
         if (impactando) {
             if (frameActual < framesImpacto.length) {
@@ -152,10 +189,19 @@ public class FlechaActor extends Actor {
         } else {
             frame = framesVuelo[frameActual];
         }
-        batch.draw(frame, getX(), getY(), getWidth(), getHeight());
+
+        if (frame != null) {
+            batch.draw(frame, getX(), getY(), getWidth(), getHeight());
+        }
     }
 
-    /** No liberamos texturas aquí; lo hace el creador de recursos. */
+    @Override
+    public boolean remove() {
+        // Llamar al método de la superclase
+        return super.remove();
+    }
+
+    /** No liberamos texturas aquí; lo hace quien creó los recursos. */
     public void dispose() {
         // vacío
     }
