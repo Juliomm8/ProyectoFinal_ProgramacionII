@@ -184,7 +184,7 @@ public class HechizoActor extends Actor {
             Rectangle r = new Rectangle(e.getX(), e.getY(), 48, 48); // Aumentado de 32 a 48
             if (hitbox.overlaps(r)) {
                 // Forzar vida = 0 en el enemigo (muerte a un solo golpe)
-                e.recibirDano(9999); // Valor muy alto para asegurar muerte inmediata
+                e.recibirDanio(9999); // Valor muy alto para asegurar muerte inmediata
 
                 // Comportamiento diferente según tipo de hechizo
                 if (atraviesaEnemigos) {

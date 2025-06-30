@@ -60,7 +60,7 @@ public class Caballero extends Jugador implements RecargableInterface {
         if (enemigos != null) {
             for (Enemigo e : enemigos) {
                 if (e.estaVivo() && estaEnRango(e)) {
-                    e.recibirDano(Integer.MAX_VALUE);
+                    e.recibirDanio(Integer.MAX_VALUE);
                 }
             }
         }

@@ -78,7 +78,7 @@ public abstract class Enemigo {
         return estaVivo;
     }
 
-    public void recibirDano(int cantidad) {
+    public void recibirDanio(int cantidad) {
         if (!estaVivo) return;
 
         vida -= cantidad;
@@ -90,6 +90,12 @@ public abstract class Enemigo {
             estadoActual = EstadoEnemigo.DYING;
             stateTime = 0; // Reiniciar tiempo para animación de muerte
         }
+    }
+
+    // Mantener método anterior para compatibilidad con código existente
+    @Deprecated
+    public void recibirDano(int cantidad) {
+        recibirDanio(cantidad); // Redirigir al método con nombre correcto
     }
 
     public abstract void update(float deltaTime, float playerX, float playerY);

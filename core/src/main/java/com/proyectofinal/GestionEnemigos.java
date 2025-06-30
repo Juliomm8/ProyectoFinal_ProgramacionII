@@ -1,5 +1,6 @@
 package com.proyectofinal;
 
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 
 import java.util.List;
@@ -47,13 +48,16 @@ public class GestionEnemigos {
     public static void comprobarColisionesProyectiles(Stage stage, List<? extends Enemigo> enemigos) {
         if (stage == null || enemigos == null || enemigos.isEmpty()) return;
 
-        // Comprobar colisiones para todas las flechas en el stage
-        stage.getActors().forEach(actor -> {
-            if (actor instanceof FlechaActor flecha) {
-                flecha.comprobarColisiones(enemigos);
-            } else if (actor instanceof HechizoActor hechizo) {
-                hechizo.comprobarColisiones(enemigos);
+        // Comprobar colisiones para todos los actores en el stage
+        for (Actor actor : stage.getActors()) {
+            if (actor instanceof FlechaActor) {
+                ((FlechaActor) actor).comprobarColisiones(enemigos);
+            } else if (actor instanceof HechizoActor) {
+                ((HechizoActor) actor).comprobarColisiones(enemigos);
             }
-        });
+        }
+
+        // Imprime un log para comprobar que se está ejecutando
+        System.out.println("Comprobando colisiones de proyectiles con " + enemigos.size() + " enemigos");
     }
 }

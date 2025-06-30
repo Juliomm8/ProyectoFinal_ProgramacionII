@@ -169,7 +169,7 @@ public class FlechaActor extends Actor {
             Rectangle r = new Rectangle(e.getX(), e.getY(), 48, 48); // Aumentado de 32 a 48
             if (hitbox.overlaps(r)) {
                 // Forzar muerte instantánea del enemigo
-                e.recibirDano(9999); // Valor muy alto para asegurar muerte inmediata
+                e.recibirDanio(9999); // Valor muy alto para asegurar muerte inmediata
 
                 // Configurar para mostrar animación de impacto
                 impactando = true;

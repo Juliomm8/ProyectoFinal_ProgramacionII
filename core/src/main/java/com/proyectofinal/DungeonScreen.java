@@ -267,9 +267,6 @@ public class DungeonScreen extends PantallaBase {
         if (eliminados > 0) {
             System.out.println("Eliminados " + eliminados + " enemigos muertos");
         }
-
-        // Comprobar colisiones de proyectiles con enemigos
-        GestionEnemigos.comprobarColisionesProyectiles(stage, enemigos);
     }
 
 

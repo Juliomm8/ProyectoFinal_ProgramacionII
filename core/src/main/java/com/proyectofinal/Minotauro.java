@@ -109,7 +109,7 @@ public class Minotauro extends Enemigo {
      * Cualquier ataque mata al Minotauro de un solo golpe.
      */
     @Override
-    public void recibirDano(int cantidad) {
+    public void recibirDanio(int cantidad) {
         // Forzar vida = 0 independientemente de la cantidad de daño
         vida = 0; // Corregido: forzar a 0 en lugar de 10
         estaVivo = false;
@@ -119,6 +119,13 @@ public class Minotauro extends Enemigo {
         stateTime = 0f;
 
         System.out.println("¡Minotauro abatido de un solo golpe! Reproduciendo animación de muerte...");
+    }
+
+    // Mantener método anterior para compatibilidad con código existente
+    @Override
+    @Deprecated
+    public void recibirDano(int cantidad) {
+        recibirDanio(cantidad); // Redirigir al método con nombre correcto
     }
 
     @Override
