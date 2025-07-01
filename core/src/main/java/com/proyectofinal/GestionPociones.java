@@ -26,13 +26,12 @@ public class GestionPociones implements Disposable {
     private List<PocionActor> pociones;
     private Stage stage;
     private MapaProcedural mapa;
-    private int mapWidth;
-    private int mapHeight;
     private Rectangle limitesJugador; // Para evitar generar pociones muy cerca del jugador
 
     // Texturas para las pociones
     private Texture texturaPocionHP;
     private Texture texturaPocionMana;
+    private Texture texturaPocionEscudo;
 
     /**
      * Constructor que inicializa el gestor de pociones.
@@ -42,8 +41,6 @@ public class GestionPociones implements Disposable {
     public GestionPociones(Stage stage, MapaProcedural mapa) {
         this.stage = stage;
         this.mapa = mapa;
-        this.mapWidth = mapa.getWidthPixels();
-        this.mapHeight = mapa.getHeightPixels();
         this.pociones = new ArrayList<>();
         this.limitesJugador = new Rectangle(0, 0, 50, 50); // Inicialmente en origen
 
@@ -57,11 +54,13 @@ public class GestionPociones implements Disposable {
         try {
             texturaPocionHP = new Texture("Pociones/pocion_hp.png");
             texturaPocionMana = new Texture("Pociones/pocion_mana.png");
+            texturaPocionEscudo = new Texture("Pociones/pocionEscudo.png");
         } catch (Exception e) {
             System.err.println("Error al cargar texturas de pociones: " + e.getMessage());
             // Crear texturas fallback
             texturaPocionHP = new Texture(32, 32, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
             texturaPocionMana = new Texture(32, 32, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
+            texturaPocionEscudo = new Texture(32, 32, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
         }
     }
 
@@ -110,12 +109,16 @@ public class GestionPociones implements Disposable {
         Pocion nuevaPocion;
         Texture texturaPocion;
 
-        if (MathUtils.randomBoolean(0.7f)) { // 70% probabilidad de poción HP
+        float r = MathUtils.random();
+        if (r < 0.5f) { // 50% probabilidad de poción HP
             nuevaPocion = new PocionHP("Poción de Vida", MathUtils.random(10, 30));
             texturaPocion = texturaPocionHP;
-        } else { // 30% probabilidad de poción Mana/Flechas
+        } else if (r < 0.8f) { // 30% probabilidad de poción Mana/Flechas
             nuevaPocion = new PocionMana("Poción de Energía", MathUtils.random(5, 15));
             texturaPocion = texturaPocionMana;
+        } else { // 20% probabilidad de poción de escudo
+            nuevaPocion = new PocionEscudo("Poción de Escudo", 20);
+            texturaPocion = texturaPocionEscudo;
         }
 
         // Buscar posición válida (no en camino, no cerca de otras pociones o jugador)
@@ -143,9 +146,9 @@ public class GestionPociones implements Disposable {
      * @return Vector2 con la posición o null si no se encontró
      */
     private Vector2 encontrarPosicionValida() {
-        // Obtener dimensiones reales del mapa en pixeles
-        int maxX = mapWidth;
-        int maxY = mapHeight;
+        // Obtener dimensiones del mapa
+        int maxX = (int) stage.getViewport().getWorldWidth();
+        int maxY = (int) stage.getViewport().getWorldHeight();
 
         // Obtener la posición actual de la cámara para generar pociones visibles
         float camX = stage.getViewport().getCamera().position.x;
@@ -156,10 +159,10 @@ public class GestionPociones implements Disposable {
         float viewportHeight = stage.getViewport().getWorldHeight();
 
         // Área visible donde preferimos colocar pociones (70% del área visible)
-        float minVisibleX = Math.max(0, camX - viewportWidth * 0.35f);
-        float maxVisibleX = Math.min(maxX, camX + viewportWidth * 0.35f);
-        float minVisibleY = Math.max(0, camY - viewportHeight * 0.35f);
-        float maxVisibleY = Math.min(maxY, camY + viewportHeight * 0.35f);
+        float minVisibleX = Math.max(100, camX - viewportWidth * 0.35f);
+        float maxVisibleX = Math.min(maxX - 100, camX + viewportWidth * 0.35f);
+        float minVisibleY = Math.max(100, camY - viewportHeight * 0.35f);
+        float maxVisibleY = Math.min(maxY - 100, camY + viewportHeight * 0.35f);
 
         // Intentar primero en el área visible con más intentos
         for (int intento = 0; intento < 30; intento++) {
@@ -227,6 +230,11 @@ public class GestionPociones implements Disposable {
         if (texturaPocionMana != null) {
             texturaPocionMana.dispose();
             texturaPocionMana = null;
+        }
+
+        if (texturaPocionEscudo != null) {
+            texturaPocionEscudo.dispose();
+            texturaPocionEscudo = null;
         }
 
         // Las pociones se eliminarán a través del stage

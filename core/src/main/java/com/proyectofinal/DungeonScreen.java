@@ -91,7 +91,7 @@ public class DungeonScreen extends PantallaBase {
                 texPlayer = new Texture("PersonajesPrincipales/Mago/mago.png");
                 break;
             case "Caballero":
-                jugadorLogico = new Caballero("Arthur", 120, 15, 50, 0.8f, 32f, 32f, 1);
+                jugadorLogico = new Caballero("Arthur", 120, 15, 50, 0.8f, 32f, 32f, 100);
                 texPlayer = new Texture("PersonajesPrincipales/Caballero/caballero.png");
                 break;
             default:

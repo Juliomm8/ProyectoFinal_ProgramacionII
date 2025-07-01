@@ -13,8 +13,8 @@ public class PocionEscudo extends Pocion {
     @Override
     public void consumir(Personaje personaje) {
         if (personaje instanceof Caballero caballero) {
-            caballero.aumentarEscudo(valor);
-            System.out.println(personaje.getNombre() + " ha aumentado su escudo en " + valor + " puntos.");
+            caballero.recargar(valor);
+            System.out.println(personaje.getNombre() + " ha recuperado " + valor + " puntos de escudo.");
         } else {
             System.out.println(personaje.getNombre() + " no puede usar esta poción de escudo.");
         }
