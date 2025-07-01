@@ -3,7 +3,6 @@ package com.proyectofinal;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -14,6 +13,7 @@ import java.util.List;
  * Versión mejorada con soporte para viewport y mejor manejo de límites.
  */
 public class FlechaActor extends ProyectilBase {
+
     // Frames de animación
     private TextureRegion[] framesVuelo;
     private TextureRegion[] framesImpacto;

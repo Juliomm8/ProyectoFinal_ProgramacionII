@@ -45,7 +45,6 @@ public class Jugador extends Personaje {
     }
 
     // ——————————— Getters ———————————
-
     public String getNombre() {
         return nombre;
     }
@@ -76,7 +75,6 @@ public class Jugador extends Personaje {
     }
 
     // ——————————— Setters y utilidad ———————————
-
     /** Actualiza la posición del jugador. */
     public void setPosition(float x, float y) {
         this.x = x;
@@ -125,7 +123,6 @@ public class Jugador extends Personaje {
     }
 
     // ——————————— Interacciones ———————————
-
     /**
      * Recibe daño directo, resta a la vida.
      */

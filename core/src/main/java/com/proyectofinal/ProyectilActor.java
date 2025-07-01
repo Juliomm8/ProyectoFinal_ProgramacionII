@@ -34,17 +34,17 @@ public class ProyectilActor extends Actor {
      * @param height Alto del sprite
      */
     public ProyectilActor(Animation<TextureRegion> animation, Animation<TextureRegion> impactAnimation,
-                         float x, float y, float dirX, float dirY, float speed, int damage,
-                         float width, float height) {
-        this.animation = animation;
-        this.impactAnimation = impactAnimation;
-        this.setPosition(x, y);
-        this.velocity = new Vector2(dirX, dirY).nor();
-        this.speed = speed;
-        this.damage = damage;
-        this.width = width;
-        this.height = height;
-        this.setSize(width, height);
+        float x, float y, float dirX, float dirY, float speed, int damage,
+        float width, float height) {
+            this.animation = animation;
+            this.impactAnimation = impactAnimation;
+            this.setPosition(x, y);
+            this.velocity = new Vector2(dirX, dirY).nor();
+            this.speed = speed;
+            this.damage = damage;
+            this.width = width;
+            this.height = height;
+            this.setSize(width, height);
     }
 
     @Override

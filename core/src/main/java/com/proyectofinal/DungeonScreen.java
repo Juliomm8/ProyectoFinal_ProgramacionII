@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+
 /**
  * Pantalla principal con mundo procedural "infinito", usando variantes de pasto.
  */
@@ -129,7 +130,6 @@ public class DungeonScreen extends PantallaBase {
         texCamino = new Texture("Mapa/Piedras/piedras.png");
         texHierbaV = new Texture("Mapa/Pasto/hiervaVerde.png");
         texHierbaA = new Texture("Mapa/Pasto/hiervaAmarilla.png");
-
     }
 
     /**
@@ -254,7 +254,6 @@ public class DungeonScreen extends PantallaBase {
         }
     }
 
-
     @Override
     public void render(float delta) {
         // 1) Limpiar pantalla
@@ -334,8 +333,6 @@ public class DungeonScreen extends PantallaBase {
             }
         }
 
-
-
         // 10) Dibujar árboles
         batch.begin();
         for (Arbol ar : generator.getArboles()) {
@@ -363,7 +360,6 @@ public class DungeonScreen extends PantallaBase {
         }
         batch.end();
     }
-
 
     private void manejarEntrada(float delta) {
         float speed = 200f * delta;

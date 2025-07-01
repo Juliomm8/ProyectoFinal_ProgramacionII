@@ -73,13 +73,14 @@ public class PlayerActor extends Image {
     private TextureRegion[] idleFrames;
     private static final float IDLE_FRAME_DUR = 0.2f; // Más lento (0.2 segundos por frame)
 
-            /**
-             * Dirección actual para la que están orientados los frames
-             * Usada para detectar cambios de dirección y voltear frames solo cuando sea necesario
-             */
-            private String direccionActualFrames = "DERECHA"; // Por defecto, los sprites miran a la derecha
+    /**
+    * Dirección actual para la que están orientados los frames
+    * Usada para detectar cambios de dirección y voltear frames solo cuando sea necesario
+    */
 
-            public PlayerActor(Jugador jugador, Texture idleTexture) {
+    private String direccionActualFrames = "DERECHA"; // Por defecto, los sprites miran a la derecha
+
+    public PlayerActor(Jugador jugador, Texture idleTexture) {
         super(new TextureRegionDrawable(new TextureRegion(idleTexture)));
         this.jugador = jugador;
         this.idleRegion = new TextureRegion(idleTexture);
@@ -205,7 +206,6 @@ public class PlayerActor extends Image {
             attackFrames = null;
         }
     }
-
 
     /**
      * Getter para acceder al objeto Jugador interno.

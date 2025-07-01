@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Arrays;
 
-
 /**
  * Genera un mapa con:
  *  - parches compactos de pasto amarillo,
@@ -251,7 +250,6 @@ public class MapaProcedural {
         }
     }
 
-
     private void generarOverlays() {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -262,7 +260,6 @@ public class MapaProcedural {
             }
         }
     }
-
 
     // Método para obtener una textura de árbol aleatoria
     private Texture obtenerArbolAleatorio() {
@@ -365,7 +362,6 @@ public class MapaProcedural {
         }
     }
 
-
     public List<Arbol> getArboles() {
         return arboles;
     }
@@ -389,8 +385,6 @@ public class MapaProcedural {
     public boolean hasOverlayAmarillo(int x, int y) {
         return x>=0 && x<width && y>=0 && y<height && overlayAmarillo[y][x];
     }
-
-    public long getSeed() { return seed; }
 
     /**
      * Libera los recursos utilizados por el mapa

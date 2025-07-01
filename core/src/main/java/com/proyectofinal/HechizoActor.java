@@ -61,7 +61,6 @@ public class HechizoActor extends ProyectilBase {
      * @param danio daño base del hechizo
      * @param velocidad velocidad del proyectil
      * @param escala escala visual
-     * @param radioEfecto radio de efecto para daño en área
      * @param atraviesaEnemigos si el hechizo atraviesa enemigos
      */
     public HechizoActor(TextureRegion[] frames, TextureRegion[] impactoFrames,

@@ -23,14 +23,6 @@ public abstract class Personaje implements AtacanteInterface, DaniableInterface 
         System.out.println(nombre + " recibe " + cantidad + " de daño. Vida actual: " + vida);
     }
 
-    /**
-     * Restaura puntos de vida.
-     */
-    public void curar(int cantidad) {
-        vida += cantidad;
-        System.out.println(nombre + " recupera " + cantidad + " de vida. Vida actual: " + vida);
-    }
-
     @Override
     public int atacar() {
         System.out.println(nombre + " ataca con daño base " + ataque);

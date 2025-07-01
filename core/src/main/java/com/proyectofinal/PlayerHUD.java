@@ -82,8 +82,8 @@ public class PlayerHUD implements Disposable {
         batch.end();
 
         shapeRenderer.setProjectionMatrix(new com.badlogic.gdx.math.Matrix4().setToOrtho2D(0, 0,
-                                    com.badlogic.gdx.Gdx.graphics.getWidth(),
-                                    com.badlogic.gdx.Gdx.graphics.getHeight()));
+        com.badlogic.gdx.Gdx.graphics.getWidth(),
+        com.badlogic.gdx.Gdx.graphics.getHeight()));
         shapeRenderer.begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 0.6f);
         shapeRenderer.rect(0, bgY, bgWidth, bgHeight);

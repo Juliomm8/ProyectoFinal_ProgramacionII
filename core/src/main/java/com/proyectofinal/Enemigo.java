@@ -32,13 +32,13 @@ public abstract class Enemigo implements Disposable {
     // Coordenadas y propiedades básicas
     protected float x, y;
     protected int vida;
-    public int danio; // Hecho público para acceso desde DungeonScreen
+    public int danio;
     protected float velocidad;
     protected boolean estaVivo = true;
     protected Rectangle hitbox = new Rectangle();
 
     // Propiedades de animación
-    public float stateTime = 0; // Hecho público para acceso desde DungeonScreen
+    public float stateTime = 0;
     public EstadoEnemigo estadoActual = EstadoEnemigo.IDLE;
 
     // Animaciones
@@ -69,7 +69,6 @@ public abstract class Enemigo implements Disposable {
     public float getX() {
         return x;
     }
-
 
     protected abstract void cargarAnimaciones();
 

@@ -46,7 +46,7 @@ public class Arquero extends Jugador implements RecargableInterface {
     }
 
     /**
-     * Método de ataque que recibe lista de enemigos.
+     * Metodo de ataque que recibe lista de enemigos.
      * La lógica de impacto se maneja en FlechaActor.
      *
      * @param enemigos Lista de enemigos que podrían ser impactados

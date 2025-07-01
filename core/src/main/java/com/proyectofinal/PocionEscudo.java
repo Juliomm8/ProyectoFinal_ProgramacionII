@@ -3,8 +3,6 @@ package com.proyectofinal;
 /**
  * Poción que restaura escudo al caballero.
  */
-
-
 public class PocionEscudo extends Pocion {
 
     public PocionEscudo(String nombre, int valor) {

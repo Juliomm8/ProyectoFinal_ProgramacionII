@@ -1,6 +1,5 @@
 package com.proyectofinal;
 
-
 /**
  * Subclase de Jugador especializada en ataques mágicos con mana.
  */
