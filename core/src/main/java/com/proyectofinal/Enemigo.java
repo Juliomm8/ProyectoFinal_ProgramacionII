@@ -93,6 +93,13 @@ public abstract class Enemigo implements Disposable {
         return marcarParaEliminar;
     }
 
+    /**
+     * Indica si este enemigo completó su animación de muerte y puede ser retirado.
+     */
+    public boolean isReadyToRemove() {
+        return marcarParaEliminar;
+    }
+
     public void recibirDanio(int cantidad) {
         // Si ya está muerto, no hacer nada
         if (!estaVivo) {

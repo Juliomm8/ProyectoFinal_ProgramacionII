@@ -323,11 +323,11 @@ public class DungeonScreen extends PantallaBase {
         Iterator<Enemigo> itE = enemigos.iterator();
         while (itE.hasNext()) {
             Enemigo e = itE.next();
-            if (!e.estaVivo()) {
-                if (e.deathAnimation != null && e.deathAnimation.isAnimationFinished(e.stateTime)) {
-                    itE.remove();
-                }
-            } else if (e.getHitbox().overlaps(pjBounds)
+            if (e.isReadyToRemove()) {
+                itE.remove();
+                continue;
+            }
+            if (e.getHitbox().overlaps(pjBounds)
                 && e.estadoActual == Enemigo.EstadoEnemigo.ATTACKING) {
                 playerActor.getJugador().recibirDanio(10);
             }
@@ -411,17 +411,13 @@ public class DungeonScreen extends PantallaBase {
             tiempoUltimoSpawn = 0f;
         }
 
-        // Actualizar todos los enemigos
+        // Actualizar todos los enemigos y eliminar los que hayan terminado su animación
         Iterator<Enemigo> iterator = enemigos.iterator();
         while (iterator.hasNext()) {
             Enemigo enemigo = iterator.next();
-            if (enemigo.estaVivo()) {
-                enemigo.update(delta, playerActor.getX(), playerActor.getY());
-            } else {
-                // Si la animación de muerte ha terminado
-                if (enemigo.deathAnimation != null && enemigo.deathAnimation.isAnimationFinished(enemigo.stateTime)) {
-                    iterator.remove(); // Eliminar enemigos muertos
-                }
+            enemigo.update(delta, playerActor.getX(), playerActor.getY());
+            if (enemigo.isReadyToRemove()) {
+                iterator.remove();
             }
         }
     }

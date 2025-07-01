@@ -28,11 +28,11 @@ public class GestionEnemigos {
         while (iter.hasNext()) {
             Enemigo enemigo = iter.next();
 
-            // Si el enemigo es un Minotauro y está marcado para eliminar
-            if (enemigo instanceof Minotauro minotauro && minotauro.debeEliminarse()) {
+            // Si el enemigo está listo para ser eliminado
+            if (enemigo.isReadyToRemove()) {
                 iter.remove();
                 eliminados++;
-                System.out.println("Minotauro eliminado del juego tras animación de muerte");
+                System.out.println("Enemigo eliminado del juego tras animación de muerte");
             }
         }
 
