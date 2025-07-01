@@ -10,6 +10,7 @@ public class Jugador extends Personaje {
     private float x, y;             // Posición del jugador
     private float width, height;    // Tamaño y collider
     private int nivel;              // Nivel del jugador
+    private int vidaMaxima;         // Límite superior de vida
     protected String direccion;     // "IZQUIERDA" o "DERECHA"
     public float getWidth()  { return width; }
     public float getHeight() { return height; }
@@ -31,8 +32,10 @@ public class Jugador extends Personaje {
                    float y,
                    float width,
                    float height,
-                   int nivel) {
+                   int nivel)
+    {
         super(nombre, vida, ataque);
+        this.vidaMaxima = vida;
         this.x = x;
         this.y = y;
         this.width = width;
@@ -49,6 +52,10 @@ public class Jugador extends Personaje {
 
     public int getVida() {
         return vida;
+    }
+
+    public int getVidaMaxima() {
+        return vidaMaxima;
     }
 
     /** Daño base que inflige el jugador. */
@@ -125,6 +132,9 @@ public class Jugador extends Personaje {
     @Override
     public void recibirDanio(int danio) {
         vida -= danio;
+        if (danio < 0 && vida > vidaMaxima) {
+            vida = vidaMaxima;
+        }
         if (vida < 0) vida = 0;
     }
 
@@ -134,7 +144,7 @@ public class Jugador extends Personaje {
     public void recogerPocion(Pocion pocion) {
         int cantidad = pocion.getCantidad();
         if (pocion instanceof PocionHP) {
-            vida = Math.min(vida + cantidad, vida);
+            vida = Math.min(vida + cantidad, vidaMaxima);
         } else if (pocion instanceof PocionEXP) {
             nivel += cantidad;
         } else if (pocion instanceof PocionMana) {

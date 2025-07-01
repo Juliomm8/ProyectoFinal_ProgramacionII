@@ -37,7 +37,11 @@ public class PlayerHUD implements Disposable {
         // Determinar tipo de jugador y mostrar información relevante
         StringBuilder info = new StringBuilder();
         info.append("Clase: ").append(determinarClase()).append("\n");
-        info.append("Vida: ").append(jugador.getVida()).append("\n");
+        info.append("Vida: ")
+            .append(jugador.getVida())
+            .append("/")
+            .append(jugador.getVidaMaxima())
+            .append("\n");
 
         // Mostrar información específica según el tipo de personaje
         if (jugador instanceof Arquero) {

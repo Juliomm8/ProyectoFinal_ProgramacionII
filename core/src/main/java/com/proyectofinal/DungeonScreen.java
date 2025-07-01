@@ -145,7 +145,7 @@ public class DungeonScreen extends PantallaBase {
                 break;
             case "Caballero":
                 texEscudo = new Texture("Pociones/pocionEscudo.png");
-                crearPocionActor(new PocionMana("Poción Escudo", 20), texEscudo, 300, 150);
+                crearPocionActor(new PocionEscudo("Poción Escudo", 20), texEscudo, 300, 150);
                 break;
         }
         // 9) Detección de colisiones poción–jugador
