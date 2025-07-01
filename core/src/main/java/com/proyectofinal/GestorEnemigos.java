@@ -38,10 +38,22 @@ public class GestorEnemigos {
             enemigo.update(deltaTime, playerX, playerY);
         }
 
-        // Eliminar enemigos marcados para eliminación
+        // Verificar cuántos enemigos están marcados para eliminación
+        int marcadosParaEliminar = 0;
+        for (Enemigo e : enemigos) {
+            if (e.debeEliminarse()) marcadosParaEliminar++;
+        }
+
+        if (marcadosParaEliminar > 0) {
+            System.out.println(marcadosParaEliminar + " enemigos marcados para eliminación");
+        }
+
+        // Eliminar enemigos marcados para eliminación (recorriendo el array desde el final)
         for (int i = enemigos.size - 1; i >= 0; i--) {
             if (enemigos.get(i).debeEliminarse()) {
-                System.out.println("Eliminando enemigo de la colección.");
+                System.out.println("Eliminando enemigo de la colección en índice " + i);
+                // Liberar recursos antes de eliminar
+                enemigos.get(i).dispose();
                 enemigos.removeIndex(i);
             }
         }

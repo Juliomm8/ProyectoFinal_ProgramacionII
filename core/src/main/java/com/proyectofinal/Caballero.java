@@ -49,9 +49,11 @@ public class Caballero extends Jugador implements RecargableInterface {
     /**
      * Mata de un solo golpe a cualquier enemigo en la misma fila
      * y dentro de rango frontal.
+     *
+     * @return
      */
-    public void atacar(List<? extends Enemigo> enemigos) {
-        if (atacando || !puedeAtacar()) return;
+    public boolean atacar(List<? extends Enemigo> enemigos) {
+        if (atacando || !puedeAtacar()) return false;
 
         // Iniciar animación de ataque
         atacando = true;
@@ -62,7 +64,7 @@ public class Caballero extends Jugador implements RecargableInterface {
         // Verificar si hay enemigos para atacar
         if (enemigos == null || enemigos.isEmpty()) {
             System.out.println("No hay enemigos para atacar");
-            return;
+            return false;
         }
 
         // Contar enemigos antes del ataque
@@ -89,6 +91,7 @@ public class Caballero extends Jugador implements RecargableInterface {
         }
 
         System.out.println("Enemigos golpeados en este ataque: " + enemigosGolpeados);
+        return false;
     }
 
     /** Lógica de animación de ataque y regeneración de escudo. */
@@ -131,14 +134,24 @@ public class Caballero extends Jugador implements RecargableInterface {
                 alturaAmpliada);
         }
 
-        // Aumentar el tamaño del hitbox del enemigo para facilitar las colisiones
-        Rectangle hitE = new Rectangle(
-            e.getX(),
-            e.getY(),
-            e.getWidth(),
-            e.getHeight());
+        // Imprimir información de depuración sobre las áreas
+        System.out.println("Área de ataque: x=" + area.x + ", y=" + area.y + ", w=" + area.width + ", h=" + area.height);
 
-        boolean enRango = area.overlaps(hitE);
+        // Aumentar el tamaño del hitbox del enemigo para facilitar las colisiones
+            // Usando directamente el hitbox del enemigo en lugar de crear uno nuevo
+            Rectangle hitE = e.getHitbox();
+
+            // Verificar la intersección entre el área de ataque y el hitbox del enemigo
+            boolean enRango = area.overlaps(hitE);
+
+            // Imprimir información de depuración
+            if (enRango) {
+                System.out.println("-------------------------------------");
+                System.out.println("Área de ataque: x=" + area.x + ", y=" + area.y + ", w=" + area.width + ", h=" + area.height);
+                System.out.println("Hitbox enemigo: x=" + hitE.x + ", y=" + hitE.y + ", w=" + hitE.width + ", h=" + hitE.height);
+                System.out.println("¡COLISIÓN DETECTADA!");
+                System.out.println("-------------------------------------");
+            }
 
         if (enRango) {
             System.out.println("¡Enemigo detectado en rango de ataque del Caballero!");

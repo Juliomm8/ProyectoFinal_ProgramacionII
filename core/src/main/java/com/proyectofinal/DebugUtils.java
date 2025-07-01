@@ -4,12 +4,15 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 
+import java.util.List;
+
 /**
- * Clase de utilidad para depuración visual
+ * Clase de utilidad para depuración visual.
  */
 public class DebugUtils {
     private static ShapeRenderer shapeRenderer;
     private static boolean debugEnabled = true;
+    private static boolean hitboxEnabled = true; // Para mostrar hitboxes
 
     /**
      * Inicializa el renderizador de formas
@@ -26,6 +29,14 @@ public class DebugUtils {
      */
     public static void setDebugEnabled(boolean enabled) {
         debugEnabled = enabled;
+    }
+
+    /**
+     * Activa o desactiva la visualización de hitboxes
+     * @param enabled true para activar, false para desactivar
+     */
+    public static void setHitboxEnabled(boolean enabled) {
+        hitboxEnabled = enabled;
     }
 
     /**
@@ -56,6 +67,34 @@ public class DebugUtils {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(color);
         shapeRenderer.line(x1, y1, x2, y2);
+        shapeRenderer.end();
+    }
+
+    /**
+     * Dibuja hitboxes de personajes para depuración
+     * @param player El jugador
+     * @param enemigos Lista de enemigos
+     */
+    public static void drawHitboxes(Jugador player, List<? extends Enemigo> enemigos) {
+        if (!hitboxEnabled || shapeRenderer == null) return;
+
+        // Iniciar renderizado
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+
+        // Dibujar hitbox del jugador
+        shapeRenderer.setColor(Color.GREEN);
+        Rectangle playerRect = player.getCollider();
+        shapeRenderer.rect(playerRect.x, playerRect.y, playerRect.width, playerRect.height);
+
+        // Dibujar hitboxes de enemigos
+        shapeRenderer.setColor(Color.RED);
+        for (Enemigo e : enemigos) {
+            if (e.estaVivo()) {
+                Rectangle enemyRect = e.getHitbox();
+                shapeRenderer.rect(enemyRect.x, enemyRect.y, enemyRect.width, enemyRect.height);
+            }
+        }
+
         shapeRenderer.end();
     }
 

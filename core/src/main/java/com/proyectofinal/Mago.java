@@ -23,8 +23,10 @@ public class Mago extends Jugador implements RecargableInterface {
 
     /**
      * Ataque básico del mago: consume mana y causa daño a distancia.
+     *
+     * @return
      */
-    public void atacar(List<? extends Enemigo> enemigos) {
+    public boolean atacar(List<? extends Enemigo> enemigos) {
         if (mana >= costoHechizo) {
             mana -= costoHechizo;
             System.out.println(getNombre() + " lanza un hechizo! Mana restante: " + mana);
@@ -34,6 +36,7 @@ public class Mago extends Jugador implements RecargableInterface {
         } else {
             System.out.println(getNombre() + " no tiene suficiente mana para lanzar un hechizo.");
         }
+        return false;
     }
 
     /**

@@ -29,24 +29,47 @@ public class Arquero extends Jugador implements RecargableInterface {
     }
 
     /**
-     * Ataque básico: dispara flecha y consume flecha si no está en ráfaga ilimitada.
+     * Devuelve si el arquero está en modo de ráfaga ilimitada.
+     * @return true si está en modo ilimitado, false en caso contrario
      */
-    public void ataque1() {
-        if (modoIlimitado || flechas > 0) {
-            if (!modoIlimitado) flechas--;
-            System.out.println(getNombre() + " dispara flecha con precisión " + precision +
-                ". Flechas restantes: " + flechas);
-        } else {
-            System.out.println(getNombre() + " no tiene flechas.");
-        }
+    public boolean estaModoIlimitado() {
+        return modoIlimitado;
+    }
+
+    /**
+     * Ataque básico: dispara flecha y consume flecha si no está en ráfaga ilimitada.
+     * Utiliza la lógica común del método atacar.
+     * @return true si se pudo realizar el ataque, false si no hay flechas disponibles
+     */
+    public boolean ataque1() {
+        return atacar(null); // Pasar null ya que no necesitamos la lista de enemigos aquí
     }
 
     /**
      * Método de ataque que recibe lista de enemigos.
      * La lógica de impacto se maneja en FlechaActor.
+     *
+     * @param enemigos Lista de enemigos que podrían ser impactados
+     * @return
      */
-    public void atacar(List<? extends Enemigo> enemigos) {
-        ataque1(); // Simplemente delegamos al método existente
+    public boolean atacar(List<? extends Enemigo> enemigos) {
+        // Verificar si podemos disparar
+        if (modoIlimitado || flechas > 0) {
+            // Consumir flecha si no estamos en modo ilimitado
+            if (!modoIlimitado) {
+                flechas--;
+            }
+            System.out.println(getNombre() + " dispara flecha con precisión " + precision +
+                ". Flechas restantes: " + flechas);
+
+            // Aquí el PlayerActor se encargará de generar la flecha física
+            // y gestionar su colisión con los enemigos
+            // FlechaActor manejará la lógica de impacto
+            return true; // Ataque exitoso
+        } else {
+            System.out.println(getNombre() + " no tiene flechas disponibles.");
+            return false; // No se pudo atacar
+        }
     }
 
     /**
@@ -67,6 +90,14 @@ public class Arquero extends Jugador implements RecargableInterface {
         modoIlimitado = true;
         tiempoIlimitado = duracionSegundos;
         System.out.println(getNombre() + " activa ráfaga ilimitada por " + duracionSegundos + "s.");
+    }
+
+    /**
+     * Obtiene el tiempo restante de ráfaga ilimitada.
+     * @return tiempo en segundos, 0 si no está en modo ilimitado
+     */
+    public float getTiempoIlimitadoRestante() {
+        return modoIlimitado ? tiempoIlimitado : 0f;
     }
 
     /**

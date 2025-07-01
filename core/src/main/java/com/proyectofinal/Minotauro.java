@@ -111,7 +111,10 @@ public class Minotauro extends Enemigo {
     @Override
     public void recibirDanio(int cantidad) {
         // Si ya está muerto, no hacer nada
-        if (!estaVivo) return;
+        if (!estaVivo) {
+            System.out.println("Minotauro ya está muerto, ignorando daño adicional");
+            return;
+        }
 
         // Forzar vida = 0 independientemente de la cantidad de daño
         vida = 0;
@@ -123,6 +126,7 @@ public class Minotauro extends Enemigo {
         tiempoPostMortem = 0f;
 
         System.out.println("¡Minotauro abatido de un solo golpe! Reproduciendo animación de muerte...");
+        System.out.println("Estado actual: " + estadoActual + ", estaVivo: " + estaVivo);
     }
 
     // Mantener método anterior para compatibilidad con código existente
@@ -183,7 +187,7 @@ public class Minotauro extends Enemigo {
         // Si ya está marcado para eliminar, no renderizar
         if (marcarParaEliminar) return;
 
-        TextureRegion frameActual;
+        TextureRegion frameActual = null;
 
         switch (estadoActual) {
             case IDLE:
@@ -206,9 +210,20 @@ public class Minotauro extends Enemigo {
                 break;
             case DYING:
                 frameActual = deathAnimation.getKeyFrame(stateTime, false);
+                // Comprobar si la animación de muerte ha terminado para actualizar
+                if (deathAnimation.isAnimationFinished(stateTime)) {
+                    // Solo para depuración: mostrar que se completó la animación
+                    System.out.println("Animación de muerte de Minotauro completada");
+                }
                 break;
             default:
                 frameActual = idleAnimation.getKeyFrame(stateTime, true);
+        }
+
+        // Verificar que el frame no sea nulo
+        if (frameActual == null) {
+            System.err.println("Error: frame nulo en render de Minotauro");
+            return;
         }
 
         // Determinar dirección basada en el movimiento

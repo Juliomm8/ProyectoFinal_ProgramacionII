@@ -2,8 +2,8 @@ package com.proyectofinal;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -13,198 +13,213 @@ import java.util.List;
  * Actor que representa un hechizo lanzado por el Mago.
  * Versión mejorada con soporte para viewport y mejor manejo de límites.
  */
-public class HechizoActor extends Actor {
-    // Frames de animación
-    private TextureRegion[] framesVuelo;
-    private TextureRegion[] framesImpacto;
-
-    // Movimiento y dirección
-    private float velocidad = 150f;        // px/s
-    private String direccion;              // "IZQUIERDA" o "DERECHA"
-
-    // Animación de vuelo
-    private float tiempoAnimacion = 0f;
-    private int frameActual = 0;
-    private static final float FRAME_DURACION = 0.1f;
-
-    // Impacto
-    private boolean impactando = false;
-    private float tiempoImpacto = 0f;
-    private boolean finalizado = false;
-
-    // Daño y colisión
-    private int dano;
-    private Rectangle hitbox;
-
-    // Opciones
-    private float escala = 1f;
-    private boolean atraviesaEnemigos = false;
-
-    // Viewport para cálculo de límites
-    private Viewport viewport;
+public class HechizoActor extends ProyectilBase {
+    private float radioEfecto; // Radio para daño en área
+    private boolean atraviesaEnemigos; // Si el hechizo atraviesa enemigos
+    private float escala; // Escala visual del hechizo
+    private Viewport viewport; // Viewport para límites de pantalla
 
     /**
-     * Constructor del hechizo.
-     *
-     * @param framesVuelo          frames de vuelo
-     * @param framesImpacto        frames de impacto
-     * @param x                    posición inicial X
-     * @param y                    posición inicial Y
-     * @param direccion            "IZQUIERDA" o "DERECHA"
-     * @param dano                 daño que inflige
-     * @param velocidad            velocidad en px/s
-     * @param escala               escala de tamaño
-     * @param atraviesaEnemigos    si el hechizo atraviesa enemigos tras impactar
+     * Constructor para hechizos
+     * @param frames frames de la animación del hechizo
+     * @param impactoFrames frames de la animación de impacto
+     * @param x posición inicial X
+     * @param y posición inicial Y
+     * @param direccion dirección del lanzamiento
+     * @param danio daño base del hechizo
+     * @param velocidad velocidad del proyectil
+     * @param escala escala visual
+     * @param radioEfecto radio de efecto para daño en área
      */
-    public HechizoActor(TextureRegion[] framesVuelo,
-                        TextureRegion[] framesImpacto,
-                        float x, float y,
-                        String direccion,
-                        int dano,
-                        float velocidad,
-                        float escala,
-                        boolean atraviesaEnemigos) {
-        this.framesVuelo          = framesVuelo;
-        this.framesImpacto        = framesImpacto;
-        this.direccion            = direccion;
-        this.dano                 = dano;
-        this.velocidad            = velocidad;
-        this.escala               = escala;
-        this.atraviesaEnemigos    = atraviesaEnemigos;
+    public HechizoActor(TextureRegion[] frames, TextureRegion[] impactoFrames,
+                        float x, float y, String direccion, int danio,
+                        float velocidad, float escala, float radioEfecto) {
+        super(x, y, direccion, danio, velocidad);
 
-        setPosition(x, y);
+        this.radioEfecto = radioEfecto;
+        this.atraviesaEnemigos = false; // Por defecto no atraviesa enemigos
+        this.escala = escala; // Guardar la escala como propiedad
+
+        // Establecer tamaño
         setSize(32 * escala, 32 * escala);
 
-        hitbox = new Rectangle(
-            x + 8 * escala,
-            y + 8 * escala,
-            16 * escala,
-            16 * escala
-        );
+        // Crear animaciones
+        animacion = new Animation<>(0.1f, frames);
+        animacionImpacto = new Animation<>(0.1f, impactoFrames);
 
-        // Correctamente manejar la orientación según la dirección
-        // Aseguramos que los hechizos estén correctamente orientados
-        // Por defecto los hechizos están mirando a la DERECHA
-        boolean debeEstarVolteado = "IZQUIERDA".equals(direccion);
-
-        for (TextureRegion f : framesVuelo) {
-            // Solo volteamos si no coincide con la orientación deseada
-            if (f.isFlipX() != debeEstarVolteado) {
-                f.flip(true, false);
-            }
-        }
-
-        for (TextureRegion f : framesImpacto) {
-            // Solo volteamos si no coincide con la orientación deseada
-            if (f.isFlipX() != debeEstarVolteado) {
-                f.flip(true, false);
-            }
-        }
+        // Ajustar hitbox circular para hechizos
+        actualizarHitbox();
     }
 
     /**
-     * Establece el viewport para determinar límites de la pantalla
+     * Constructor para hechizos especiales (atraviesan enemigos)
+     * @param frames frames de la animación del hechizo
+     * @param impactoFrames frames de la animación de impacto
+     * @param x posición inicial X
+     * @param y posición inicial Y
+     * @param direccion dirección del lanzamiento
+     * @param danio daño base del hechizo
+     * @param velocidad velocidad del proyectil
+     * @param escala escala visual
+     * @param radioEfecto radio de efecto para daño en área
+     * @param atraviesaEnemigos si el hechizo atraviesa enemigos
      */
-    public void setViewport(Viewport viewport) {
-        this.viewport = viewport;
+    public HechizoActor(TextureRegion[] frames, TextureRegion[] impactoFrames,
+                        float x, float y, String direccion, int danio,
+                        float velocidad, float escala, boolean atraviesaEnemigos) {
+        this(frames, impactoFrames, x, y, direccion, danio, velocidad, escala, 50f);
+        this.atraviesaEnemigos = atraviesaEnemigos; // Si atraviesa enemigos, este parámetro se pasa como true
+        System.out.println("Creando hechizo " + (atraviesaEnemigos ? "que atraviesa enemigos" : "normal"));
+    }
+
+    public HechizoActor(TextureRegion[] frames, TextureRegion[] impactoFrames,
+                        float x, float y, String direccion, int danio,
+                        float velocidad, float escala, float radioEfecto,
+                        boolean atraviesaEnemigos) {
+        this(frames, impactoFrames, x, y, direccion, danio, velocidad, escala, radioEfecto);
+        this.atraviesaEnemigos = atraviesaEnemigos; // Si atraviesa enemigos, este parámetro se pasa como true
+        System.out.println("Creando hechizo " + (atraviesaEnemigos ? "que atraviesa enemigos" : "normal"));
+    }
+
+    @Override
+    protected void actualizarHitbox() {
+        // Hitbox centrada para hechizos, ajustada según la escala
+        float hitboxWidth = getWidth() * 0.6f;
+        float hitboxHeight = getHeight() * 0.6f;
+
+        // Posición centrada respecto al sprite
+        float hitboxX = getX() + (getWidth() - hitboxWidth) / 2;
+        float hitboxY = getY() + (getHeight() - hitboxHeight) / 2;
+
+        hitbox.set(hitboxX, hitboxY, hitboxWidth, hitboxHeight);
+
+        // Debug: mostrar dimensiones de la hitbox
+        System.out.println("Hitbox hechizo: x=" + hitbox.x + ", y=" + hitbox.y +
+                         ", w=" + hitbox.width + ", h=" + hitbox.height);
+    }
+
+    @Override
+    public void comprobarColisiones(List<? extends Enemigo> enemigos) {
+        if (impactado || enemigos == null || enemigos.isEmpty()) return;
+
+        System.out.println("Comprobando colisiones para hechizo en posición (" + getX() + ", " + getY() + ")");
+        System.out.println("Hitbox hechizo: x=" + hitbox.x + ", y=" + hitbox.y + ", w=" + hitbox.width + ", h=" + hitbox.height);
+
+        // Verificar colisión directa primero
+        boolean colisionDetectada = false;
+        Enemigo enemigoImpactado = null;
+
+        for (Enemigo e : enemigos) {
+            if (e.estaVivo()) {
+                Rectangle enemyHitbox = e.getHitbox();
+                boolean colision = hitbox.overlaps(enemyHitbox);
+
+                if (colision) {
+                    enemigoImpactado = e;
+                    colisionDetectada = true;
+                    break;
+                }
+            }
+        }
+
+        if (colisionDetectada) {
+            // Cambiar a estado de impacto
+            impactado = true;
+            stateTime = 0f; // Reiniciar para animación de impacto
+
+            // Aplicar daño al enemigo impactado
+            System.out.println("¡Hechizo impactó directamente a un enemigo en (" +
+                              enemigoImpactado.getX() + ", " + enemigoImpactado.getY() + ")!");
+            enemigoImpactado.recibirDanio(danio);
+
+            // Aplicar daño en área a enemigos cercanos
+            float centroX = getX() + getWidth() / 2;
+            float centroY = getY() + getHeight() / 2;
+
+            for (Enemigo e : enemigos) {
+                if (e != enemigoImpactado && e.estaVivo()) {
+                    // Calcular distancia al centro del impacto
+                    float eX = e.getX() + e.getWidth() / 2;
+                    float eY = e.getY() + e.getHeight() / 2;
+                    float distancia = (float) Math.sqrt(
+                        Math.pow(centroX - eX, 2) + Math.pow(centroY - eY, 2));
+
+                    // Si está dentro del radio de efecto, aplicar daño reducido
+                    if (distancia <= radioEfecto) {
+                        // El daño se reduce con la distancia
+                        float factorDanio = 1 - (distancia / radioEfecto);
+                        int danioArea = (int)(danio * factorDanio * 0.5f); // 50% del daño directo como máximo
+
+                        if (danioArea > 0) {
+                            System.out.println("Daño de área a enemigo a distancia " + distancia);
+                            e.recibirDanio(danioArea);
+                        }
+                    }
+                }
+            }
+
+            // Si el hechizo atraviesa enemigos, no terminamos aquí
+            if (!atraviesaEnemigos) {
+                // Solo si no atraviesa enemigos, mantenemos impactado = true
+                impactado = true;
+            } else {
+                // Si atraviesa, seguimos en movimiento
+                System.out.println("El hechizo atraviesa al enemigo y continúa");
+                impactado = false;
+            }
+        }
     }
 
     @Override
     public void act(float delta) {
         super.act(delta);
 
-        if (finalizado) {
+        // Si debe eliminarse, remover del escenario
+        if (debeEliminarse) {
             remove();
             return;
         }
 
-        if (impactando) {
-            // Animación de impacto
-            tiempoImpacto += delta;
-            frameActual = (int)(tiempoImpacto / FRAME_DURACION);
-            if (frameActual >= framesImpacto.length) {
+        // Incrementar contador de tiempo
+        stateTime += delta;
+
+        if (impactado) {
+            // Si está impactado y la animación terminó, marcar para eliminar
+            if (animacionImpacto.isAnimationFinished(stateTime)) {
                 if (atraviesaEnemigos) {
-                    // volver a vuelo si atraviesa
-                    impactando     = false;
-                    tiempoAnimacion = 0f;
-                    frameActual     = 0;
+                    // Si atraviesa enemigos, volver a estado de vuelo
+                    impactado = false;
+                    stateTime = 0f;
                 } else {
-                    finalizado = true;
+                    // Si no atraviesa, eliminar
+                    debeEliminarse = true;
                 }
             }
         } else {
-            // Mover hechizo
-            float mov = velocidad * delta;
-            float nx  = getX() + ("DERECHA".equals(direccion) ? mov : -mov);
-            setPosition(nx, getY());
+            // Mover el hechizo según su dirección
+            float movX = "DERECHA".equals(direccion) ? velocidad * delta : -velocidad * delta;
+            moveBy(movX, 0);
 
-            hitbox.setPosition(nx + 8 * escala, getY() + 8 * escala);
+            // Actualizar hitbox
+            actualizarHitbox();
 
-            // Animación de vuelo
-            tiempoAnimacion += delta;
-            frameActual = (int)(tiempoAnimacion / FRAME_DURACION) % framesVuelo.length;
-
-            // Calcular límites del mundo con margen adicional
-            float margenExtra = 100f; // Margen más pequeño para mejor rendimiento
+            // Calcular límites del mundo con margen
+            float margenExtra = 100f;
             float limiteIzquierdo, limiteDerecho;
 
             if (viewport != null) {
-                // Usar dimensiones del viewport
                 limiteIzquierdo = -getWidth() - margenExtra;
                 limiteDerecho = viewport.getWorldWidth() + margenExtra;
             } else {
-                // Fallback a tamaño de pantalla
                 limiteIzquierdo = -getWidth() - margenExtra;
                 limiteDerecho = Gdx.graphics.getWidth() + margenExtra;
             }
 
-            // Comprobar si está fuera de límites
-            if (nx < limiteIzquierdo || nx > limiteDerecho) {
-                finalizado = true;
-                System.out.println("Hechizo fuera de límites: " + nx +
+            // Eliminar si está fuera de límites
+            if (getX() < limiteIzquierdo || getX() > limiteDerecho) {
+                debeEliminarse = true;
+                System.out.println("Hechizo fuera de límites: " + getX() +
                     " (límites: " + limiteIzquierdo + ", " + limiteDerecho + ")");
-            }
-        }
-    }
-
-    /**
-     * Comprueba colisiones y aplica daño.
-     * El hechizo básico (no atraviesa) se elimina inmediatamente al impactar.
-     * El hechizo especial (atraviesa) muestra animación de impacto y continúa.
-     */
-    public void comprobarColisiones(List<? extends Enemigo> enemigos) {
-        if (enemigos == null) return; // Protección contra null
-        if (finalizado) return;
-        // Quitamos el check de impactando para permitir múltiples impactos con hechizo especial
-
-        for (Enemigo e : enemigos) {
-            if (e == null || !e.estaVivo()) continue; // Usar método estaVivo() en lugar de acceder al campo directamente
-
-            // Crear un rectángulo ligeramente más grande para facilitar la colisión
-            Rectangle r = new Rectangle(e.getX(), e.getY(), 48, 48); // Aumentado de 32 a 48
-            if (hitbox.overlaps(r)) {
-                // Registrar la colisión para depuración
-                System.out.println("¡Hechizo colisiona con enemigo! Estado enemigo: " + e.estadoActual);
-
-                // Forzar vida = 0 en el enemigo (muerte a un solo golpe)
-                e.recibirDanio(9999); // Valor muy alto para asegurar muerte inmediata
-
-                // Comportamiento diferente según tipo de hechizo
-                if (atraviesaEnemigos) {
-                    // Hechizo especial: muestra animación de impacto y continúa
-                    System.out.println("¡Hechizo especial impactó y atraviesa!");
-                    impactando = true;
-                    tiempoImpacto = 0f;
-                    frameActual = 0;
-                } else {
-                    // Hechizo básico: eliminar inmediatamente sin animación de impacto
-                    System.out.println("¡Hechizo básico impactó! Eliminando...");
-                    finalizado = true;
-                    remove();
-                    return; // Salir inmediatamente
-                }
-
-                if (!atraviesaEnemigos) break;
             }
         }
     }
@@ -214,18 +229,18 @@ public class HechizoActor extends Actor {
         if (batch == null) return; // Protección contra null
 
         TextureRegion frame;
-        if (impactando) {
-            if (frameActual < framesImpacto.length) {
-                frame = framesImpacto[frameActual];
-            } else {
-                return;
-            }
+        if (impactado) {
+            frame = animacionImpacto.getKeyFrame(stateTime, false);
         } else {
-            frame = framesVuelo[frameActual];
+            frame = animacion.getKeyFrame(stateTime, true);
         }
 
         if (frame != null) {
-            batch.draw(frame, getX(), getY(), getWidth(), getHeight());
+            if ("DERECHA".equals(direccion)) {
+                batch.draw(frame, getX(), getY(), getWidth(), getHeight());
+            } else {
+                batch.draw(frame, getX() + getWidth(), getY(), -getWidth(), getHeight());
+            }
         }
     }
 
@@ -238,5 +253,13 @@ public class HechizoActor extends Actor {
     /** No liberamos texturas aquí; lo hace quien creó los recursos. */
     public void dispose() {
         // vacío
+    }
+
+    /**
+     * Establece el viewport para determinar los límites de la pantalla
+     * @param viewport El viewport a usar
+     */
+    public void setViewport(Viewport viewport) {
+        this.viewport = viewport;
     }
 }

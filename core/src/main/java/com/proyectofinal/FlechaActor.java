@@ -10,31 +10,21 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import java.util.List;
 
 /**
- * Actor que representa una flecha lanzada por el Arquero.
+ * Actor que representa una flecha disparada por el Arquero.
  * Versión mejorada con soporte para viewport y mejor manejo de límites.
  */
-public class FlechaActor extends Actor {
+public class FlechaActor extends ProyectilBase {
     // Frames de animación
     private TextureRegion[] framesVuelo;
     private TextureRegion[] framesImpacto;
 
-    // Movimiento y dirección
-    private float velocidad = 150f;        // px/s
-    private String direccion;              // "IZQUIERDA" o "DERECHA"
-
-    // Animación de vuelo
-    private float tiempoAnimacion = 0f;
-    private int frameActual = 0;
+    // Constantes de animación
     private static final float FRAME_DURACION = 0.1f;
 
-    // Impacto
-    private boolean impactando = false;
+    // Variables adicionales
+    private int frameActual = 0;
     private float tiempoImpacto = 0f;
     private boolean finalizado = false;
-
-    // Daño y colisión
-    private int dano;
-    private Rectangle hitbox;
 
     // Opciones
     private float escala = 1f;
@@ -61,14 +51,11 @@ public class FlechaActor extends Actor {
                        int dano,
                        float velocidad,
                        float escala) {
+        super(x, y, direccion, dano, velocidad);
         this.framesVuelo     = framesVuelo;
         this.framesImpacto   = framesImpacto;
-        this.direccion       = direccion;
-        this.dano            = dano;
-        this.velocidad       = velocidad;
         this.escala          = escala;
 
-        setPosition(x, y);
         setSize(32 * escala, 32 * escala);
 
         hitbox = new Rectangle(
@@ -107,29 +94,24 @@ public class FlechaActor extends Actor {
     public void act(float delta) {
         super.act(delta);
 
-        if (finalizado) {
+        if (finalizado || debeEliminarse) {
             remove();
             return;
         }
 
-        if (impactando) {
+        if (impactado) {
             // Animación de impacto
             tiempoImpacto += delta;
             frameActual = (int)(tiempoImpacto / FRAME_DURACION);
             if (frameActual >= framesImpacto.length) {
                 finalizado = true;
+                debeEliminarse = true;
             }
         } else {
-            // Mover flecha
-            float mov = velocidad * delta;
-            float nx  = getX() + ("DERECHA".equals(direccion) ? mov : -mov);
-            setPosition(nx, getY());
-
-            hitbox.setPosition(nx + 8 * escala, getY() + 8 * escala);
-
-            // Animación de vuelo
-            tiempoAnimacion += delta;
-            frameActual = (int)(tiempoAnimacion / FRAME_DURACION) % framesVuelo.length;
+            // La lógica de movimiento ya la maneja ProyectilBase en su método act()
+            // Solo actualizamos la hitbox con el tamaño específico de la flecha
+            hitbox.setPosition(getX() + 8 * escala, getY() + 8 * escala);
+            hitbox.setSize(16 * escala, 16 * escala);
 
             // Calcular límites del mundo con margen adicional
             float margenExtra = 100f; // Margen más pequeño para mejor rendimiento
@@ -146,9 +128,10 @@ public class FlechaActor extends Actor {
             }
 
             // Comprobar si está fuera de límites
-            if (nx < limiteIzquierdo || nx > limiteDerecho) {
+            if (getX() < limiteIzquierdo || getX() > limiteDerecho) {
                 finalizado = true;
-                System.out.println("Flecha fuera de límites: " + nx +
+                debeEliminarse = true;
+                System.out.println("Flecha fuera de límites: " + getX() +
                     " (límites: " + limiteIzquierdo + ", " + limiteDerecho + ")");
             }
         }
@@ -158,9 +141,10 @@ public class FlechaActor extends Actor {
      * Comprueba colisiones y aplica daño.
      * Si hay impacto, inicia la animación de impacto y luego elimina la flecha.
      */
+    @Override
     public void comprobarColisiones(List<? extends Enemigo> enemigos) {
         if (enemigos == null) return; // Protección contra null
-        if (impactando || finalizado) return;
+        if (impactado || finalizado || debeEliminarse) return;
 
         for (Enemigo e : enemigos) {
             if (e == null || !e.estaVivo()) continue; // Usar método estaVivo() en lugar de acceder al campo directamente
@@ -169,12 +153,13 @@ public class FlechaActor extends Actor {
             Rectangle r = new Rectangle(e.getX(), e.getY(), 48, 48); // Aumentado de 32 a 48
             if (hitbox.overlaps(r)) {
                 // Forzar muerte instantánea del enemigo
-                e.recibirDanio(9999); // Valor muy alto para asegurar muerte inmediata
+                e.recibirDanio(danio); // Usar el daño definido en ProyectilBase
 
                 // Configurar para mostrar animación de impacto
-                impactando = true;
+                impactado = true;
                 tiempoImpacto = 0f;
                 frameActual = 0;
+                stateTime = 0f; // Reiniciar el tiempo de animación
 
                 // Posicionar la animación de impacto en el punto de colisión
                 // Ajustamos para centrar mejor el impacto
@@ -193,13 +178,15 @@ public class FlechaActor extends Actor {
         if (batch == null) return; // Protección contra null
 
         TextureRegion frame;
-        if (impactando) {
+        if (impactado) {
             if (frameActual < framesImpacto.length) {
                 frame = framesImpacto[frameActual];
             } else {
                 return;
             }
         } else {
+            // Usar el stateTime de ProyectilBase para la animación
+            frameActual = (int)(stateTime / FRAME_DURACION) % framesVuelo.length;
             frame = framesVuelo[frameActual];
         }
 

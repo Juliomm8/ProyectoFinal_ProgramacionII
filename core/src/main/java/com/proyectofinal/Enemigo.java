@@ -104,17 +104,18 @@ public abstract class Enemigo {
         vida -= cantidad;
         System.out.println("Enemigo recibió " + cantidad + " de daño. Vida restante: " + vida);
 
-        // Cambiar a estado de golpe y reiniciar animación
-        estadoActual = EstadoEnemigo.HIT;
-        stateTime = 0; // Reiniciar tiempo para animación de hit
-
         // Verificar si el enemigo debe morir
         if (vida <= 0) {
             System.out.println("¡Enemigo ha muerto! Cambiando a animación de muerte");
+            vida = 0; // Asegurar que la vida no sea negativa
             estaVivo = false;
             estadoActual = EstadoEnemigo.DYING;
             stateTime = 0; // Reiniciar tiempo para animación de muerte
             tiempoPostMortem = 0f; // Reiniciar contador de tiempo post-mortem
+        } else {
+            // Solo cambiar a estado de golpe si no va a morir
+            estadoActual = EstadoEnemigo.HIT;
+            stateTime = 0; // Reiniciar tiempo para animación de hit
         }
     }
 
@@ -131,14 +132,26 @@ public abstract class Enemigo {
         // Si el enemigo está muerto (en animación de muerte)
         if (!estaVivo) {
             // Si está en estado de morir, comprobar si la animación ha terminado
-            if (estadoActual == EstadoEnemigo.DYING && deathAnimation.isAnimationFinished(stateTime)) {
-                // Incrementar el contador post-mortem
-                tiempoPostMortem += deltaTime;
+            if (estadoActual == EstadoEnemigo.DYING) {
+                // Verificar si la animación ha terminado
+                if (deathAnimation.isAnimationFinished(stateTime)) {
+                    // Incrementar el contador post-mortem
+                    tiempoPostMortem += deltaTime;
 
-                // Si ha pasado el tiempo de retraso, marcar para eliminar
-                if (tiempoPostMortem >= TIEMPO_ELIMINACION) {
-                    marcarParaEliminar = true;
+                    // Imprimir información de depuración
+                    System.out.println("Enemigo muerto, tiempo post-mortem: " + tiempoPostMortem + "/" + TIEMPO_ELIMINACION);
+
+                    // Si ha pasado el tiempo de retraso, marcar para eliminar
+                    if (tiempoPostMortem >= TIEMPO_ELIMINACION) {
+                        System.out.println("Marcando enemigo para eliminar");
+                        marcarParaEliminar = true;
+                    }
                 }
+            } else {
+                // Si el enemigo está muerto pero no en estado DYING, corregir el estado
+                estadoActual = EstadoEnemigo.DYING;
+                stateTime = 0f;
+                System.out.println("Corrigiendo estado de enemigo muerto a DYING");
             }
             return; // No procesar más la lógica de enemigo vivo
         }

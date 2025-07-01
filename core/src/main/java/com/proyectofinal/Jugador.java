@@ -107,11 +107,14 @@ public class Jugador extends Personaje {
     /**
      * Método de ataque genérico para el jugador.
      * Las subclases pueden sobrescribir este método para implementar su lógica específica.
+     *
      * @param enemigos Lista de enemigos que pueden ser afectados por el ataque
+     * @return
      */
-    public void atacar(List<? extends Enemigo> enemigos) {
+    public boolean atacar(List<? extends Enemigo> enemigos) {
         // Implementación genérica que puede ser sobrescrita
         System.out.println(nombre + " realiza un ataque básico");
+        return false;
     }
 
     // ——————————— Interacciones ———————————

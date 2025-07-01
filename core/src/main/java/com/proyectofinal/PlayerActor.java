@@ -270,7 +270,8 @@ public class PlayerActor extends Image {
             danoHechizo,
             velocidad,
             escala,
-            atraviesa
+            50f, // Radio de efecto del hechizo
+            atraviesa // Si atraviesa enemigos o no
         );
 
         // Configurar viewport si está disponible
@@ -671,18 +672,28 @@ public class PlayerActor extends Image {
             } else if (jugador instanceof Arquero && arqueroAttackFrames != null) {
                 // Lógica para Arquero
                 if (idx >= arqueroAttackFrames.length) {
-                    // IMPORTANTE: Primero consumir flecha y generarla, y luego marcar como no atacando
-                    // para evitar que la animación se quede trabada
+                    // IMPORTANTE: Primero verificar si el arquero puede disparar
+                    boolean pudoDisparar = false;
 
                     // Llamar a atacar para consumir flecha
                     if (enemigos != null) {
-                        ((Arquero)jugador).atacar(enemigos);
+                        pudoDisparar = ((Arquero)jugador).atacar(enemigos);
                     } else {
-                        ((Arquero)jugador).ataque1();
+                        // Modo alternativo si no hay enemigos
+                        if (((Arquero)jugador).getFlechas() > 0) {
+                            ((Arquero)jugador).ataque1();
+                            pudoDisparar = true;
+                        }
                     }
 
-                    // Generar la flecha visualmente
-                    generarFlecha();
+                    // Solo generar la flecha si pudo disparar
+                    if (pudoDisparar) {
+                        // Generar la flecha visualmente
+                        generarFlecha();
+                        System.out.println("Flecha generada exitosamente");
+                    } else {
+                        System.out.println("No se pudo generar la flecha - sin munición");
+                    }
 
                     // Resetear estado de ataque
                     atacando = false;
