@@ -34,7 +34,7 @@ public class HechizoActor extends ProyectilBase {
     public HechizoActor(TextureRegion[] frames, TextureRegion[] impactoFrames,
                         float x, float y, String direccion, int danio,
                         float velocidad, float escala, float radioEfecto) {
-        super(x, y, direccion, danio, velocidad);
+        super(x, y, direccion, danio + 20, velocidad);
 
         this.radioEfecto = radioEfecto;
         this.atraviesaEnemigos = false; // Por defecto no atraviesa enemigos

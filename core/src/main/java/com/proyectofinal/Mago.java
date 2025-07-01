@@ -12,7 +12,7 @@ public class Mago extends Jugador implements RecargableInterface {
                 float x, float y, float width, float height,
                 int manaInicial) {
         super(nombre, vida, ataque, x, y, width, height, 0);
-        this.mana = manaInicial;
+        this.mana = 50;
     }
 
     public int getMana() {

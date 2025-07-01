@@ -110,6 +110,8 @@ public class DungeonScreen extends PantallaBase {
         cam.update();
 
         stage = new Stage(new ScreenViewport(cam), batch);
+        playerActor.setStage(stage);
+        playerActor.setViewport(stage.getViewport());
         stage.addActor(playerActor);
 
         // Sistema de generación y gestión de pociones
@@ -328,7 +330,7 @@ public class DungeonScreen extends PantallaBase {
                 }
             } else if (e.getHitbox().overlaps(pjBounds)
                 && e.estadoActual == Enemigo.EstadoEnemigo.ATTACKING) {
-                playerActor.getJugador().recibirDanio(e.danio);
+                playerActor.getJugador().recibirDanio(10);
             }
         }
 

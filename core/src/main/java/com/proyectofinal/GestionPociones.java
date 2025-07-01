@@ -1,12 +1,9 @@
 package com.proyectofinal;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.math.Rectangle;
 
@@ -79,7 +76,7 @@ public class GestionPociones implements Disposable {
 
         // Generar nuevas pociones si es tiempo y no hay demasiadas
         if (tiempoParaNuevaPociones <= 0 && pociones.size() < MAX_POCIONES) {
-            generarPocionAleatoria();
+            generarPocionAleatoria(personaje);
             tiempoParaNuevaPociones = TIEMPO_ENTRE_POCIONES;
         }
 
@@ -104,7 +101,7 @@ public class GestionPociones implements Disposable {
     /**
      * Genera una poción aleatoria en una posición válida del mapa.
      */
-    private void generarPocionAleatoria() {
+    private void generarPocionAleatoria(Personaje personaje) {
         // Elegir tipo de poción aleatoriamente
         Pocion nuevaPocion;
         Texture texturaPocion;
@@ -117,8 +114,19 @@ public class GestionPociones implements Disposable {
             nuevaPocion = new PocionMana("Poción de Energía", MathUtils.random(5, 15));
             texturaPocion = texturaPocionMana;
         } else { // 20% probabilidad de poción de escudo
-            nuevaPocion = new PocionEscudo("Poción de Escudo", 20);
-            texturaPocion = texturaPocionEscudo;
+            if (personaje instanceof Caballero) {
+                nuevaPocion = new PocionEscudo("Poción de Escudo", 20);
+                texturaPocion = texturaPocionEscudo;
+            } else {
+                // Si el personaje no es Caballero, elegir entre HP o Mana
+                if (MathUtils.randomBoolean()) {
+                    nuevaPocion = new PocionHP("Poción de Vida", MathUtils.random(10, 30));
+                    texturaPocion = texturaPocionHP;
+                } else {
+                    nuevaPocion = new PocionMana("Poción de Energía", MathUtils.random(5, 15));
+                    texturaPocion = texturaPocionMana;
+                }
+            }
         }
 
         // Buscar posición válida (no en camino, no cerca de otras pociones o jugador)

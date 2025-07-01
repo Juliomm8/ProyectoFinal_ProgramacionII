@@ -257,7 +257,7 @@ public class PlayerActor extends Image {
         float escala = esAtaqueEspecial ? 1.5f : 1.0f;     // Hechizo más grande para ataque especial
         float velocidad = esAtaqueEspecial ? 500f : 400f;  // Mayor velocidad para hechizo especial
         boolean atraviesa = esAtaqueEspecial;              // Solo el especial atraviesa enemigos
-        int danoHechizo = mago.getDanoBase() * (esAtaqueEspecial ? 2 : 1); // Doble daño si es especial
+        int danoHechizo = mago.getDanoBase() * (esAtaqueEspecial ? 2 : 1) + 20;
 
         // Crear el hechizo con las propiedades determinadas
         HechizoActor hechizo = new HechizoActor(
@@ -300,8 +300,6 @@ public class PlayerActor extends Image {
         // Si no tiene flechas disponibles, no disparar
         if (arquero.getFlechas() <= 0) return;
 
-        // Consumir una flecha (ya no lo hacemos aquí, lo hace el arquero.atacar)
-        // arquero.ataque1();
 
         // Posición ligeramente adelantada según dirección
         float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : -16;
