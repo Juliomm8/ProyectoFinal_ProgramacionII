@@ -142,16 +142,7 @@ public class Jugador extends Personaje {
      * Recoge una poción y aplica su efecto.
      */
     public void recogerPocion(Pocion pocion) {
-        int cantidad = pocion.getCantidad();
-        if (pocion instanceof PocionHP) {
-            vida = Math.min(vida + cantidad, vidaMaxima);
-        } else if (pocion instanceof PocionEXP) {
-            nivel += cantidad;
-        } else if (pocion instanceof PocionMana) {
-            // Lógica para maná
-        } else if (pocion instanceof PocionFlechas) {
-            // Lógica para flechas
-        }
+        pocion.consumir(this);
     }
 
     /** Sube un nivel. */
