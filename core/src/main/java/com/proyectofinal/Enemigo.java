@@ -5,8 +5,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Disposable;
 
-public abstract class Enemigo {
+public abstract class Enemigo implements Disposable {
     protected float width, height;
 
     // Tiempo de retraso para eliminar el enemigo después de la animación de muerte
@@ -198,6 +199,7 @@ public abstract class Enemigo {
     /**
      * Libera los recursos utilizados por este enemigo
      */
+    @Override
     public void dispose() {
         // Las subclases pueden sobreescribir este método para liberar recursos adicionales
     }

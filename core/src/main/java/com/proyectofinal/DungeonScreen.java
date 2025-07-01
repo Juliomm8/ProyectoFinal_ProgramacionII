@@ -501,8 +501,8 @@ public class DungeonScreen extends PantallaBase {
             // Liberar recursos de los enemigos
             if (enemigos != null) {
                 for (Enemigo enemigo : enemigos) {
-                    if (enemigo != null && enemigo instanceof com.badlogic.gdx.utils.Disposable) {
-                        ((com.badlogic.gdx.utils.Disposable)enemigo).dispose();
+                    if (enemigo != null) {
+                        enemigo.dispose();
                     }
                 }
             }
