@@ -68,17 +68,19 @@ public class FlechaActor extends ProyectilBase {
         // Correctamente manejar la orientación según la dirección
         boolean debeEstarVolteado = "IZQUIERDA".equals(direccion);
 
-        for (TextureRegion f : framesVuelo) {
-            // Solo volteamos si no coincide con la orientación deseada
-            if (f.isFlipX() != debeEstarVolteado) {
-                f.flip(true, false);
+        if (framesVuelo != null) {
+            for (TextureRegion f : framesVuelo) {
+                if (f != null && f.isFlipX() != debeEstarVolteado) {
+                    f.flip(true, false);
+                }
             }
         }
 
-        for (TextureRegion f : framesImpacto) {
-            // Solo volteamos si no coincide con la orientación deseada
-            if (f.isFlipX() != debeEstarVolteado) {
-                f.flip(true, false);
+        if (framesImpacto != null) {
+            for (TextureRegion f : framesImpacto) {
+                if (f != null && f.isFlipX() != debeEstarVolteado) {
+                    f.flip(true, false);
+                }
             }
         }
     }
@@ -102,10 +104,12 @@ public class FlechaActor extends ProyectilBase {
         if (impactado) {
             // Animación de impacto
             tiempoImpacto += delta;
-            frameActual = (int)(tiempoImpacto / FRAME_DURACION);
-            if (frameActual >= framesImpacto.length) {
-                finalizado = true;
-                debeEliminarse = true;
+            if (framesImpacto != null) {
+                frameActual = (int)(tiempoImpacto / FRAME_DURACION);
+                if (frameActual >= framesImpacto.length) {
+                    finalizado = true;
+                    debeEliminarse = true;
+                }
             }
         } else {
             // La lógica de movimiento ya la maneja ProyectilBase en su método act()
@@ -177,17 +181,19 @@ public class FlechaActor extends ProyectilBase {
     public void draw(Batch batch, float parentAlpha) {
         if (batch == null) return; // Protección contra null
 
-        TextureRegion frame;
+        TextureRegion frame = null;
         if (impactado) {
-            if (frameActual < framesImpacto.length) {
+            if (framesImpacto != null && frameActual < framesImpacto.length) {
                 frame = framesImpacto[frameActual];
             } else {
                 return;
             }
         } else {
             // Usar el stateTime de ProyectilBase para la animación
-            frameActual = (int)(stateTime / FRAME_DURACION) % framesVuelo.length;
-            frame = framesVuelo[frameActual];
+            if (framesVuelo != null && framesVuelo.length > 0) {
+                frameActual = (int)(stateTime / FRAME_DURACION) % framesVuelo.length;
+                frame = framesVuelo[frameActual];
+            }
         }
 
         if (frame != null) {

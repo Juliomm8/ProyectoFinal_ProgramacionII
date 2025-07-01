@@ -43,9 +43,13 @@ public class HechizoActor extends ProyectilBase {
         // Establecer tamaño
         setSize(32 * escala, 32 * escala);
 
-        // Crear animaciones
-        animacion = new Animation<>(0.1f, frames);
-        animacionImpacto = new Animation<>(0.1f, impactoFrames);
+        // Crear animaciones solo si se proporcionan frames válidos
+        if (frames != null) {
+            animacion = new Animation<>(0.1f, frames);
+        }
+        if (impactoFrames != null) {
+            animacionImpacto = new Animation<>(0.1f, impactoFrames);
+        }
 
         // Ajustar hitbox circular para hechizos
         actualizarHitbox();
@@ -184,7 +188,7 @@ public class HechizoActor extends ProyectilBase {
 
         if (impactado) {
             // Si está impactado y la animación terminó, marcar para eliminar
-            if (animacionImpacto.isAnimationFinished(stateTime)) {
+            if (animacionImpacto != null && animacionImpacto.isAnimationFinished(stateTime)) {
                 if (atraviesaEnemigos) {
                     // Si atraviesa enemigos, volver a estado de vuelo
                     impactado = false;
@@ -227,11 +231,15 @@ public class HechizoActor extends ProyectilBase {
     public void draw(Batch batch, float parentAlpha) {
         if (batch == null) return; // Protección contra null
 
-        TextureRegion frame;
+        TextureRegion frame = null;
         if (impactado) {
-            frame = animacionImpacto.getKeyFrame(stateTime, false);
+            if (animacionImpacto != null) {
+                frame = animacionImpacto.getKeyFrame(stateTime, false);
+            }
         } else {
-            frame = animacion.getKeyFrame(stateTime, true);
+            if (animacion != null) {
+                frame = animacion.getKeyFrame(stateTime, true);
+            }
         }
 
         if (frame != null) {
