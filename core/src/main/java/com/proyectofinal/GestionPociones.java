@@ -26,6 +26,8 @@ public class GestionPociones implements Disposable {
     private List<PocionActor> pociones;
     private Stage stage;
     private MapaProcedural mapa;
+    private int mapWidth;
+    private int mapHeight;
     private Rectangle limitesJugador; // Para evitar generar pociones muy cerca del jugador
 
     // Texturas para las pociones
@@ -40,6 +42,8 @@ public class GestionPociones implements Disposable {
     public GestionPociones(Stage stage, MapaProcedural mapa) {
         this.stage = stage;
         this.mapa = mapa;
+        this.mapWidth = mapa.getWidthPixels();
+        this.mapHeight = mapa.getHeightPixels();
         this.pociones = new ArrayList<>();
         this.limitesJugador = new Rectangle(0, 0, 50, 50); // Inicialmente en origen
 
@@ -139,9 +143,9 @@ public class GestionPociones implements Disposable {
      * @return Vector2 con la posición o null si no se encontró
      */
     private Vector2 encontrarPosicionValida() {
-        // Obtener dimensiones del mapa
-        int maxX = (int) stage.getViewport().getWorldWidth();
-        int maxY = (int) stage.getViewport().getWorldHeight();
+        // Obtener dimensiones reales del mapa en pixeles
+        int maxX = mapWidth;
+        int maxY = mapHeight;
 
         // Obtener la posición actual de la cámara para generar pociones visibles
         float camX = stage.getViewport().getCamera().position.x;
@@ -152,10 +156,10 @@ public class GestionPociones implements Disposable {
         float viewportHeight = stage.getViewport().getWorldHeight();
 
         // Área visible donde preferimos colocar pociones (70% del área visible)
-        float minVisibleX = Math.max(100, camX - viewportWidth * 0.35f);
-        float maxVisibleX = Math.min(maxX - 100, camX + viewportWidth * 0.35f);
-        float minVisibleY = Math.max(100, camY - viewportHeight * 0.35f);
-        float maxVisibleY = Math.min(maxY - 100, camY + viewportHeight * 0.35f);
+        float minVisibleX = Math.max(0, camX - viewportWidth * 0.35f);
+        float maxVisibleX = Math.min(maxX, camX + viewportWidth * 0.35f);
+        float minVisibleY = Math.max(0, camY - viewportHeight * 0.35f);
+        float maxVisibleY = Math.min(maxY, camY + viewportHeight * 0.35f);
 
         // Intentar primero en el área visible con más intentos
         for (int intento = 0; intento < 30; intento++) {

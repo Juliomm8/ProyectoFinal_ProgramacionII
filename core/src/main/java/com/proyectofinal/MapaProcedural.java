@@ -375,6 +375,20 @@ public class MapaProcedural {
     }
 
     /**
+     * Devuelve el ancho del mapa en pixeles.
+     */
+    public int getWidthPixels() {
+        return width * TILE_SIZE;
+    }
+
+    /**
+     * Devuelve el alto del mapa en pixeles.
+     */
+    public int getHeightPixels() {
+        return height * TILE_SIZE;
+    }
+
+    /**
      * Obtiene el tile en (x,y), o PASTO_VERDE si está fuera de rango.
      */
     public Tile getTile(int x, int y) {
