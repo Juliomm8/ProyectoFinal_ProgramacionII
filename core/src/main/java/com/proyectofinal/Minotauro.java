@@ -110,13 +110,17 @@ public class Minotauro extends Enemigo {
      */
     @Override
     public void recibirDanio(int cantidad) {
+        // Si ya está muerto, no hacer nada
+        if (!estaVivo) return;
+
         // Forzar vida = 0 independientemente de la cantidad de daño
-        vida = 0; // Corregido: forzar a 0 en lugar de 10
+        vida = 0;
         estaVivo = false;
 
         // Cambiar a estado de muerte y reiniciar contador de animación
         estadoActual = EstadoEnemigo.DYING;
         stateTime = 0f;
+        tiempoPostMortem = 0f;
 
         System.out.println("¡Minotauro abatido de un solo golpe! Reproduciendo animación de muerte...");
     }
@@ -129,14 +133,7 @@ public class Minotauro extends Enemigo {
     }
 
     @Override
-    public void update(float deltaTime, float playerX, float playerY) {
-        stateTime += deltaTime;
-
-        // Si el minotauro está muerto, solo actualizar el tiempo de la animación
-        if (!estaVivo) {
-            return;
-        }
-
+    protected void actualizarComportamiento(float deltaTime, float playerX, float playerY) {
         // Si está recibiendo daño, mantener el estado de HIT durante un momento
         if (estadoActual == EstadoEnemigo.HIT) {
             if (hitAnimation.isAnimationFinished(stateTime)) {
@@ -181,17 +178,6 @@ public class Minotauro extends Enemigo {
     private boolean mirandoDerecha = true;
     private float ultimoX = 0;
 
-    // Flag para marcar que el enemigo debe ser eliminado del stage
-    private boolean marcarParaEliminar = false;
-
-    /**
-     * Comprueba si este enemigo debe ser eliminado del stage
-     * @return true si debe eliminarse
-     */
-    public boolean debeEliminarse() {
-        return marcarParaEliminar;
-    }
-
     @Override
     public void render(SpriteBatch batch) {
         // Si ya está marcado para eliminar, no renderizar
@@ -220,13 +206,6 @@ public class Minotauro extends Enemigo {
                 break;
             case DYING:
                 frameActual = deathAnimation.getKeyFrame(stateTime, false);
-
-                // Comprobar si la animación de muerte ha terminado
-                if (deathAnimation.isAnimationFinished(stateTime)) {
-                    System.out.println("Animación de muerte completada. Marcando Minotauro para eliminar.");
-                    marcarParaEliminar = true;
-                    return; // No renderizar más
-                }
                 break;
             default:
                 frameActual = idleAnimation.getKeyFrame(stateTime, true);

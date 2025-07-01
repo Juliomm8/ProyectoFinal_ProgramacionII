@@ -178,11 +178,14 @@ public class HechizoActor extends Actor {
         // Quitamos el check de impactando para permitir múltiples impactos con hechizo especial
 
         for (Enemigo e : enemigos) {
-            if (e == null || !e.estaVivo) continue; // Protección contra null y enemigos ya muertos
+            if (e == null || !e.estaVivo()) continue; // Usar método estaVivo() en lugar de acceder al campo directamente
 
             // Crear un rectángulo ligeramente más grande para facilitar la colisión
             Rectangle r = new Rectangle(e.getX(), e.getY(), 48, 48); // Aumentado de 32 a 48
             if (hitbox.overlaps(r)) {
+                // Registrar la colisión para depuración
+                System.out.println("¡Hechizo colisiona con enemigo! Estado enemigo: " + e.estadoActual);
+
                 // Forzar vida = 0 en el enemigo (muerte a un solo golpe)
                 e.recibirDanio(9999); // Valor muy alto para asegurar muerte inmediata
 

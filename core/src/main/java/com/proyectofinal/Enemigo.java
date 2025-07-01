@@ -9,6 +9,13 @@ import com.badlogic.gdx.math.Vector2;
 public abstract class Enemigo {
     protected float width, height;
 
+    // Tiempo de retraso para eliminar el enemigo después de la animación de muerte
+    protected static final float TIEMPO_ELIMINACION = 1.0f;
+    // Flag para indicar que el enemigo debe ser eliminado
+    protected boolean marcarParaEliminar = false;
+    // Contador para el tiempo después de la muerte
+    protected float tiempoPostMortem = 0f;
+
     public float getHeight() {
     return height;
     }
@@ -78,17 +85,36 @@ public abstract class Enemigo {
         return estaVivo;
     }
 
-    public void recibirDanio(int cantidad) {
-        if (!estaVivo) return;
+    /**
+     * Comprueba si este enemigo debe ser eliminado del stage
+     * @return true si debe eliminarse
+     */
+    public boolean debeEliminarse() {
+        return marcarParaEliminar;
+    }
 
+    public void recibirDanio(int cantidad) {
+        // Si ya está muerto, no hacer nada
+        if (!estaVivo) {
+            System.out.println("Enemigo ya está muerto, ignorando daño adicional");
+            return;
+        }
+
+        // Aplicar daño y cambiar a estado de golpe
         vida -= cantidad;
+        System.out.println("Enemigo recibió " + cantidad + " de daño. Vida restante: " + vida);
+
+        // Cambiar a estado de golpe y reiniciar animación
         estadoActual = EstadoEnemigo.HIT;
         stateTime = 0; // Reiniciar tiempo para animación de hit
 
+        // Verificar si el enemigo debe morir
         if (vida <= 0) {
+            System.out.println("¡Enemigo ha muerto! Cambiando a animación de muerte");
             estaVivo = false;
             estadoActual = EstadoEnemigo.DYING;
             stateTime = 0; // Reiniciar tiempo para animación de muerte
+            tiempoPostMortem = 0f; // Reiniciar contador de tiempo post-mortem
         }
     }
 
@@ -98,7 +124,33 @@ public abstract class Enemigo {
         recibirDanio(cantidad); // Redirigir al método con nombre correcto
     }
 
-    public abstract void update(float deltaTime, float playerX, float playerY);
+    public void update(float deltaTime, float playerX, float playerY) {
+        // Incrementar el tiempo de estado
+        stateTime += deltaTime;
+
+        // Si el enemigo está muerto (en animación de muerte)
+        if (!estaVivo) {
+            // Si está en estado de morir, comprobar si la animación ha terminado
+            if (estadoActual == EstadoEnemigo.DYING && deathAnimation.isAnimationFinished(stateTime)) {
+                // Incrementar el contador post-mortem
+                tiempoPostMortem += deltaTime;
+
+                // Si ha pasado el tiempo de retraso, marcar para eliminar
+                if (tiempoPostMortem >= TIEMPO_ELIMINACION) {
+                    marcarParaEliminar = true;
+                }
+            }
+            return; // No procesar más la lógica de enemigo vivo
+        }
+
+        // Implementación específica en las subclases
+        actualizarComportamiento(deltaTime, playerX, playerY);
+    }
+
+    /**
+     * Método abstracto para implementar el comportamiento específico de cada enemigo
+     */
+    protected abstract void actualizarComportamiento(float deltaTime, float playerX, float playerY);
 
     public abstract void render(SpriteBatch batch);
 
@@ -128,5 +180,12 @@ public abstract class Enemigo {
         y += direccion.y * velocidad * factorVelocidad * deltaTime;
 
         actualizarHitbox();
+    }
+
+    /**
+     * Libera los recursos utilizados por este enemigo
+     */
+    public void dispose() {
+        // Las subclases pueden sobreescribir este método para liberar recursos adicionales
     }
 }

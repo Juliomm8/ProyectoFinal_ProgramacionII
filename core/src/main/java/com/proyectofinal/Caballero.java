@@ -52,18 +52,43 @@ public class Caballero extends Jugador implements RecargableInterface {
      */
     public void atacar(List<? extends Enemigo> enemigos) {
         if (atacando || !puedeAtacar()) return;
+
+        // Iniciar animación de ataque
         atacando = true;
         tiempoAtaque = 0f;
         registrarAtaque();
         System.out.println(getNombre() + " realiza un ataque demoledor!");
 
-        if (enemigos != null) {
-            for (Enemigo e : enemigos) {
-                if (e.estaVivo() && estaEnRango(e)) {
-                    e.recibirDanio(Integer.MAX_VALUE);
+        // Verificar si hay enemigos para atacar
+        if (enemigos == null || enemigos.isEmpty()) {
+            System.out.println("No hay enemigos para atacar");
+            return;
+        }
+
+        // Contar enemigos antes del ataque
+        int enemigosVivos = 0;
+        for (Enemigo e : enemigos) {
+            if (e.estaVivo()) enemigosVivos++;
+        }
+        System.out.println("Enemigos vivos antes del ataque: " + enemigosVivos);
+
+        // Aplicar daño a los enemigos en rango
+        int enemigosGolpeados = 0;
+        for (Enemigo e : enemigos) {
+            if (e.estaVivo()) {
+                boolean enRango = estaEnRango(e);
+                System.out.println("Enemigo en posición (" + e.getX() + ", " + e.getY() + ") " +
+                                  (enRango ? "ESTÁ" : "NO ESTÁ") + " en rango");
+
+                if (enRango) {
+                    System.out.println("Aplicando daño letal al enemigo");
+                    e.recibirDanio(9999); // Usar un valor grande pero no MAX_VALUE para evitar overflow
+                    enemigosGolpeados++;
                 }
             }
         }
+
+        System.out.println("Enemigos golpeados en este ataque: " + enemigosGolpeados);
     }
 
     /** Lógica de animación de ataque y regeneración de escudo. */
@@ -87,21 +112,41 @@ public class Caballero extends Jugador implements RecargableInterface {
 
     /** Comprueba si un enemigo está en la zona frontal de ataque. */
     private boolean estaEnRango(Enemigo e) {
+        // Aumentar el tamaño vertical del área para facilitar colisiones
+        float alturaAmpliada = getHeight() * 1.5f;
+        float offsetY = (alturaAmpliada - getHeight()) / 2;
+
         Rectangle area;
         if ("DERECHA".equals(direccion)) {
-            area = new Rectangle(getX() + getWidth(),
-                getY(),
+            area = new Rectangle(
+                getX() + getWidth() * 0.5f, // Iniciar un poco antes para mejorar la detección
+                getY() - offsetY,
                 rangoAtaque,
-                getHeight());
+                alturaAmpliada);
         } else {
-            area = new Rectangle(getX() - rangoAtaque,
-                getY(),
+            area = new Rectangle(
+                getX() - rangoAtaque + getWidth() * 0.5f, // Ajustar posición para mejorar la detección
+                getY() - offsetY,
                 rangoAtaque,
-                getHeight());
+                alturaAmpliada);
         }
-        Rectangle hitE = new Rectangle(e.getX(), e.getY(),
-            e.getWidth(), e.getHeight());
-        return area.overlaps(hitE);
+
+        // Aumentar el tamaño del hitbox del enemigo para facilitar las colisiones
+        Rectangle hitE = new Rectangle(
+            e.getX(),
+            e.getY(),
+            e.getWidth(),
+            e.getHeight());
+
+        boolean enRango = area.overlaps(hitE);
+
+        if (enRango) {
+            System.out.println("¡Enemigo detectado en rango de ataque del Caballero!");
+            System.out.println("Posición del Caballero: (" + getX() + ", " + getY() + ")");
+            System.out.println("Posición del Enemigo: (" + e.getX() + ", " + e.getY() + ")");
+        }
+
+        return enRango;
     }
 
     /** ¿Está en plena animación de ataque? */

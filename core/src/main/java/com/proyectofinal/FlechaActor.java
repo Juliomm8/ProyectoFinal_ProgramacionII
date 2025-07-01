@@ -163,7 +163,7 @@ public class FlechaActor extends Actor {
         if (impactando || finalizado) return;
 
         for (Enemigo e : enemigos) {
-            if (e == null || !e.estaVivo) continue; // Protección contra null y enemigos ya muertos
+            if (e == null || !e.estaVivo()) continue; // Usar método estaVivo() en lugar de acceder al campo directamente
 
             // Crear un rectángulo ligeramente más grande para facilitar la colisión
             Rectangle r = new Rectangle(e.getX(), e.getY(), 48, 48); // Aumentado de 32 a 48
