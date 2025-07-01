@@ -84,15 +84,6 @@ public class Arquero extends Jugador implements RecargableInterface {
     }
 
     /**
-     * Activa ráfaga de flechas ilimitadas durante segundos especificados.
-     */
-    public void activarRafagaIlimitada(float duracionSegundos) {
-        modoIlimitado = true;
-        tiempoIlimitado = duracionSegundos;
-        System.out.println(getNombre() + " activa ráfaga ilimitada por " + duracionSegundos + "s.");
-    }
-
-    /**
      * Obtiene el tiempo restante de ráfaga ilimitada.
      * @return tiempo en segundos, 0 si no está en modo ilimitado
      */

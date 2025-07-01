@@ -11,11 +11,6 @@ public class Arbol extends ElementoDeMapa {
     }
 
     @Override
-    public void actualizar(float delta) {
-
-    }
-
-    @Override
     public void colocar(float x, float y) {
         // Guardamos la posición original para renderizado
         this.posX = x;
@@ -31,11 +26,6 @@ public class Arbol extends ElementoDeMapa {
 
         // Configuramos el collider con el tamaño y la posición del tronco
         this.collider.set(troncoX, troncoY, troncoWidth, troncoHeight);
-    }
-
-    @Override
-    public void crearCollider() {
-        // Aquí puedes agregar lógica adicional para modificar el collider si es necesario
     }
 
     // Método para obtener el collider

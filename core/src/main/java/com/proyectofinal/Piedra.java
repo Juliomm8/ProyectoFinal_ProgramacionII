@@ -11,11 +11,6 @@ public class Piedra extends ElementoDeMapa {
     }
 
     @Override
-    public void actualizar(float delta) {
-
-    }
-
-    @Override
     public void colocar(float x, float y) {
         // Guardamos la posición original para renderizado
         this.posX = x;
@@ -23,11 +18,6 @@ public class Piedra extends ElementoDeMapa {
 
         // Creamos un collider de tamaño cero (sin colisión)
         this.collider.set(0, 0, 0, 0);
-    }
-
-    @Override
-    public void crearCollider() {
-        // Implementación adicional si es necesaria
     }
 
     @Override

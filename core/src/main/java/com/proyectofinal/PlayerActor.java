@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
@@ -305,7 +304,7 @@ public class PlayerActor extends Image {
         // arquero.ataque1();
 
         // Posición ligeramente adelantada según dirección
-        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : -16; // Ajuste para izquierda
+        float offsetX = "DERECHA".equals(jugador.direccion) ? getWidth() : -16;
 
         // Clonamos los frames para evitar problemas de orientación compartida
         TextureRegion[] flechaFramesClone = new TextureRegion[flechaFrames.length];
@@ -390,35 +389,10 @@ public class PlayerActor extends Image {
     }
 
     /**
-     * Comprueba colisiones de todos los proyectiles en el stage con los enemigos.
-     * Debe ser llamado desde la pantalla principal del juego.
-     */
-    public void comprobarColisionesProyectiles(List<? extends Enemigo> enemigos) {
-        if (stage == null || enemigos == null || enemigos.isEmpty()) return;
-
-        // Comprobamos todos los proyectiles activos en el stage
-        for (Actor actor : stage.getActors()) {
-            if (actor instanceof FlechaActor) {
-                ((FlechaActor) actor).comprobarColisiones(enemigos);
-            } else if (actor instanceof HechizoActor) {
-                ((HechizoActor) actor).comprobarColisiones(enemigos);
-            }
-        }
-    }
-
-    /**
      * Lista de enemigos en la pantalla actual, necesaria para procesar ataques correctamente.
      * Debe ser configurada por la pantalla principal del juego.
      */
     private List<? extends Enemigo> enemigosActuales;
-
-    /**
-     * Establece la lista de enemigos para procesar colisiones y ataques.
-     * @param enemigos Lista de enemigos en la pantalla actual
-     */
-    public void setEnemigos(List<? extends Enemigo> enemigos) {
-        this.enemigosActuales = enemigos;
-    }
 
     @Override
     public void act(float delta) {

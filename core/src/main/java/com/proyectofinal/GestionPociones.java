@@ -52,8 +52,8 @@ public class GestionPociones implements Disposable {
      */
     private void cargarTexturas() {
         try {
-            texturaPocionHP = new Texture("Pociones/pocion_hp.png");
-            texturaPocionMana = new Texture("Pociones/pocion_mana.png");
+            texturaPocionHP = new Texture("Pociones/pocionHP.png");
+            texturaPocionMana = new Texture("Pociones/pocionMana.png");
             texturaPocionEscudo = new Texture("Pociones/pocionEscudo.png");
         } catch (Exception e) {
             System.err.println("Error al cargar texturas de pociones: " + e.getMessage());

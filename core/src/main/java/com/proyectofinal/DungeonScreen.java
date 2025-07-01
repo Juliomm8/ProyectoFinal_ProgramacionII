@@ -9,7 +9,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import java.util.ArrayList;
@@ -62,9 +61,6 @@ public class DungeonScreen extends PantallaBase {
         initUI();
     }
 
-    // Este método fue fusionado con manejarEntrada
-    // para evitar actualización duplicada
-
     @Override
     protected void initUI() {
         // 2.1) Batch, fuente y cámara
@@ -98,7 +94,7 @@ public class DungeonScreen extends PantallaBase {
                 jugadorLogico = new Jugador("Héroe", 100, 10, 100f, 100f, 32f, 32f, 1);
                 texPlayer = new Texture("PersonajesPrincipales/Arquero/arquero.png");
         }
-        playerActor = new PlayerActor(jugadorLogico, texPlayer);  // Asegúrate de que esta línea se ejecute
+        playerActor = new PlayerActor(jugadorLogico, texPlayer);
 
         // Inicializar la lista de enemigos
         enemigos = new ArrayList<>();

@@ -162,18 +162,7 @@ public class Caballero extends Jugador implements RecargableInterface {
         return enRango;
     }
 
-    /** ¿Está en plena animación de ataque? */
-    public boolean estaAtacando() {
-        return atacando;
-    }
-
-    /** Tiempo transcurrido desde que inició su último ataque. */
-    public float getTiempoAtaque() {
-        return tiempoAtaque;
-    }
-
     // ——— RecargableInterface ———
-
     @Override
     public void recargar(int cantidad) {
         escudo = Math.min(escudo + cantidad, escudoMaximo);
@@ -181,7 +170,6 @@ public class Caballero extends Jugador implements RecargableInterface {
     }
 
     // ——— Absorción de daño con escudo ———
-
     @Override
     public void recibirDanio(int cantidad) {
         if (cantidad <= 0) {
@@ -201,17 +189,5 @@ public class Caballero extends Jugador implements RecargableInterface {
 
     public String getEscudo() {
         return "Escudo: " + escudo + "/" + escudoMaximo;
-    }
-
-    public void aumentarEscudo(int valor) {
-        escudoMaximo += valor;
-        System.out.println(getNombre() + " aumenta su escudo a " + escudoMaximo);
-        if (escudo > escudoMaximo) {
-            escudo = escudoMaximo;
-        }
-        if (escudo < 0) {
-            escudo = 0;
-        }
-        System.out.println(getNombre() + " ahora tiene " + escudo + " de escudo.");
     }
 }

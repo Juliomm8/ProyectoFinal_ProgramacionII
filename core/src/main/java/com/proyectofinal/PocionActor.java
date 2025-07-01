@@ -159,14 +159,6 @@ public class PocionActor extends Image {
     }
 
     /**
-     * Libera los recursos utilizados por la poción.
-     */
-    public void dispose() {
-        // No liberamos la textura aquí porque puede ser compartida
-        // entre varias pociones
-    }
-
-    /**
      * Devuelve la poción asociada a este actor.
      */
     public Pocion getPocion() {

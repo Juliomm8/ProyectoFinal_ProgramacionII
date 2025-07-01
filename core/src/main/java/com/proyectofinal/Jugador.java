@@ -138,13 +138,6 @@ public class Jugador extends Personaje {
         if (vida < 0) vida = 0;
     }
 
-    /**
-     * Recoge una poción y aplica su efecto.
-     */
-    public void recogerPocion(Pocion pocion) {
-        pocion.consumir(this);
-    }
-
     /** Sube un nivel. */
     public void subirNivel() {
         nivel++;
