@@ -329,7 +329,7 @@ public class DungeonScreen extends PantallaBase {
             }
             if (e.getHitbox().overlaps(pjBounds)
                 && e.estadoActual == Enemigo.EstadoEnemigo.ATTACKING) {
-                playerActor.getJugador().recibirDanio(10);
+                playerActor.getJugador().recibirDanio(e.getDanio());
             }
         }
 
