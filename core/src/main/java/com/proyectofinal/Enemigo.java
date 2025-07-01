@@ -50,6 +50,11 @@ public abstract class Enemigo implements Disposable {
     protected Animation<TextureRegion> hitAnimation;
     protected Animation<TextureRegion> deathAnimation;
 
+    // Tiempo (en segundos) de reutilización entre ataques.
+    protected float cooldownAttack = 0f;
+    // Instante en nanosegundos del último ataque realizado.
+    protected long lastAttackTime = 0L;
+
     public Enemigo(float x, float y, int vida, int danio, float velocidad) {
         this.x = x;
         this.y = y;
@@ -126,45 +131,64 @@ public abstract class Enemigo implements Disposable {
         }
     }
 
+    /**
+     * Comprueba si el enemigo puede ejecutar un nuevo ataque.
+     *
+     * @return {@code true} si ha transcurrido el tiempo de reutilización.
+     */
+    protected boolean canAttack() {
+        return com.badlogic.gdx.utils.TimeUtils.nanoTime() - lastAttackTime >= (long) (cooldownAttack * 1_000_000_000L);
+    }
+
     // Mantener método anterior para compatibilidad con código existente
     @Deprecated
     public void recibirDano(int cantidad) {
         recibirDanio(cantidad); // Redirigir al método con nombre correcto
     }
 
-    public void update(float deltaTime, float playerX, float playerY) {
-        // Incrementar el tiempo de estado
-        stateTime += deltaTime;
+    /**
+     * Actualiza el estado y comportamiento del enemigo.
+     *
+     * @param delta    tiempo transcurrido desde el último frame
+     * @param playerX  posición X del jugador para la IA
+     * @param playerY  posición Y del jugador para la IA
+     */
+    public void update(float delta, float playerX, float playerY) {
+        stateTime += delta;
 
-        // Si el enemigo está muerto (en animación de muerte)
         if (!estaVivo) {
-            // Si está en estado de morir, comprobar si la animación ha terminado
-            if (estadoActual == EstadoEnemigo.DYING) {
-                // Verificar si la animación ha terminado
-                if (deathAnimation.isAnimationFinished(stateTime)) {
-                    // Incrementar el contador post-mortem
-                    tiempoPostMortem += deltaTime;
-
-                    // Imprimir información de depuración
-                    System.out.println("Enemigo muerto, tiempo post-mortem: " + tiempoPostMortem + "/" + TIEMPO_ELIMINACION);
-
-                    // Si ha pasado el tiempo de retraso, marcar para eliminar
-                    if (tiempoPostMortem >= TIEMPO_ELIMINACION) {
-                        System.out.println("Marcando enemigo para eliminar");
-                        marcarParaEliminar = true;
-                    }
-                }
-            } else {
-                // Si el enemigo está muerto pero no en estado DYING, corregir el estado
+            if (estadoActual != EstadoEnemigo.DYING) {
                 estadoActual = EstadoEnemigo.DYING;
                 stateTime = 0f;
-                System.out.println("Corrigiendo estado de enemigo muerto a DYING");
+            } else if (deathAnimation.isAnimationFinished(stateTime)) {
+                tiempoPostMortem += delta;
+                if (tiempoPostMortem >= TIEMPO_ELIMINACION) {
+                    marcarParaEliminar = true;
+                }
             }
-            return; // No procesar más la lógica de enemigo vivo
+            return;
         }
 
-        // Implementación específica en las subclases
-        actualizarComportamiento(deltaTime, playerX, playerY);
+        if (estadoActual == EstadoEnemigo.HIT) {
+            if (hitAnimation != null && hitAnimation.isAnimationFinished(stateTime)) {
+                estadoActual = EstadoEnemigo.IDLE;
+                stateTime = 0f;
+            } else {
+                return;
+            }
+        }
+
+        if (estadoActual == EstadoEnemigo.ATTACKING) {
+            if (attackAnimation != null && attackAnimation.isAnimationFinished(stateTime)) {
+                afterAttack();
+                estadoActual = EstadoEnemigo.IDLE;
+                stateTime = 0f;
+            } else {
+                return;
+            }
+        }
+
+        actualizarComportamiento(delta, playerX, playerY);
     }
 
     /**
@@ -173,6 +197,16 @@ public abstract class Enemigo implements Disposable {
     protected abstract void actualizarComportamiento(float deltaTime, float playerX, float playerY);
 
     public abstract void render(SpriteBatch batch);
+
+    /** Hook ejecutado justo antes de iniciar la animación de ataque. */
+    protected void beforeAttack() {
+        // Implementación opcional en subclases
+    }
+
+    /** Hook ejecutado tras finalizar la animación de ataque. */
+    protected void afterAttack() {
+        // Implementación opcional en subclases
+    }
 
     protected void moverHaciaJugador(float playerX, float playerY, float deltaTime) {
         // Calcular dirección hacia el jugador

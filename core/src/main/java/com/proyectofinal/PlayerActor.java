@@ -74,9 +74,9 @@ public class PlayerActor extends Image {
     private static final float IDLE_FRAME_DUR = 0.2f; // Más lento (0.2 segundos por frame)
 
     /**
-    * Dirección actual para la que están orientados los frames
-    * Usada para detectar cambios de dirección y voltear frames solo cuando sea necesario
-    */
+     * Dirección actual para la que están orientados los frames
+     * Usada para detectar cambios de dirección y voltear frames solo cuando sea necesario
+     */
 
     private String direccionActualFrames = "DERECHA"; // Por defecto, los sprites miran a la derecha
 
