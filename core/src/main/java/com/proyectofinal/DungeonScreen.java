@@ -44,8 +44,8 @@ public class DungeonScreen extends PantallaBase {
     // Tamaño de cada tile en píxeles (ajústalo a tu proyecto)
     private static final int TILE_SIZE = 32;
 
-    // Jugador y pociones
-    private Texture texPlayer, texHP, texEXP, texMana, texEscudo, texMunicion;
+    // Jugador y textura para el personaje
+    private Texture texPlayer;
 
     // Añadir esta lista para manejar los enemigos
     private List<Enemigo> enemigos;
@@ -116,6 +116,9 @@ public class DungeonScreen extends PantallaBase {
         stage = new Stage(new ScreenViewport(cam), batch);
         stage.addActor(playerActor);
 
+        // Sistema de generación y gestión de pociones
+        gestionPociones = new GestionPociones(stage, generator);
+
         // Inicializar el HUD del jugador
         playerHUD = new PlayerHUD(playerActor.getJugador());
 
@@ -129,27 +132,6 @@ public class DungeonScreen extends PantallaBase {
         texHierbaV = new Texture("Mapa/Pasto/hiervaVerde.png");
         texHierbaA = new Texture("Mapa/Pasto/hiervaAmarilla.png");
 
-        // 6) Cargar y colocar pociones (idéntico al tuyo)
-        texHP = new Texture("Pociones/pocionHP.png");
-        texEXP = new Texture("Pociones/pocionXP.png");
-        crearPocionActor(new PocionHP("Poción Vida", 30), texHP, 100, 150);
-        crearPocionActor(new PocionEXP("Poción EXP", 1), texEXP, 200, 150);
-        switch (playerClass) {
-            case "Arquero":
-                texMunicion = new Texture("Pociones/pocionMunicion.png");
-                crearPocionActor(new PocionFlechas("Poción Munición", 5), texMunicion, 300, 150);
-                break;
-            case "Mago":
-                texMana = new Texture("Pociones/pocionMana.png");
-                crearPocionActor(new PocionMana("Poción Maná", 20), texMana, 300, 150);
-                break;
-            case "Caballero":
-                texEscudo = new Texture("Pociones/pocionEscudo.png");
-                crearPocionActor(new PocionEscudo("Poción Escudo", 20), texEscudo, 300, 150);
-                break;
-        }
-        // 9) Detección de colisiones poción–jugador
-        Rectangle pjBounds = playerActor.getBounds();
     }
 
     /**
@@ -275,12 +257,6 @@ public class DungeonScreen extends PantallaBase {
     }
 
 
-    private void crearPocionActor(Pocion pocion, Texture tex, float x, float y) {
-        PocionActor actor = new PocionActor(pocion, tex);
-        actor.setPosition(x, y);
-        stage.addActor(actor);
-    }
-
     @Override
     public void render(float delta) {
         // 1) Limpiar pantalla
@@ -289,6 +265,9 @@ public class DungeonScreen extends PantallaBase {
 
         // 2) Manejar entrada genérica (spawn y actualización de enemigos)
         manejarEntrada(delta);
+
+        // Actualizar sistema de pociones
+        gestionPociones.actualizar(delta, playerActor.getBounds(), playerActor.getJugador());
 
         // 3) Centrar cámara en el jugador
         float px = playerActor.getX() + playerActor.getWidth() * 0.5f;
@@ -357,14 +336,7 @@ public class DungeonScreen extends PantallaBase {
             }
         }
 
-        // 9) Colisiones poción→jugador
-        pjBounds = playerActor.getBounds();
-        for (Actor a : stage.getActors()) {
-            if (a instanceof PocionActor pa && pa.getBounds().overlaps(pjBounds)) {
-                playerActor.getJugador().recogerPocion(pa.getPocion());
-                pa.remove();
-            }
-        }
+
 
         // 10) Dibujar árboles
         batch.begin();
@@ -469,13 +441,8 @@ public class DungeonScreen extends PantallaBase {
             if (batch != null) batch.dispose();
             if (font != null) font.dispose();
 
-            // Liberar texturas de jugador y pociones
+            // Liberar textura del jugador
             if (texPlayer != null) texPlayer.dispose();
-            if (texHP != null) texHP.dispose();
-            if (texEXP != null) texEXP.dispose();
-            if (texMana != null) texMana.dispose();
-            if (texEscudo != null) texEscudo.dispose();
-            if (texMunicion != null) texMunicion.dispose();
 
             // Liberar texturas de terreno
             if (texPastoVVariants != null) {
