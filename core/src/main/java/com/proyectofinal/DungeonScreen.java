@@ -225,7 +225,7 @@ public class DungeonScreen extends PantallaBase {
                 }
 
                 if (!demasiadoCerca) {
-                    Minotauro minotauro = new Minotauro(spawnX, spawnY);
+                    Minotauro minotauro = new Minotauro(spawnX, spawnY, playerActor.getJugador());
                     // Establecer estado inmediatamente para que persiga al jugador
                     minotauro.estadoActual = Enemigo.EstadoEnemigo.RUNNING;
                     enemigos.add(minotauro);

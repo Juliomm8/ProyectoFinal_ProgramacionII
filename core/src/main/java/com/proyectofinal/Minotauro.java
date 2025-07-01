@@ -12,6 +12,7 @@ public class Minotauro extends Enemigo {
     private static final float FRAME_DURATION   = 0.1f;
     private static final float DETECTION_RANGE  = 2000f;
     private static final float ATTACK_RANGE     = 25f;
+    private final Jugador jugador;
 
     private Texture[] idleTextures;
     private Texture[] walkTextures;
@@ -24,11 +25,12 @@ public class Minotauro extends Enemigo {
     private boolean facingRight = true;
     private float lastX;
 
-    public Minotauro(float x, float y) {
+    public Minotauro(float x, float y, Jugador jugador) {
         super(x, y,
             /* vida */   1,
-            /* danio */  10,
+            /* danio */  1,
             /* velocidad */ 85f + (float)(Math.random() * 10));
+        this.jugador = jugador;
         // Cooldown de 1 segundo
         this.cooldownAttack = 1.0f;
     }
@@ -119,6 +121,8 @@ public class Minotauro extends Enemigo {
         if (distancia <= ATTACK_RANGE && canAttack()) {
             estadoActual = EstadoEnemigo.ATTACKING;
             stateTime    = 0f;
+            jugador.recibirDanio(getDanio());
+
         } else if (distancia <= DETECTION_RANGE) {
             estadoActual = EstadoEnemigo.RUNNING;
             moverHaciaJugador(playerX, playerY, deltaTime);
