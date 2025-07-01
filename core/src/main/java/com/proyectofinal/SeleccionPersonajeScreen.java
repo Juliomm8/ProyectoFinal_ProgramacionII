@@ -24,7 +24,7 @@ public class SeleccionPersonajeScreen extends PantallaBase {
         btnArquero.addListener(event -> {
             if (btnArquero.isPressed()) {
                 game.setSelectedClass("Arquero");
-                game.setScreen(new DungeonScreen("Arquero"));
+                game.setScreen(new DungeonScreen(game, "Arquero"));
             }
             return false;
         });
@@ -33,7 +33,7 @@ public class SeleccionPersonajeScreen extends PantallaBase {
         btnMago.addListener(event -> {
             if (btnMago.isPressed()) {
                 game.setSelectedClass("Mago");
-                game.setScreen(new DungeonScreen("Mago"));
+                game.setScreen(new DungeonScreen(game, "Mago"));
             }
             return false;
         });
@@ -42,7 +42,7 @@ public class SeleccionPersonajeScreen extends PantallaBase {
         btnCaballero.addListener(event -> {
             if (btnCaballero.isPressed()) {
                 game.setSelectedClass("Caballero");
-                game.setScreen(new DungeonScreen("Caballero"));
+                game.setScreen(new DungeonScreen(game, "Caballero"));
             }
             return false;
         });

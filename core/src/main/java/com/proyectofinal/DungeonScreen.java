@@ -20,6 +20,7 @@ import java.util.Random;
  * Pantalla principal con mundo procedural "infinito", usando variantes de pasto.
  */
 public class DungeonScreen extends PantallaBase {
+    private final RPGGame juego;
     private static final int MAP_WIDTH = 150;
     private static final int MAP_HEIGHT = 150;
     private static final int spawnTileX = MAP_WIDTH / 2;  // = 50
@@ -56,9 +57,10 @@ public class DungeonScreen extends PantallaBase {
     private static final int MAX_MINOTAUROS = 30; // Máximo de minotauros simultáneos
     private float tiempoUltimoSpawn = 0f; // Tiempo desde el último spawn
 
-    public DungeonScreen(String playerClass) {
+    public DungeonScreen(RPGGame juego, String playerClass) {
+        this.juego = juego;
         this.playerClass = playerClass;
-        jugador = new Jugador("Héroe", 100, 10, 100f, 100f, 32f, 32f, 1);  // Esto pasa todos los parámetros necesarios
+        jugador = new Jugador("Héroe", 100, 10, 100f, 100f, 32f, 32f, 1);
         initUI();
     }
 
@@ -331,6 +333,11 @@ public class DungeonScreen extends PantallaBase {
                 && e.estadoActual == Enemigo.EstadoEnemigo.ATTACKING) {
                 playerActor.getJugador().recibirDanio(e.getDanio());
             }
+        }
+
+        if (playerActor.getJugador().estaMuerto()) {
+            juego.setScreen(new PantallaMuerte(juego));
+            return;
         }
 
         // 10) Dibujar árboles

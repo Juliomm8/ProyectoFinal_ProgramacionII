@@ -12,18 +12,25 @@ public class Jugador extends Personaje {
     private int nivel;              // Nivel del jugador
     private int vidaMaxima;         // Límite superior de vida
     protected String direccion;     // "IZQUIERDA" o "DERECHA"
-    public float getWidth()  { return width; }
-    public float getHeight() { return height; }
+    private boolean muerto;
+
+    public float getWidth() {
+        return width;
+    }
+
+    public float getHeight() {
+        return height;
+    }
 
     /**
-     * @param nombre    Nombre del jugador
-     * @param vida      Puntos de vida iniciales
-     * @param ataque    Daño base de ataque
-     * @param x         Posición X inicial
-     * @param y         Posición Y inicial
-     * @param width     Ancho del collider
-     * @param height    Alto del collider
-     * @param nivel     Nivel inicial
+     * @param nombre Nombre del jugador
+     * @param vida   Puntos de vida iniciales
+     * @param ataque Daño base de ataque
+     * @param x      Posición X inicial
+     * @param y      Posición Y inicial
+     * @param width  Ancho del collider
+     * @param height Alto del collider
+     * @param nivel  Nivel inicial
      */
     public Jugador(String nombre,
                    int vida,
@@ -32,8 +39,7 @@ public class Jugador extends Personaje {
                    float y,
                    float width,
                    float height,
-                   int nivel)
-    {
+                   int nivel) {
         super(nombre, vida, ataque);
         this.vidaMaxima = vida;
         this.x = x;
@@ -41,7 +47,8 @@ public class Jugador extends Personaje {
         this.width = width;
         this.height = height;
         this.nivel = nivel;
-        this.direccion = "DERECHA"; // valor por defecto
+        this.direccion = "DERECHA";
+        this.muerto = false;
     }
 
     // ——————————— Getters ———————————
@@ -56,6 +63,16 @@ public class Jugador extends Personaje {
     public int getVidaMaxima() {
         return vidaMaxima;
     }
+
+    public boolean estaMuerto() {
+        return muerto;
+    }
+
+    public void morir() {
+        muerto = true;
+        System.out.println("El jugador ha muerto");
+    }
+
 
     /** Daño base que inflige el jugador. */
     public int getDanoBase() {
@@ -133,11 +150,11 @@ public class Jugador extends Personaje {
             vida = vidaMaxima;
         }
 
-        if (vida <= 0){
+        if (vida <= 0 && !muerto){
             vida = 0;
-            System.out.println("esta mrd es larga para poder verla en la consola(ojalá funcione)");
+            morir();
+            System.out.println(nombre + " ha muerto con");
         }
-
     }
 
     /** Sube un nivel. */
