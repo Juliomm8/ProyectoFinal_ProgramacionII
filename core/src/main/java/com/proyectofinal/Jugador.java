@@ -132,7 +132,12 @@ public class Jugador extends Personaje {
         if (danio < 0 && vida > vidaMaxima) {
             vida = vidaMaxima;
         }
-        if (vida < 0) vida = 0;
+
+        if (vida <= 0){
+            vida = 0;
+            System.out.println("esta mrd es larga para poder verla en la consola(ojalá funcione)");
+        }
+
     }
 
     /** Sube un nivel. */

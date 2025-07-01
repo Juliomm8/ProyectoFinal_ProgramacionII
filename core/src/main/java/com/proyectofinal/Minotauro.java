@@ -9,8 +9,8 @@ import com.badlogic.gdx.graphics.Pixmap;
 
 public class Minotauro extends Enemigo {
     private static final float FRAME_DURATION = 0.1f;
-    private static final float DETECTION_RANGE = 1000f; // Aumentado para detectar al jugador desde más lejos
-    private static final float ATTACK_RANGE = 100f;
+    private static final float DETECTION_RANGE = 2000f; // Aumentado para detectar al jugador desde más lejos
+    private static final float ATTACK_RANGE = 25f;
 
     // Referencias a las texturas de cada animación para liberarlas posteriormente
     private Texture[] idleTextures;
@@ -26,7 +26,7 @@ public class Minotauro extends Enemigo {
     }
 
     public Minotauro(float x, float y) {
-        super(x, y, 1, 10, 80f + (float)(Math.random() * 10));
+        super(x, y, 1, 10, 85f + (float)(Math.random() * 10));
     }
 
     @Override
@@ -166,7 +166,7 @@ public class Minotauro extends Enemigo {
 
         // Calcular distancia al jugador
         float distanciaAlJugador = (float) Math.sqrt(
-            Math.pow(playerX - x, 2) + Math.pow(playerY - y, 2)
+            Math.pow(playerX - x, 2f) + Math.pow(playerY - y, 2f)
         );
 
         // Actualizar estado y comportamiento basado en la distancia
