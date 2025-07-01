@@ -26,7 +26,6 @@ public class DungeonScreen extends PantallaBase {
     private static final int spawnTileY = MAP_HEIGHT / 2;  // = 50
     private final long seed = System.currentTimeMillis();
 
-    private GestionPociones gestionPociones;
     private PlayerHUD playerHUD;
     private SpriteBatch batch;
     private BitmapFont font;
@@ -507,10 +506,6 @@ public class DungeonScreen extends PantallaBase {
                 }
             }
 
-            // Liberar recursos del sistema de pociones
-            if (gestionPociones != null) {
-                gestionPociones.dispose();
-            }
             // Liberar recursos del HUD
             if (playerHUD != null) {
                 playerHUD.dispose();
