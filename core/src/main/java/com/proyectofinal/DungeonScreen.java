@@ -51,7 +51,7 @@ public class DungeonScreen extends PantallaBase {
     private List<Enemigo> enemigos;
     private static final int NUMERO_INICIAL_MINOTAUROS = 10;
     private static final float DISTANCIA_MINIMA_SPAWN = 500f; // Distancia mínima al jugador para spawn
-    private static final float TIEMPO_ENTRE_SPAWNS = 2f; // Tiempo entre oleadas de spawn (segundos)
+    private static final float TIEMPO_ENTRE_SPAWNS = 4f; // Tiempo entre oleadas de spawn (segundos) - aumentado para reducir frecuencia
     private static final int MINOTAUROS_POR_OLEADA = 3; // Cantidad de minotauros por oleada
     private static final int MAX_MINOTAUROS = 30; // Máximo de minotauros simultáneos
     private float tiempoUltimoSpawn = 0f; // Tiempo desde el último spawn

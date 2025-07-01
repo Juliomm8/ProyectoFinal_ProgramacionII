@@ -17,7 +17,8 @@ public class PocionActor extends Image {
     private final Pocion pocion;
     private Texture texture;
     private Rectangle hitbox;
-    private float tiempoVida = 10f; // Duración máxima en segundos
+    private static final float TIEMPO_VIDA_MAXIMO = 10f; // Duración máxima en segundos
+    private float tiempoVida = TIEMPO_VIDA_MAXIMO; // Inicializar con el tiempo máximo
     private boolean recogida = false;
     private boolean debeEliminarse = false;
     private float tiempoTranscurrido = 0f;
@@ -31,10 +32,10 @@ public class PocionActor extends Image {
         super(new TextureRegionDrawable(new TextureRegion(texture)));
         this.pocion = pocion;
         this.texture = texture;
-        setSize(32, 32);  // tamaño predeterminado
+        setSize(40, 40);  // tamaño aumentado para mejor visibilidad
 
-        // Crear un hitbox ligeramente más pequeño que la textura
-        float hitboxScale = 0.8f;
+        // Crear un hitbox ligeramente más grande para facilitar la recogida
+        float hitboxScale = 0.9f;
         hitbox = UtilColisiones.crearHitbox(getX(), getY(), getWidth(), getHeight(), hitboxScale);
     }
 
@@ -80,8 +81,12 @@ public class PocionActor extends Image {
         }
 
         // Efecto de flotación para la poción (movimiento suave vertical)
-        float offsetY = MathUtils.sin(tiempoTranscurrido * 2) * 3f;
-        setY(getY() + offsetY - MathUtils.sin((tiempoTranscurrido - delta) * 2) * 3f);
+        // Aumentado para mayor visibilidad
+        float offsetY = MathUtils.sin(tiempoTranscurrido * 3) * 5f;
+        setY(getY() + offsetY - MathUtils.sin((tiempoTranscurrido - delta) * 3) * 5f);
+
+        // Añadir también un ligero giro para llamar más la atención
+        setRotation(MathUtils.sin(tiempoTranscurrido * 1.5f) * 8f);
 
         // Actualizar hitbox para seguir a la poción
         actualizarHitbox();
@@ -100,11 +105,15 @@ public class PocionActor extends Image {
         float alpha = parentAlpha;
         if (tiempoVida < 3f) {
             // Parpadear rápidamente en los últimos 3 segundos
-            alpha = parentAlpha * (MathUtils.sin(tiempoTranscurrido * 10) * 0.3f + 0.7f);
+            alpha = parentAlpha * (MathUtils.sin(tiempoTranscurrido * 15) * 0.5f + 0.5f);
         }
 
-        batch.setColor(1, 1, 1, alpha);
-        super.draw(batch, alpha);
+        // Hacer que la poción también se vuelva más transparente conforme pasa el tiempo
+        float factorTiempo = tiempoVida / TIEMPO_VIDA_MAXIMO;
+        float alphaFinal = alpha * Math.max(0.5f, factorTiempo); // Nunca menos del 50% de transparencia
+
+        batch.setColor(1, 1, 1, alphaFinal);
+        super.draw(batch, alphaFinal);
         batch.setColor(1, 1, 1, 1); // Restaurar
     }
 

@@ -143,13 +143,30 @@ public class GestionPociones implements Disposable {
         int maxX = (int) stage.getViewport().getWorldWidth();
         int maxY = (int) stage.getViewport().getWorldHeight();
 
-        // Intentar un número limitado de veces
-        for (int intento = 0; intento < 50; intento++) {
-            float x = MathUtils.random(100, maxX - 100);
-            float y = MathUtils.random(100, maxY - 100);
+        // Obtener la posición actual de la cámara para generar pociones visibles
+        float camX = stage.getViewport().getCamera().position.x;
+        float camY = stage.getViewport().getCamera().position.y;
 
-            // Comprobar si la posición es adecuada (no en camino, no cerca de otras pociones o jugador)
+        // Dimensiones de la ventana visible
+        float viewportWidth = stage.getViewport().getWorldWidth();
+        float viewportHeight = stage.getViewport().getWorldHeight();
+
+        // Área visible donde preferimos colocar pociones (70% del área visible)
+        float minVisibleX = Math.max(100, camX - viewportWidth * 0.35f);
+        float maxVisibleX = Math.min(maxX - 100, camX + viewportWidth * 0.35f);
+        float minVisibleY = Math.max(100, camY - viewportHeight * 0.35f);
+        float maxVisibleY = Math.min(maxY - 100, camY + viewportHeight * 0.35f);
+
+        // Intentar primero en el área visible con más intentos
+        for (int intento = 0; intento < 30; intento++) {
+            float x = MathUtils.random(minVisibleX, maxVisibleX);
+            float y = MathUtils.random(minVisibleY, maxVisibleY);
+
+            // Comprobar si la posición es adecuada
             boolean posicionValida = true;
+
+            // Logear información sobre el intento de generación
+            System.out.println("Intentando generar poción en área visible: (" + x + ", " + y + ")");
 
             // Verificar que no esté cerca del jugador
             if (Math.abs(x - limitesJugador.x) < 200 && Math.abs(y - limitesJugador.y) < 200) {

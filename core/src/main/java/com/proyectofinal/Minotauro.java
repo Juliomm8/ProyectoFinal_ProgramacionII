@@ -17,9 +17,9 @@ public class Minotauro extends Enemigo {
     }
 
     public Minotauro(float x, float y) {
-        // Dar a cada minotauro una velocidad ligeramente diferente (entre 140 y 160)
-        // para evitar que se muevan en grupo
-        super(x, y, 100, 20, 140f + (float)(Math.random() * 20)); // vida: 100, daño: 20, velocidad: variada
+        // Reducir la velocidad de los minotauros (entre 80 y 90)
+        // para que sean más lentos y el jugador pueda escapar más fácilmente
+        super(x, y, 100, 20, 80f + (float)(Math.random() * 10)); // vida: 100, daño: 20, velocidad: reducida
     }
 
     @Override
