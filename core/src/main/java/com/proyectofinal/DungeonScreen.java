@@ -26,6 +26,8 @@ public class DungeonScreen extends PantallaBase {
     private static final int spawnTileY = MAP_HEIGHT / 2;  // = 50
     private final long seed = System.currentTimeMillis();
 
+    private GestionPociones gestionPociones;
+    private PlayerHUD playerHUD;
     private SpriteBatch batch;
     private BitmapFont font;
     private OrthographicCamera cam;
@@ -113,6 +115,9 @@ public class DungeonScreen extends PantallaBase {
 
         stage = new Stage(new ScreenViewport(cam), batch);
         stage.addActor(playerActor);
+
+        // Inicializar el HUD del jugador
+        playerHUD = new PlayerHUD(playerActor.getJugador());
 
         // 2.5) Cargar texturas de tiles
         texPastoVVariants = new Texture[4];
@@ -370,6 +375,18 @@ public class DungeonScreen extends PantallaBase {
 
         // 11) HUD y lógica específica de clase
         batch.begin();
+        // Renderizar el HUD con posición fija en la pantalla
+        batch.setProjectionMatrix(new com.badlogic.gdx.math.Matrix4().setToOrtho2D(0, 0,
+                                    com.badlogic.gdx.Gdx.graphics.getWidth(),
+                                    com.badlogic.gdx.Gdx.graphics.getHeight()));
+
+        // Usar PlayerHUD para mostrar información fija en pantalla
+        playerHUD.render(batch);
+
+        // Restaurar la matriz de proyección a la cámara del juego
+        batch.setProjectionMatrix(cam.combined);
+
+        // Continuar con el HUD normal seguido al jugador
         playerActor.dibujarHUD(batch, font);
         if (playerActor.getJugador() instanceof Arquero arq) {
             arq.actualizar(delta);
@@ -488,6 +505,15 @@ public class DungeonScreen extends PantallaBase {
                         ((com.badlogic.gdx.utils.Disposable)enemigo).dispose();
                     }
                 }
+            }
+
+            // Liberar recursos del sistema de pociones
+            if (gestionPociones != null) {
+                gestionPociones.dispose();
+            }
+            // Liberar recursos del HUD
+            if (playerHUD != null) {
+                playerHUD.dispose();
             }
         } catch (Exception e) {
             System.err.println("Error al liberar recursos en DungeonScreen: " + e.getMessage());

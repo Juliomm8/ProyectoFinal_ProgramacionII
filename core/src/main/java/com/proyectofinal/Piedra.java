@@ -29,4 +29,9 @@ public class Piedra extends ElementoDeMapa {
     public void crearCollider() {
         // Implementación adicional si es necesaria
     }
+
+    @Override
+    public Rectangle getCollider() {
+        return this.collider;
+    }
 }

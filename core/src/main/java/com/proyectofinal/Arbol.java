@@ -39,6 +39,7 @@ public class Arbol extends ElementoDeMapa {
     }
 
     // Método para obtener el collider
+    @Override
     public Rectangle getCollider() {
         return this.collider; // Retorna el collider ajustado al tronco
     }
