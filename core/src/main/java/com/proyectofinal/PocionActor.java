@@ -6,46 +6,40 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.math.MathUtils;
 
 /**
- * Actor que representa una poción en el mundo del juego.
- * Se encarga de renderizar la poción y controlar su tiempo de vida.
+ * Clase visual que representa una pocion dentro del juego.
+ * Maneja su render, colision, animacion y desaparicion automatica.
  */
 public class PocionActor extends Image {
-    private final Pocion pocion;
-    private Texture texture;
-    private Rectangle hitbox;
-    private static final float TIEMPO_VIDA_MAXIMO = 10f; // Duración máxima en segundos
-    private float tiempoVida = TIEMPO_VIDA_MAXIMO; // Inicializar con el tiempo máximo
-    private boolean recogida = false;
-    private boolean debeEliminarse = false;
+    private final Pocion pocion;               // Referencia a la pocion logica
+    private Texture texture;                   // Textura visual de la pocion
+    private Rectangle hitbox;                  // Hitbox para colisiones con el jugador
+
+    private static final float TIEMPO_VIDA_MAXIMO = 10f; // Tiempo que dura en pantalla
+    private float tiempoVida = TIEMPO_VIDA_MAXIMO;
     private float tiempoTranscurrido = 0f;
 
+    private boolean recogida = false;          // Si ya fue recogida
+    private boolean debeEliminarse = false;    // Si debe eliminarse en el siguiente frame
+
     /**
-     * Constructor simple para la poción con tamaño predeterminado.
-     * @param pocion Objeto poción a representar
-     * @param texture Textura para visualizar la poción
+     * Constructor simple con tamaño por defecto.
      */
     public PocionActor(Pocion pocion, Texture texture) {
         super(new TextureRegionDrawable(new TextureRegion(texture)));
         this.pocion = pocion;
         this.texture = texture;
-        setSize(40, 40);  // tamaño aumentado para mejor visibilidad
+        setSize(40, 40); // Tamaño visual
 
-        // Crear un hitbox ligeramente más grande para facilitar la recogida
+        // Hitbox mas grande para facilitar recogida
         float hitboxScale = 0.9f;
         hitbox = UtilColisiones.crearHitbox(getX(), getY(), getWidth(), getHeight(), hitboxScale);
     }
 
     /**
-     * Constructor completo para la poción con parámetros adicionales.
-     * @param pocion Objeto poción a representar
-     * @param texture Textura para visualizar la poción
-     * @param x Posición X inicial
-     * @param y Posición Y inicial
-     * @param escala Escala de la textura
+     * Constructor completo para ubicar la pocion con escala personalizada.
      */
     public PocionActor(Pocion pocion, Texture texture, float x, float y, float escala) {
         super(new TextureRegionDrawable(new TextureRegion(texture)));
@@ -54,7 +48,7 @@ public class PocionActor extends Image {
         setPosition(x, y);
         setSize(texture.getWidth() * escala, texture.getHeight() * escala);
 
-        // Crear un hitbox ligeramente más pequeño que la textura
+        // Hitbox mas pequeno
         float hitboxScale = 0.8f;
         hitbox = UtilColisiones.crearHitbox(x, y, getWidth(), getHeight(), hitboxScale);
     }
@@ -63,73 +57,70 @@ public class PocionActor extends Image {
     public void act(float delta) {
         super.act(delta);
 
-        // Si ya fue recogida o debe eliminarse, no procesar más
+        // Si ya fue recogida o debe desaparecer
         if (recogida || debeEliminarse) {
             remove();
             return;
         }
 
-        // Actualizar tiempo de vida
+        // Actualizar tiempo
         tiempoTranscurrido += delta;
         tiempoVida -= delta;
 
-        // Si se acabó el tiempo, marcar para eliminar
+        // Si se acaba el tiempo
         if (tiempoVida <= 0) {
             debeEliminarse = true;
-            System.out.println("Poción expirada: " + pocion.getNombre());
+            System.out.println("Pocion expirada: " + pocion.getNombre());
             return;
         }
 
-        // Efecto de flotación para la poción (movimiento suave vertical)
-        // Aumentado para mayor visibilidad
+        // Efecto de flotacion (suave movimiento vertical)
         float offsetY = MathUtils.sin(tiempoTranscurrido * 3) * 5f;
         setY(getY() + offsetY - MathUtils.sin((tiempoTranscurrido - delta) * 3) * 5f);
 
-        // Añadir también un ligero giro para llamar más la atención
+        // Pequeño giro oscilante
         setRotation(MathUtils.sin(tiempoTranscurrido * 1.5f) * 8f);
 
-        // Actualizar hitbox para seguir a la poción
+        // Actualizar posicion del hitbox
         actualizarHitbox();
     }
 
+    /**
+     * Reposiciona el hitbox segun la pocion.
+     */
     private void actualizarHitbox() {
         hitbox.setPosition(getX() + (getWidth() - hitbox.width) / 2,
-                          getY() + (getHeight() - hitbox.height) / 2);
+            getY() + (getHeight() - hitbox.height) / 2);
     }
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
         if (batch == null || texture == null || recogida || debeEliminarse) return;
 
-        // Calcular un factor de parpadeo cuando la poción esté a punto de desaparecer
+        // Parpadeo en los ultimos segundos
         float alpha = parentAlpha;
         if (tiempoVida < 3f) {
-            // Parpadear rápidamente en los últimos 3 segundos
             alpha = parentAlpha * (MathUtils.sin(tiempoTranscurrido * 15) * 0.5f + 0.5f);
         }
 
-        // Hacer que la poción también se vuelva más transparente conforme pasa el tiempo
+        // Reduccion progresiva de visibilidad
         float factorTiempo = tiempoVida / TIEMPO_VIDA_MAXIMO;
-        float alphaFinal = alpha * Math.max(0.5f, factorTiempo); // Nunca menos del 50% de transparencia
+        float alphaFinal = alpha * Math.max(0.5f, factorTiempo); // Nunca menor a 0.5
 
         batch.setColor(1, 1, 1, alphaFinal);
         super.draw(batch, alphaFinal);
-        batch.setColor(1, 1, 1, 1); // Restaurar
+        batch.setColor(1, 1, 1, 1); // Restaurar color
     }
 
     /**
-     * Verifica si el jugador ha colisionado con esta poción.
-     * @param jugador Rectángulo que representa al jugador
-     * @return true si hay colisión
+     * Verifica si el jugador colisiona con la pocion.
      */
     public boolean comprobarColision(Rectangle jugador) {
-        // Agregar una pequeña tolerancia para facilitar la colisión
         return UtilColisiones.colisionConTolerancia(hitbox, jugador, 5f);
     }
 
     /**
-     * Marca la poción como recogida y aplicar sus efectos al jugador.
-     * @param personaje Personaje que recoge la poción
+     * Aplica el efecto de la pocion al personaje si es valida.
      */
     public void recoger(Personaje personaje) {
         if (recogida) return;
@@ -137,42 +128,29 @@ public class PocionActor extends Image {
         recogida = true;
         System.out.println(personaje.getNombre() + " recoge " + pocion.getNombre());
 
-        // Aplicar el efecto de la poción
         try {
             pocion.consumir(personaje);
         } catch (InvalidPotionException e) {
             System.out.println(e.getMessage());
-            // Si no se pudo consumir, revertir la recogida
-            recogida = false;
+            recogida = false; // Revertir si no se pudo consumir
             return;
         }
 
-        // Marcar para eliminar en el próximo frame
         debeEliminarse = true;
     }
 
-    /**
-     * Indica si esta poción debe ser eliminada del juego.
-     */
     public boolean debeEliminarse() {
         return debeEliminarse;
     }
 
-    /**
-     * Indica si esta poción ha sido recogida.
-     */
     public boolean estaRecogida() {
         return recogida;
     }
 
-    /**
-     * Devuelve la poción asociada a este actor.
-     */
     public Pocion getPocion() {
         return pocion;
     }
 
-    /** Retorna el rectángulo de colisión de esta poción */
     public Rectangle getBounds() {
         return new Rectangle(getX(), getY(), getWidth(), getHeight());
     }

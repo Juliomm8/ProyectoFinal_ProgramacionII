@@ -9,21 +9,28 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import java.util.List;
 
 /**
- * Clase base para todos los proyectiles (flechas, hechizos, etc.)
+ * Clase base abstracta para todos los proyectiles del juego (como flechas o hechizos).
+ * Incluye logica comun de movimiento, animacion, colision e impacto.
  */
 public abstract class ProyectilBase extends Actor {
-    protected Animation<TextureRegion> animacion;
-    protected Animation<TextureRegion> animacionImpacto;
-    protected float stateTime = 0f;
-    protected String direccion; // "DERECHA" o "IZQUIERDA"
-    protected int danio;
-    protected float velocidad;
-    protected boolean impactado = false;
-    protected boolean debeEliminarse = false;
-    protected Rectangle hitbox = new Rectangle();
+
+    protected Animation<TextureRegion> animacion;            // Animacion durante el vuelo
+    protected Animation<TextureRegion> animacionImpacto;     // Animacion al impactar
+    protected float stateTime = 0f;                           // Tiempo acumulado para las animaciones
+    protected String direccion;                              // Direccion del disparo: "DERECHA" o "IZQUIERDA"
+    protected int danio;                                     // Cantidad de danio que causa
+    protected float velocidad;                               // Velocidad de movimiento
+    protected boolean impactado = false;                     // Marca si ya impacto
+    protected boolean debeEliminarse = false;                // Marca si debe eliminarse del escenario
+    protected Rectangle hitbox = new Rectangle();            // Rectangulo de colision
 
     /**
-     * Constructor base para proyectiles
+     * Constructor base del proyectil.
+     * @param x posicion inicial en X
+     * @param y posicion inicial en Y
+     * @param direccion direccion del proyectil ("DERECHA" o "IZQUIERDA")
+     * @param danio cantidad de danio que causa
+     * @param velocidad velocidad de desplazamiento
      */
     public ProyectilBase(float x, float y, String direccion, int danio, float velocidad) {
         setPosition(x, y);
@@ -34,16 +41,16 @@ public abstract class ProyectilBase extends Actor {
     }
 
     /**
-     * Actualiza la posición de la hitbox basada en la posición del actor
+     * Actualiza la posicion de la hitbox en base a la posicion del proyectil.
+     * Puede ajustarse segun el tamano real del sprite.
      */
     protected void actualizarHitbox() {
-        // Ajustar según el tamaño real del proyectil
-        hitbox.set(getX(), getY(), 16, 8);
+        hitbox.set(getX(), getY(), 16, 8); // Tamano por defecto
     }
 
     /**
-     * Actualiza el estado del proyectil
-     * @param delta tiempo transcurrido entre frames
+     * Actualiza el estado del proyectil en cada frame.
+     * Maneja el movimiento y el ciclo de vida.
      */
     @Override
     public void act(float delta) {
@@ -51,17 +58,18 @@ public abstract class ProyectilBase extends Actor {
         stateTime += delta;
 
         if (!impactado) {
-            // Mover el proyectil en la dirección adecuada
+            // Movimiento continuo en la direccion asignada
             float movX = "DERECHA".equals(direccion) ? velocidad * delta : -velocidad * delta;
             moveBy(movX, 0);
             actualizarHitbox();
 
-            // Eliminar si sale de la pantalla
-            if (getX() < -50 || getX() > 1000) { // Ajustar según tamaño del mundo
+            // Eliminar si sale del area visible
+            if (getX() < -50 || getX() > 1000) {
                 debeEliminarse = true;
             }
+
         } else {
-            // Si está en animación de impacto, comprobar si ha terminado
+            // Si ya impacto, esperar a que termine la animacion de impacto
             if (animacionImpacto.isAnimationFinished(stateTime)) {
                 debeEliminarse = true;
             }
@@ -69,14 +77,15 @@ public abstract class ProyectilBase extends Actor {
     }
 
     /**
-     * Comprueba colisiones con enemigos
-     * @param enemigos lista de enemigos a comprobar
+     * Comprueba si el proyectil colisiona con algun enemigo.
+     * Si impacta, aplica danio y cambia a animacion de impacto.
+     * @param enemigos lista de enemigos a verificar
      */
     public void comprobarColisiones(List<? extends Enemigo> enemigos) {
         if (impactado || enemigos == null || enemigos.isEmpty()) return;
 
-        // Imprimir información de depuración sobre el proyectil
-        System.out.println("Comprobando colisiones para proyectil en posición (" + getX() + ", " + getY() + ")");
+        // Debug: imprimir datos de posicion y colision
+        System.out.println("Comprobando colisiones para proyectil en posicion (" + getX() + ", " + getY() + ")");
         System.out.println("Hitbox proyectil: x=" + hitbox.x + ", y=" + hitbox.y + ", w=" + hitbox.width + ", h=" + hitbox.height);
 
         for (Enemigo e : enemigos) {
@@ -85,26 +94,26 @@ public abstract class ProyectilBase extends Actor {
                 boolean colision = hitbox.overlaps(enemyHitbox);
 
                 if (colision) {
-                    System.out.println("¡Colisión detectada con enemigo en (" + e.getX() + ", " + e.getY() + ")!");
-                    // Aplicar daño al enemigo
-                    e.recibirDanio(danio);
-
-                    // Cambiar a estado de impacto
+                    System.out.println("¡Colision detectada con enemigo en (" + e.getX() + ", " + e.getY() + ")!");
+                    e.recibirDanio(danio);  // Aplicar danio
                     impactado = true;
-                    stateTime = 0f; // Reiniciar para animación de impacto
-                    break;
+                    stateTime = 0f;         // Reiniciar para animacion de impacto
+                    break;                  // Solo un impacto por proyectil
                 }
             }
         }
     }
 
     /**
-     * Dibujar el proyectil con la animación adecuada
+     * Dibuja el proyectil con la animacion correspondiente.
+     * @param batch el batch donde se dibuja
+     * @param parentAlpha opacidad heredada
      */
     @Override
     public void draw(Batch batch, float parentAlpha) {
         TextureRegion frame;
 
+        // Elegir animacion segun si ya impacto o no
         if (impactado) {
             frame = animacionImpacto.getKeyFrame(stateTime, false);
         } else {
@@ -112,6 +121,7 @@ public abstract class ProyectilBase extends Actor {
         }
 
         if (frame != null) {
+            // Dibujar volteado si va a la izquierda
             if ("DERECHA".equals(direccion)) {
                 batch.draw(frame, getX(), getY(), getWidth(), getHeight());
             } else {
@@ -121,16 +131,16 @@ public abstract class ProyectilBase extends Actor {
     }
 
     /**
-     * Indica si el proyectil debe eliminarse
+     * Indica si el proyectil ya cumplio su ciclo y debe eliminarse del escenario.
      */
     public boolean debeEliminarse() {
         return debeEliminarse;
     }
 
     /**
-     * Libera recursos
+     * Metodo opcional para que subclases liberen recursos si es necesario.
      */
     public void dispose() {
-        // Las subclases pueden sobrescribir para liberar recursos específicos
+        // Sobrescribir si hay recursos que liberar
     }
 }

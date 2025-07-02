@@ -4,68 +4,66 @@ import java.util.List;
 import com.badlogic.gdx.math.Rectangle;
 
 /**
- * Caballero: combate cuerpo a cuerpo con escudo, cooldown de ataque,
- * un solo golpe letal, y regeneración de escudo.
+ * Caballero: personaje especializado en combate cuerpo a cuerpo.
+ * Posee un escudo que absorbe daño, ataque con hitbox frontal,
+ * y un cooldown entre ataques.
  */
 public class Caballero extends Jugador implements RecargableInterface {
-    // ——— Escudo ———
-    private int escudo;
-    private int escudoMaximo;
-    private float tiempoRegeneracionEscudo;
-    private static final float TIEMPO_REGENERACION_BASE = 2.0f; // seg
 
-    // ——— Ataque ———
-    private float rangoAtaque = 80f;              // píxeles
-    private float duracionAnimacionAtaque = 0.5f; // seg
-    private boolean atacando = false;
-    private float tiempoAtaque = 0f;
-    /** Indica si la hitbox de ataque está activa */
-    private boolean hitboxActiva = false;
+    // ——— Atributos del escudo ———
+    private int escudo;                      // Escudo actual
+    private int escudoMaximo;                // Máximo escudo posible
+    private float tiempoRegeneracionEscudo;  // Temporizador para regenerar escudo
+    private static final float TIEMPO_REGENERACION_BASE = 2.0f; // Tiempo en segundos para regenerar 1 punto de escudo
 
-    /** Hitbox del ataque cuerpo a cuerpo para detectar colisiones. */
-    private Rectangle hitboxAtaque = new Rectangle();
+    // ——— Atributos del ataque ———
+    private float rangoAtaque = 80f;              // Alcance horizontal del golpe
+    private float duracionAnimacionAtaque = 0.5f; // Duración de la animación del ataque
+    private boolean atacando = false;             // ¿Está atacando actualmente?
+    private float tiempoAtaque = 0f;              // Tiempo transcurrido desde que comenzó a atacar
+    private boolean hitboxActiva = false;         // ¿Está activa la hitbox de daño?
 
+    private Rectangle hitboxAtaque = new Rectangle(); // Área que detecta colisiones con enemigos durante el ataque
 
-    // Cooldown en ms
+    // ——— Cooldown entre ataques ———
     private long tiempoUltimoAtaque = 0L;
-    private static final long COOLDOWN_MS = 500L; // 0.5 seg
+    private static final long COOLDOWN_MS = 500L; // Tiempo en milisegundos entre ataques
 
     /**
-     * @param escudoInicial tanto escudoMaximo como valor de escudo al inicio
+     * Constructor del Caballero.
+     * @param escudoInicial Valor inicial y máximo del escudo.
      */
     public Caballero(String nombre, int vida, int ataque,
                      float x, float y, float width, float height,
                      int escudoInicial) {
-        super(nombre, vida, ataque, x, y, width, height, /*nivel*/1);
+        super(nombre, vida, ataque, x, y, width, height, 1);
         this.escudo = escudoInicial;
         this.escudoMaximo = escudoInicial;
         this.tiempoRegeneracionEscudo = 0f;
-        this.vidaMaxima = 200;
+        this.vidaMaxima = 200;  // Vida máxima predeterminada del caballero
         this.vida = vidaMaxima;
     }
 
-    /** ¿Ha pasado el cooldown para poder atacar de nuevo? */
+    // ——— ATAQUE ———
+
+    /** Verifica si ha pasado el tiempo de cooldown para volver a atacar. */
     public boolean puedeAtacar() {
         return System.currentTimeMillis() - tiempoUltimoAtaque >= COOLDOWN_MS;
     }
 
-    /** Registra el instante del ataque para el cooldown. */
+    /** Registra el instante actual como momento del último ataque. */
     public void registrarAtaque() {
         tiempoUltimoAtaque = System.currentTimeMillis();
     }
 
-    /**
-     * Inicia el ataque activando la hitbox y marcando el estado.
-     */
+    /** Activa la animación e hitbox del ataque. */
     public void iniciarAtaque() {
         atacando = true;
         tiempoAtaque = 0f;
         hitboxActiva = true;
     }
 
-    /**
-     * Finaliza el ataque y desactiva la hitbox.
-     */
+    /** Finaliza la animación e inactiva la hitbox del ataque. */
     public void terminarAtaque() {
         atacando = false;
         hitboxActiva = false;
@@ -73,12 +71,12 @@ public class Caballero extends Jugador implements RecargableInterface {
     }
 
     /**
-     * Posiciona la hitbox de ataque justo frente al caballero. Se utiliza
-     * únicamente mientras se ejecuta la animación de ataque.
+     * Actualiza la posición de la hitbox según la dirección del caballero.
+     * La hitbox se ubica justo frente a él.
      */
     private void actualizarHitboxAtaque() {
-        float altura = getHeight() * 1.5f;
-        float offsetY = (altura - getHeight()) / 2f;
+        float altura = getHeight() * 1.5f; // Abarca un poco más que su altura
+        float offsetY = (altura - getHeight()) / 2f; // Centra verticalmente
 
         float x = "DERECHA".equals(direccion)
             ? getX() + getWidth()
@@ -88,13 +86,12 @@ public class Caballero extends Jugador implements RecargableInterface {
     }
 
     /**
-     * Mata de un solo golpe a cualquier enemigo en la misma fila
-     * y dentro de rango frontal.
-     *
-     * @return
+     * Ataca a todos los enemigos dentro de la hitbox activa.
+     * Solo funciona si está atacando y la hitbox está activa.
      */
     public boolean atacar(List<? extends Enemigo> enemigos) {
         if (!atacando || !hitboxActiva) return false;
+
         hitboxActiva = false;
         atacando = true;
         tiempoAtaque = 0f;
@@ -102,32 +99,17 @@ public class Caballero extends Jugador implements RecargableInterface {
 
         System.out.println(getNombre() + " realiza un ataque demoledor!");
 
-        // Verificar si hay enemigos para atacar
         if (enemigos == null || enemigos.isEmpty()) {
             System.out.println("No hay enemigos para atacar");
             return false;
         }
 
-        // Contar enemigos antes del ataque
-        int enemigosVivos = 0;
-        for (Enemigo e : enemigos) {
-            if (e.estaVivo()) enemigosVivos++;
-        }
-        System.out.println("Enemigos vivos antes del ataque: " + enemigosVivos);
-
-        // Aplicar daño a los enemigos en rango
         int enemigosGolpeados = 0;
         for (Enemigo e : enemigos) {
-            if (e.estaVivo()) {
-                boolean enRango = estaEnRango(e);
-                System.out.println("Enemigo en posición (" + e.getX() + ", " + e.getY() + ") " +
-                    (enRango ? "ESTÁ" : "NO ESTÁ") + " en rango");
-
-                if (enRango) {
-                    System.out.println("Aplicando daño al enemigo");
-                    e.recibirDanio(getDanoBase());
-                    enemigosGolpeados++;
-                }
+            if (e.estaVivo() && estaEnRango(e)) {
+                System.out.println("Aplicando daño al enemigo");
+                e.recibirDanio(getDanoBase());
+                enemigosGolpeados++;
             }
         }
 
@@ -135,10 +117,20 @@ public class Caballero extends Jugador implements RecargableInterface {
         return enemigosGolpeados > 0;
     }
 
-    /** Lógica de animación de ataque y regeneración de escudo. */
+    /** Verifica si un enemigo está dentro del área de la hitbox. */
+    private boolean estaEnRango(Enemigo e) {
+        return hitboxAtaque.overlaps(e.getHitbox());
+    }
+
+    // ——— ACTUALIZACIÓN GENERAL ———
+
+    /**
+     * Lógica que se ejecuta en cada frame:
+     * - Maneja la animación del ataque
+     * - Regenera escudo si no está completo
+     */
     @Override
     public void actualizar(float delta) {
-        // Animación de ataque
         if (atacando) {
             actualizarHitboxAtaque();
             tiempoAtaque += delta;
@@ -146,28 +138,26 @@ public class Caballero extends Jugador implements RecargableInterface {
                 atacando = false;
             }
         }
-        // Regeneración de escudo
+
         tiempoRegeneracionEscudo += delta;
-        if (tiempoRegeneracionEscudo >= TIEMPO_REGENERACION_BASE
-            && escudo < escudoMaximo) {
+        if (tiempoRegeneracionEscudo >= TIEMPO_REGENERACION_BASE && escudo < escudoMaximo) {
             escudo++;
             tiempoRegeneracionEscudo = 0f;
         }
     }
 
-    /** Comprueba si un enemigo está en la zona frontal de ataque. */
-    private boolean estaEnRango(Enemigo e) {
-        return hitboxAtaque.overlaps(e.getHitbox());
-    }
+    // ——— INTERFAZ RecargableInterface ———
 
-    // ——— RecargableInterface ———
+    /** Aumenta el escudo sin pasarse del máximo. */
     @Override
     public void recargar(int cantidad) {
         escudo = Math.min(escudo + cantidad, escudoMaximo);
         System.out.println(getNombre() + " recupera escudo: +" + cantidad);
     }
 
-    // ——— Absorción de daño con escudo ———
+    // ——— RECEPCIÓN DE DAÑO ———
+
+    /** El escudo absorbe daño primero; si se agota, la vida recibe el resto. */
     @Override
     public void recibirDanio(int cantidad) {
         if (cantidad <= 0) {
@@ -185,6 +175,7 @@ public class Caballero extends Jugador implements RecargableInterface {
         }
     }
 
+    /** Devuelve el estado actual del escudo en texto. */
     public String getEscudo() {
         return "Escudo: " + escudo + "/" + escudoMaximo;
     }

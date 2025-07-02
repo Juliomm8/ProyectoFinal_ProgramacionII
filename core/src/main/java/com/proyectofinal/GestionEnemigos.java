@@ -7,17 +7,16 @@ import java.util.List;
 import java.util.Iterator;
 
 /**
- * Clase de ayuda para gestionar los enemigos en pantalla.
- * Se encarga de eliminar enemigos muertos tras completar su animación.
+ * Clase de utilidad para gestionar enemigos en pantalla.
+ * Se encarga de actualizar el estado de cada enemigo y manejar colisiones con proyectiles.
  */
 public class GestionEnemigos {
 
     /**
-     * Actualiza la lista de enemigos, eliminando aquellos que deben ser eliminados
-     * tras completar su animación de muerte.
+     * Recorre la lista de enemigos y elimina los que ya terminaron su animación de muerte.
      *
-     * @param enemigos Lista de enemigos a actualizar
-     * @return Número de enemigos eliminados en esta actualización
+     * @param enemigos Lista de enemigos activos
+     * @return cantidad de enemigos eliminados
      */
     public static int actualizarEnemigos(List<? extends Enemigo> enemigos) {
         if (enemigos == null) return 0;
@@ -28,11 +27,10 @@ public class GestionEnemigos {
         while (iter.hasNext()) {
             Enemigo enemigo = iter.next();
 
-            // Si el enemigo está listo para ser eliminado
             if (enemigo.isReadyToRemove()) {
-                iter.remove();
+                iter.remove(); // Eliminar de la lista
                 eliminados++;
-                System.out.println("Enemigo eliminado del juego tras animación de muerte");
+                System.out.println("Enemigo eliminado del juego tras animacion de muerte");
             }
         }
 
@@ -40,24 +38,22 @@ public class GestionEnemigos {
     }
 
     /**
-     * Comprueba colisiones de todos los proyectiles con los enemigos.
+     * Verifica colisiones de todos los proyectiles activos con los enemigos.
      *
-     * @param stage Stage donde se encuentran los actores
-     * @param enemigos Lista de enemigos para comprobar colisiones
+     * @param stage Stage actual que contiene todos los actores
+     * @param enemigos Lista de enemigos para comprobar colision
      */
     public static void comprobarColisionesProyectiles(Stage stage, List<? extends Enemigo> enemigos) {
         if (stage == null || enemigos == null || enemigos.isEmpty()) return;
 
-        // Comprobar colisiones para todos los actores en el stage
         for (Actor actor : stage.getActors()) {
             if (actor instanceof FlechaActor) {
                 ((FlechaActor) actor).comprobarColisiones(enemigos);
             } else if (actor instanceof HechizoActor) {
                 ((HechizoActor) actor).comprobarColisiones(enemigos);
             }
+            // Puedes agregar más proyectiles aquí, por ejemplo:
+            // else if (actor instanceof BolaDeFuegoActor) { ... }
         }
-
-        // Imprime un log para comprobar que se está ejecutando
-        System.out.println("Comprobando colisiones de proyectiles con " + enemigos.size() + " enemigos");
     }
 }

@@ -7,8 +7,9 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.utils.Disposable;
 
 /**
- * Clase responsable de mostrar la información del jugador en la esquina superior izquierda
- * como su clase, vida y flechas (si es arquero).
+ * Clase responsable de mostrar la informacion del jugador en pantalla.
+ * Se ubica en la esquina superior izquierda y presenta clase, vida,
+ * y recursos especiales como flechas, mana o escudo.
  */
 public class PlayerHUD implements Disposable {
     private BitmapFont font;
@@ -19,22 +20,27 @@ public class PlayerHUD implements Disposable {
 
     public PlayerHUD(Jugador jugador) {
         this.jugador = jugador;
+
+        // Crear fuente para dibujar el texto
         font = new BitmapFont();
         font.setColor(Color.WHITE);
-        // Aumentar el tamaño del texto para mejor visualización
-        font.getData().setScale(1.8f);
+        font.getData().setScale(1.8f); // Aumentar tamaño de letra
+
+        // Objeto para medir el texto
         layout = new GlyphLayout();
+
+        // Inicializar shapeRenderer para dibujar el fondo
         shapeRenderer = new com.badlogic.gdx.graphics.glutils.ShapeRenderer();
     }
 
     /**
-     * Renderiza la información del jugador en la esquina superior izquierda.
-     * @param batch SpriteBatch para dibujar
+     * Renderiza el HUD del jugador con clase, vida y recursos especiales.
+     * @param batch SpriteBatch donde se dibuja el texto
      */
     public void render(SpriteBatch batch) {
         if (batch == null || jugador == null) return;
 
-        // Determinar tipo de jugador y mostrar información relevante
+        // Construir la informacion a mostrar
         StringBuilder info = new StringBuilder();
         info.append("Clase: ").append(determinarClase()).append("\n");
         info.append("Vida: ")
@@ -43,62 +49,61 @@ public class PlayerHUD implements Disposable {
             .append(jugador.getVidaMaxima())
             .append("\n");
 
-        // Mostrar información específica según el tipo de personaje
+        // Agregar datos segun la clase del jugador
         if (jugador instanceof Arquero) {
             Arquero arquero = (Arquero) jugador;
             info.append("Flechas: ").append(arquero.getFlechas()).append("\n");
 
-            // Si está en modo ráfaga ilimitada, mostrar tiempo restante
+            // Si tiene modo rafaga activado, mostrar tiempo restante
             if (arquero.estaModoIlimitado()) {
-                info.append("Ráfaga: ").append(String.format("%.1f", arquero.getTiempoIlimitadoRestante())).append("s");
+                info.append("Rafaga: ").append(String.format("%.1f", arquero.getTiempoIlimitadoRestante())).append("s");
             }
         } else if (jugador instanceof Mago) {
-            // Añadir información de maná para el Mago
             Mago mago = (Mago) jugador;
-            info.append("Maná: ").append(mago.getMana()).append("\n");
+            info.append("Mana: ").append(mago.getMana()).append("\n");
         } else if (jugador instanceof Caballero) {
-            // Añadir información de escudo para el Caballero
             Caballero caballero = (Caballero) jugador;
-            info.append(caballero.getEscudo()).append("\n");
+            info.append("Escudo: ").append(caballero.getEscudo()).append("\n");
         }
 
-        // Medir el texto para determinar el tamaño
+        // Medir el tamaño del texto
         layout.setText(font, info.toString());
 
-        // Calcular posición en la esquina superior izquierda
-        // Asegurarnos que el texto se dibuja desde arriba (en la esquina superior)
+        // Calcular posicion para dibujar (esquina superior izquierda)
         float textY = com.badlogic.gdx.Gdx.graphics.getHeight() - padding;
-
-        // Calcular dimensiones del fondo
         float bgWidth = layout.width + padding * 2;
         float bgHeight = layout.height + padding * 2;
         float bgY = textY + padding - layout.height;
 
-        // Guardar el color actual del batch
+        // Guardar color original del batch
         com.badlogic.gdx.graphics.Color oldColor = batch.getColor().cpy();
 
-        // Dibujar fondo semi-transparente para mejorar legibilidad
+        // Terminar el batch para poder dibujar el fondo con shapeRenderer
         batch.setColor(0, 0, 0, 0.6f);
         batch.end();
 
-        shapeRenderer.setProjectionMatrix(new com.badlogic.gdx.math.Matrix4().setToOrtho2D(0, 0,
-        com.badlogic.gdx.Gdx.graphics.getWidth(),
-        com.badlogic.gdx.Gdx.graphics.getHeight()));
+        // Configurar shapeRenderer para dibujar en pantalla completa
+        shapeRenderer.setProjectionMatrix(new com.badlogic.gdx.math.Matrix4().setToOrtho2D(
+            0, 0,
+            com.badlogic.gdx.Gdx.graphics.getWidth(),
+            com.badlogic.gdx.Gdx.graphics.getHeight()
+        ));
         shapeRenderer.begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0, 0, 0, 0.6f);
         shapeRenderer.rect(0, bgY, bgWidth, bgHeight);
         shapeRenderer.end();
 
+        // Volver a comenzar el batch
         batch.begin();
         batch.setColor(oldColor);
 
-        // Dibujar el texto directamente en la posición fija
+        // Dibujar el texto en pantalla
         font.draw(batch, info.toString(), padding, textY);
     }
 
     /**
-     * Determina la clase del jugador para mostrarla en el HUD.
-     * @return String con el nombre de la clase
+     * Devuelve el nombre de la clase del jugador como texto.
+     * @return Nombre de clase para mostrar en pantalla
      */
     private String determinarClase() {
         if (jugador instanceof Arquero) {
@@ -112,6 +117,9 @@ public class PlayerHUD implements Disposable {
         }
     }
 
+    /**
+     * Libera los recursos usados por el HUD.
+     */
     @Override
     public void dispose() {
         if (font != null) {

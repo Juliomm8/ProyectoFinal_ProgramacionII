@@ -13,39 +13,44 @@ import java.util.List;
 
 /**
  * Clase encargada de gestionar la generación, seguimiento y eliminación de pociones.
+ * Controla cuántas hay, cuándo aparecen, dónde se colocan, colisiones con el jugador y liberación de recursos.
  */
 public class GestionPociones implements Disposable {
-    private static final float TIEMPO_ENTRE_POCIONES = 15f; // Segundos entre generación de pociones
-    private static final float MIN_DIST_POCIONES = 150f; // Distancia mínima entre pociones
-    private static final int MAX_POCIONES = 10; // Número máximo de pociones simultáneas
 
-    private float tiempoParaNuevaPociones = 3f; // Empezar generando pronto
-    private List<PocionActor> pociones;
-    private Stage stage;
-    private MapaProcedural mapa;
-    private Rectangle limitesJugador; // Para evitar generar pociones muy cerca del jugador
+    // Configuración general del sistema de pociones
+    private static final float TIEMPO_ENTRE_POCIONES = 15f;   // Tiempo entre generación de nuevas pociones
+    private static final float MIN_DIST_POCIONES = 150f;      // Distancia mínima entre pociones
+    private static final int MAX_POCIONES = 10;               // Límite de pociones simultáneas en pantalla
 
-    // Texturas para las pociones
+    // Estado interno
+    private float tiempoParaNuevaPociones = 3f;               // Temporizador para próxima poción (inicial con delay corto)
+    private List<PocionActor> pociones;                       // Lista de pociones activas
+    private Stage stage;                                      // Stage donde se colocan las pociones
+    private MapaProcedural mapa;                              // Referencia al mapa (por si se necesita en el futuro)
+    private Rectangle limitesJugador;                         // Rectángulo de colisión del jugador
+
+    // Texturas para los diferentes tipos de pociones
     private Texture texturaPocionHP;
     private Texture texturaPocionMana;
     private Texture texturaPocionEscudo;
 
     /**
-     * Constructor que inicializa el gestor de pociones.
-     * @param stage Stage donde se añadirán las pociones
-     * @param mapa Mapa donde se generarán las pociones
+     * Constructor del sistema de gestión de pociones.
+     * @param stage Stage del juego donde aparecerán las pociones
+     * @param mapa Mapa del mundo actual (para integraciones futuras)
      */
     public GestionPociones(Stage stage, MapaProcedural mapa) {
         this.stage = stage;
         this.mapa = mapa;
         this.pociones = new ArrayList<>();
-        this.limitesJugador = new Rectangle(0, 0, 50, 50); // Inicialmente en origen
+        this.limitesJugador = new Rectangle(0, 0, 50, 50); // Valor inicial seguro
 
         cargarTexturas();
     }
 
     /**
      * Carga las texturas necesarias para las pociones.
+     * En caso de error, crea texturas vacías como respaldo.
      */
     private void cargarTexturas() {
         try {
@@ -54,7 +59,7 @@ public class GestionPociones implements Disposable {
             texturaPocionEscudo = new Texture("Pociones/pocionEscudo.png");
         } catch (Exception e) {
             System.err.println("Error al cargar texturas de pociones: " + e.getMessage());
-            // Crear texturas fallback
+            // Fallback en caso de error
             texturaPocionHP = new Texture(32, 32, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
             texturaPocionMana = new Texture(32, 32, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
             texturaPocionEscudo = new Texture(32, 32, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
@@ -62,63 +67,57 @@ public class GestionPociones implements Disposable {
     }
 
     /**
-     * Actualiza el gestor de pociones: genera nuevas, comprueba colisiones y elimina expiradas.
-     * @param delta Tiempo transcurrido desde el último frame
-     * @param jugadorRect Rectángulo que representa al jugador para comprobar colisiones
-     * @param personaje Personaje para aplicar efectos de pociones recogidas
+     * Lógica principal que se debe llamar desde el render o update del juego.
+     * Controla generación, colisiones y eliminación de pociones.
      */
     public void actualizar(float delta, Rectangle jugadorRect, Personaje personaje) {
-        // Actualizar la posición conocida del jugador
-        this.limitesJugador = jugadorRect;
-
-        // Actualizar temporizador para generar nuevas pociones
+        this.limitesJugador = jugadorRect;  // Actualiza posición del jugador
         tiempoParaNuevaPociones -= delta;
 
-        // Generar nuevas pociones si es tiempo y no hay demasiadas
+        // Generar una nueva poción si es tiempo y no se superó el límite
         if (tiempoParaNuevaPociones <= 0 && pociones.size() < MAX_POCIONES) {
             generarPocionAleatoria(personaje);
             tiempoParaNuevaPociones = TIEMPO_ENTRE_POCIONES;
         }
 
-        // Comprobar colisiones y eliminar pociones expiradas
+        // Verificar colisiones y eliminar pociones recogidas o expiradas
         Iterator<PocionActor> iter = pociones.iterator();
         while (iter.hasNext()) {
             PocionActor pocion = iter.next();
 
-            // Comprobar si el jugador recoge la poción
+            // Recoger si el jugador la toca
             if (!pocion.estaRecogida() && pocion.comprobarColision(jugadorRect)) {
                 pocion.recoger(personaje);
             }
 
-            // Eliminar pociones que deben eliminarse
+            // Eliminar del stage si ya está marcada
             if (pocion.debeEliminarse()) {
-                pocion.remove(); // Eliminar del stage
-                iter.remove(); // Eliminar de nuestra lista
+                pocion.remove();  // Se elimina del stage
+                iter.remove();    // Se elimina de la lista interna
             }
         }
     }
 
     /**
-     * Genera una poción aleatoria en una posición válida del mapa.
+     * Genera una nueva poción aleatoria en el mapa según probabilidad y clase del personaje.
      */
     private void generarPocionAleatoria(Personaje personaje) {
-        // Elegir tipo de poción aleatoriamente
         Pocion nuevaPocion;
         Texture texturaPocion;
 
+        // Lógica de probabilidad para decidir el tipo de poción
         float r = MathUtils.random();
-        if (r < 0.5f) { // 50% probabilidad de poción HP
+        if (r < 0.5f) {
             nuevaPocion = new PocionHP("Poción de Vida", MathUtils.random(10, 30));
             texturaPocion = texturaPocionHP;
-        } else if (r < 0.8f) { // 30% probabilidad de poción Mana/Flechas
+        } else if (r < 0.8f) {
             nuevaPocion = new PocionMana("Poción de Energía", MathUtils.random(5, 15));
             texturaPocion = texturaPocionMana;
-        } else { // 20% probabilidad de poción de escudo
+        } else {
             if (personaje instanceof Caballero) {
                 nuevaPocion = new PocionEscudo("Poción de Escudo", 20);
                 texturaPocion = texturaPocionEscudo;
             } else {
-                // Si el personaje no es Caballero, elegir entre HP o Mana
                 if (MathUtils.randomBoolean()) {
                     nuevaPocion = new PocionHP("Poción de Vida", MathUtils.random(10, 30));
                     texturaPocion = texturaPocionHP;
@@ -129,88 +128,61 @@ public class GestionPociones implements Disposable {
             }
         }
 
-        // Buscar posición válida (no en camino, no cerca de otras pociones o jugador)
+        // Buscar una ubicación válida
         Vector2 posicion = encontrarPosicionValida();
-
         if (posicion != null) {
-            PocionActor pocionActor = new PocionActor(
-                nuevaPocion,
-                texturaPocion,
-                posicion.x,
-                posicion.y,
-                0.75f // Escala
-            );
-
-            // Añadir la poción al stage y a nuestra lista
-            stage.addActor(pocionActor);
-            pociones.add(pocionActor);
-
+            PocionActor actor = new PocionActor(nuevaPocion, texturaPocion, posicion.x, posicion.y, 0.75f);
+            stage.addActor(actor);
+            pociones.add(actor);
             System.out.println("Generada " + nuevaPocion.getNombre() + " en " + posicion.x + ", " + posicion.y);
         }
     }
 
     /**
-     * Encuentra una posición válida para colocar una poción.
-     * @return Vector2 con la posición o null si no se encontró
+     * Encuentra una posición en pantalla para colocar una poción,
+     * asegurándose de no estar cerca del jugador ni de otras pociones.
      */
     private Vector2 encontrarPosicionValida() {
-        // Obtener dimensiones del mapa
+        // Dimensiones de la cámara y mundo
         int maxX = (int) stage.getViewport().getWorldWidth();
         int maxY = (int) stage.getViewport().getWorldHeight();
-
-        // Obtener la posición actual de la cámara para generar pociones visibles
         float camX = stage.getViewport().getCamera().position.x;
         float camY = stage.getViewport().getCamera().position.y;
 
-        // Dimensiones de la ventana visible
         float viewportWidth = stage.getViewport().getWorldWidth();
         float viewportHeight = stage.getViewport().getWorldHeight();
 
-        // Área visible donde preferimos colocar pociones (70% del área visible)
-        float minVisibleX = Math.max(100, camX - viewportWidth * 0.35f);
-        float maxVisibleX = Math.min(maxX - 100, camX + viewportWidth * 0.35f);
-        float minVisibleY = Math.max(100, camY - viewportHeight * 0.35f);
-        float maxVisibleY = Math.min(maxY - 100, camY + viewportHeight * 0.35f);
+        // Área central visible preferida para generación
+        float minX = Math.max(100, camX - viewportWidth * 0.35f);
+        float maxXv = Math.min(maxX - 100, camX + viewportWidth * 0.35f);
+        float minY = Math.max(100, camY - viewportHeight * 0.35f);
+        float maxYv = Math.min(maxY - 100, camY + viewportHeight * 0.35f);
 
-        // Intentar primero en el área visible con más intentos
-        for (int intento = 0; intento < 30; intento++) {
-            float x = MathUtils.random(minVisibleX, maxVisibleX);
-            float y = MathUtils.random(minVisibleY, maxVisibleY);
+        for (int i = 0; i < 30; i++) {
+            float x = MathUtils.random(minX, maxXv);
+            float y = MathUtils.random(minY, maxYv);
 
-            // Comprobar si la posición es adecuada
-            boolean posicionValida = true;
+            // Muy cerca del jugador
+            if (Math.abs(x - limitesJugador.x) < 200 && Math.abs(y - limitesJugador.y) < 200) continue;
 
-            // Logear información sobre el intento de generación
-            System.out.println("Intentando generar poción en área visible: (" + x + ", " + y + ")");
-
-            // Verificar que no esté cerca del jugador
-            if (Math.abs(x - limitesJugador.x) < 200 && Math.abs(y - limitesJugador.y) < 200) {
-                posicionValida = false;
-                continue;
-            }
-
-            // Verificar que no esté cerca de otras pociones
+            // Muy cerca de otra poción
+            boolean muyCercaOtra = false;
             for (PocionActor p : pociones) {
                 if (Math.abs(p.getX() - x) < MIN_DIST_POCIONES &&
                     Math.abs(p.getY() - y) < MIN_DIST_POCIONES) {
-                    posicionValida = false;
+                    muyCercaOtra = true;
                     break;
                 }
             }
 
-            if (posicionValida) {
-                return new Vector2(x, y);
-            }
+            if (!muyCercaOtra) return new Vector2(x, y);
         }
 
-        return null; // No se encontró posición válida
+        return null; // No se encontró una posición válida
     }
 
     /**
-     * Comprueba si hay colisiones entre el jugador y las pociones.
-     * @param jugadorRect Rectángulo del jugador
-     * @param personaje Personaje que recoge las pociones
-     * @return Número de pociones recogidas
+     * Permite verificar colisiones por separado (si quieres forzar la detección desde otro método).
      */
     public int comprobarColisiones(Rectangle jugadorRect, Personaje personaje) {
         int recogidas = 0;
@@ -226,26 +198,13 @@ public class GestionPociones implements Disposable {
     }
 
     /**
-     * Libera todos los recursos utilizados.
+     * Libera texturas cargadas y limpia la lista de pociones.
      */
     @Override
     public void dispose() {
-        if (texturaPocionHP != null) {
-            texturaPocionHP.dispose();
-            texturaPocionHP = null;
-        }
-
-        if (texturaPocionMana != null) {
-            texturaPocionMana.dispose();
-            texturaPocionMana = null;
-        }
-
-        if (texturaPocionEscudo != null) {
-            texturaPocionEscudo.dispose();
-            texturaPocionEscudo = null;
-        }
-
-        // Las pociones se eliminarán a través del stage
+        if (texturaPocionHP != null) texturaPocionHP.dispose();
+        if (texturaPocionMana != null) texturaPocionMana.dispose();
+        if (texturaPocionEscudo != null) texturaPocionEscudo.dispose();
         pociones.clear();
     }
 }

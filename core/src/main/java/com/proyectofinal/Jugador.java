@@ -7,38 +7,15 @@ import java.util.List;
  * Representa al jugador con inventario de pociones y nivel.
  */
 public class Jugador extends Personaje {
-    private float x, y;             // Posición del jugador
-    private float width, height;    // Tamaño y collider
-    private int nivel;              // Nivel del jugador
-    protected String direccion;     // "IZQUIERDA" o "DERECHA"
-    private boolean muerto;
+    private float x, y;             // Posicion del jugador
+    private float width, height;    // Tamano del collider
+    private int nivel;              // Nivel actual del jugador
+    protected String direccion;     // Direccion hacia la que mira: "IZQUIERDA" o "DERECHA"
+    private boolean muerto;         // Estado de vida del jugador
 
-    public float getWidth() {
-        return width;
-    }
-
-    public float getHeight() {
-        return height;
-    }
-
-    /**
-     * @param nombre Nombre del jugador
-     * @param vida   Puntos de vida iniciales
-     * @param ataque Daño base de ataque
-     * @param x      Posición X inicial
-     * @param y      Posición Y inicial
-     * @param width  Ancho del collider
-     * @param height Alto del collider
-     * @param nivel  Nivel inicial
-     */
-    public Jugador(String nombre,
-                   int vida,
-                   int ataque,
-                   float x,
-                   float y,
-                   float width,
-                   float height,
-                   int nivel) {
+    // Constructor
+    public Jugador(String nombre, int vida, int ataque,
+                   float x, float y, float width, float height, int nivel) {
         super(nombre, vida, ataque);
         this.x = x;
         this.y = y;
@@ -49,54 +26,60 @@ public class Jugador extends Personaje {
         this.muerto = false;
     }
 
-    // ——————————— Getters ———————————
-    public String getNombre() {
-        return nombre;
-    }
+    // Getters basicos
+    public float getWidth() { return width; }
+    public float getHeight() { return height; }
+    public String getNombre() { return nombre; }
+    public int getVida() { return vida; }
+    public float getX() { return x; }
+    public float getY() { return y; }
+    public int getNivel() { return nivel; }
+    public boolean estaMuerto() { return muerto; }
 
-    public int getVida() {
-        return vida;
-    }
-
-    public boolean estaMuerto() {
-        return muerto;
-    }
-
+    // Marcar jugador como muerto
     public void morir() {
         muerto = true;
         System.out.println("El jugador ha muerto");
     }
 
-
-    /** Daño base que inflige el jugador. */
+    // Devuelve el dano base del jugador
     public int getDanoBase() {
         return ataque;
     }
 
-    public float getX() {
-        return x;
+    // Devuelve el collider del jugador para colisiones
+    public Rectangle getCollider() {
+        return new Rectangle(x, y, width, height);
     }
 
-    public float getY() {
-        return y;
+    // Actualiza la posicion del jugador
+    public void setPosition(float x, float y) {
+        this.x = x;
+        this.y = y;
     }
 
-    public int getNivel() {
-        return nivel;
+    // Movimiento con delta y actualizacion de direccion
+    public void mover(float dirX, float dirY, float delta) {
+        float speed = 200f * delta;
+        this.x += dirX * speed;
+        this.y += dirY * speed;
+
+        if (dirX < 0) direccion = "IZQUIERDA";
+        else if (dirX > 0) direccion = "DERECHA";
+        // Si dirX es 0, se mantiene la direccion anterior
     }
 
     /**
-     * Determina si el jugador cumple los requisitos para equipar un item.
+     * Verifica si un item puede ser equipado por el jugador.
      * @param item objeto a comprobar
-     * @return true si puede equiparlo
+     * @return true si el item cumple requisitos de clase y nivel
      */
     public boolean puedeEquipar(Item item) {
         return item != null && item.cumpleRequisitos(this);
     }
 
     /**
-     * Intenta equipar un item y lanza una excepción si no cumple con los
-     * requisitos de clase o nivel.
+     * Intenta equipar un item. Lanza excepcion si no se cumplen los requisitos.
      * @param item objeto a equipar
      */
     public void equiparItem(Item item) {
@@ -107,57 +90,19 @@ public class Jugador extends Personaje {
         System.out.println(nombre + " ha equipado " + item.getNombre());
     }
 
-    // ——————————— Setters y utilidad ———————————
-    /** Actualiza la posición del jugador. */
-    public void setPosition(float x, float y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    /** Collider para detección de colisiones. */
-    public Rectangle getCollider() {
-        return new Rectangle(x, y, width, height);
-    }
-
     /**
-     * Mueve al jugador.
-     * @param dirX  -1 izquierda, +1 derecha, 0 sin horizontal
-     * @param dirY  -1 abajo, +1 arriba, 0 sin vertical
-     * @param delta Delta time para velocidad independiente de FPS
-     */
-    public void mover(float dirX, float dirY, float delta) {
-        float speed = 200f * delta;
-
-        // Aplicar movimiento en ambas direcciones
-        this.x += dirX * speed;
-        this.y += dirY * speed;
-
-        // Actualizar dirección solo si hay movimiento horizontal
-        // Esto permite que el sprite mantenga su orientación durante movimientos verticales
-        if (dirX < 0) {
-            direccion = "IZQUIERDA";
-        } else if (dirX > 0) {
-            direccion = "DERECHA";
-        }
-        // Nota: No cambiamos la dirección si dirX es 0, manteniendo la orientación anterior
-    }
-
-    /**
-     * Método de ataque genérico para el jugador.
-     * Las subclases pueden sobrescribir este método para implementar su lógica específica.
-     *
-     * @param enemigos Lista de enemigos que pueden ser afectados por el ataque
-     * @return
+     * Metodo generico de ataque. Puede ser sobrescrito por subclases.
+     * @param enemigos lista de enemigos cercanos
+     * @return true si el ataque fue efectivo
      */
     public boolean atacar(List<? extends Enemigo> enemigos) {
-        // Implementación genérica que puede ser sobrescrita
-        System.out.println(nombre + " realiza un ataque básico");
+        System.out.println(nombre + " realiza un ataque basico");
         return false;
     }
 
-    // ——————————— Interacciones ———————————
     /**
-     * Recibe daño directo, resta a la vida.
+     * Aplica dano al jugador. Si la vida cae a 0, el jugador muere.
+     * Tambien controla que la vida no supere el maximo si se recibe "curacion negativa".
      */
     @Override
     public void recibirDanio(int danio) {
@@ -165,24 +110,23 @@ public class Jugador extends Personaje {
         if (danio < 0 && vida > vidaMaxima) {
             vida = vidaMaxima;
         }
-
-        if (vida <= 0 && !muerto){
+        if (vida <= 0 && !muerto) {
             vida = 0;
             morir();
             System.out.println(nombre + " ha muerto con");
         }
     }
 
-    /** Sube un nivel. */
+    // Sube un nivel al jugador
     public void subirNivel() {
         nivel++;
     }
 
     /**
-     * Método para actualización por frame. Debe ser implementado por subclases.
-     * @param delta tiempo entre frames para cálculos independientes de FPS
+     * Metodo vacio para ser sobrescrito en subclases. Llamado cada frame.
+     * @param delta tiempo entre frames
      */
     public void actualizar(float delta) {
-        // Implementación base vacía, las subclases deben sobrescribir este método
+        // Implementacion vacia
     }
 }

@@ -1,5 +1,6 @@
 package com.proyectofinal;
 
+// Importaciones necesarias para gráficos, entradas, escena y utilidades
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
@@ -17,16 +18,26 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Pantalla principal con mundo procedural "infinito", usando variantes de pasto.
+ * Pantalla principal del juego. Aquí se gestiona el mapa procedural, la cámara, el HUD,
+ * el jugador, los enemigos y el renderizado general del mundo.
  */
 public class DungeonScreen extends PantallaBase {
+
+    // Referencia al juego principal
     private final RPGGame juego;
+
+    // Dimensiones del mapa en tiles
     private static final int MAP_WIDTH = 150;
     private static final int MAP_HEIGHT = 150;
-    private static final int spawnTileX = MAP_WIDTH / 2;  // = 50
-    private static final int spawnTileY = MAP_HEIGHT / 2;  // = 50
+
+    // Coordenadas del punto de aparición inicial del jugador
+    private static final int spawnTileX = MAP_WIDTH / 2;
+    private static final int spawnTileY = MAP_HEIGHT / 2;
+
+    // Semilla para la generación aleatoria del mapa
     private final long seed = System.currentTimeMillis();
 
+    // Componentes de UI y lógica del juego
     private GestionPociones gestionPociones;
     private PlayerHUD playerHUD;
     private SpriteBatch batch;
@@ -37,48 +48,53 @@ public class DungeonScreen extends PantallaBase {
     private MapaProcedural generator;
     private final String playerClass;
 
+    // Texturas del terreno
     private Texture[] texPastoVVariants;
     private Texture texPastoA, texCamino, texHierbaV, texHierbaA;
 
+    // Objeto que representa la lógica del jugador (modelo)
     private Jugador jugador;
 
-    // Tamaño de cada tile en píxeles (ajústalo a tu proyecto)
+    // Tamaño de cada tile (casilla del mapa) en pixeles
     private static final int TILE_SIZE = 32;
 
-    // Jugador y textura para el personaje
+    // Textura del sprite del personaje del jugador
     private Texture texPlayer;
 
-    // Añadir esta lista para manejar los enemigos
+    // Lista de enemigos activos en la escena
     private List<Enemigo> enemigos;
-    private static final int NUMERO_INICIAL_MINOTAUROS = 10;
-    private static final float DISTANCIA_MINIMA_SPAWN = 500f; // Distancia mínima al jugador para spawn
-    private static final float TIEMPO_ENTRE_SPAWNS = 4f; // Tiempo entre oleadas de spawn (segundos) - aumentado para reducir frecuencia
-    private static final int MINOTAUROS_POR_OLEADA = 3; // Cantidad de minotauros por oleada
-    private static final int MAX_MINOTAUROS = 30; // Máximo de minotauros simultáneos
-    private float tiempoUltimoSpawn = 0f; // Tiempo desde el último spawn
 
+    // Configuración de generación de enemigos tipo minotauro
+    private static final int NUMERO_INICIAL_MINOTAUROS = 10;
+    private static final float DISTANCIA_MINIMA_SPAWN = 500f; // Distancia mínima del jugador
+    private static final float TIEMPO_ENTRE_SPAWNS = 4f;       // Tiempo entre oleadas de minotauros
+    private static final int MINOTAUROS_POR_OLEADA = 3;
+    private static final int MAX_MINOTAUROS = 30;
+    private float tiempoUltimoSpawn = 0f; // Cronómetro entre oleadas
+
+    // Constructor que recibe la referencia al juego y la clase del jugador seleccionada
     public DungeonScreen(RPGGame juego, String playerClass) {
         this.juego = juego;
         this.playerClass = playerClass;
-        jugador = new Jugador("Héroe", 100, 10, 100f, 100f, 32f, 32f, 1);
-        initUI();
+        jugador = new Jugador("Héroe", 100, 10, 100f, 100f, 32f, 32f, 1); // Placeholder temporal
+        initUI(); // Inicializa cámara, mapa, jugador y HUD
     }
 
     @Override
     protected void initUI() {
-        // 2.1) Batch, fuente y cámara
+        // Inicializa batch de dibujo, fuente para texto y la cámara principal
         batch = new SpriteBatch();
         font = new BitmapFont();
         cam = new OrthographicCamera();
         cam.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        cam.zoom = 0.6f; // ajustable
+        cam.zoom = 0.6f; // Zoom para alejar la cámara (opcional)
 
-        // 2.2) Inicializar el mapa procedural (ahora sí con width, height, seed y spawn)
+        // Generación del mapa procedural con los parámetros establecidos
         generator = new MapaProcedural(
             MAP_WIDTH, MAP_HEIGHT, seed, spawnTileX, spawnTileY
         );
 
-        // 2.3) Crear jugador y actor
+        // Crea una instancia del jugador según la clase seleccionada por el usuario
         Jugador jugadorLogico;
         switch (playerClass) {
             case "Arquero":
@@ -97,35 +113,48 @@ public class DungeonScreen extends PantallaBase {
                 jugadorLogico = new Jugador("Héroe", 100, 10, 100f, 100f, 32f, 32f, 1);
                 texPlayer = new Texture("PersonajesPrincipales/Arquero/arquero.png");
         }
+
+        // Crear el actor visual del jugador, pasándole la lógica y su textura
         playerActor = new PlayerActor(jugadorLogico, texPlayer);
 
-        // Inicializar la lista de enemigos
+        // Inicializar la lista donde se almacenarán los enemigos activos
         enemigos = new ArrayList<>();
 
-        // Generar los minotauros iniciales
+        // Generar una primera oleada de minotauros
         generarMinotauros();
 
-        // Asegúrate de que playerActor esté inicializado antes de usarlo
+        // Calcular la posicion en pixeles para colocar al jugador en el centro del mapa
         float spawnPx = spawnTileX * TILE_SIZE;
         float spawnPy = spawnTileY * TILE_SIZE;
+
+        // Colocar al actor y al modelo logico del jugador en esa posicion
         playerActor.setPosition(spawnPx, spawnPy);
         jugadorLogico.setPosition(spawnPx, spawnPy);
+
+        // Ajustar la camara para que inicie centrada en el jugador
         cam.position.set(spawnPx, spawnPy, 0f);
         cam.update();
 
+        // Crear el Stage que gestiona los actores visuales y asignarle la camara y el batch
         stage = new Stage(new ScreenViewport(cam), batch);
+
+        // Configurar playerActor con la referencia al stage y viewport
         playerActor.setStage(stage);
         playerActor.setViewport(stage.getViewport());
+
+        // Agregar el playerActor al stage para que sea renderizado
         stage.addActor(playerActor);
+
+        // Pasar la lista de enemigos al actor para que pueda interactuar con ellos
         playerActor.setEnemigosActuales(enemigos);
 
-        // Sistema de generación y gestión de pociones
+        // Crear el sistema de pociones que gestiona las apariciones y efectos
         gestionPociones = new GestionPociones(stage, generator);
 
-        // Inicializar el HUD del jugador
+        // Crear el HUD del jugador para mostrar vida, flechas, etc.
         playerHUD = new PlayerHUD(playerActor.getJugador());
 
-        // 2.5) Cargar texturas de tiles
+        // Cargar las texturas de los distintos tipos de terreno
         texPastoVVariants = new Texture[4];
         for (int i = 0; i < 4; i++) {
             texPastoVVariants[i] = new Texture("Mapa/Pasto/pastoVerde_" + i + ".png");
@@ -137,40 +166,41 @@ public class DungeonScreen extends PantallaBase {
     }
 
     /**
-     * Genera una oleada de minotauros en ubicaciones fuera de la cámara
-     * siguiendo el estilo de Vampire Survivors.
+     * Genera una oleada de minotauros que aparecen fuera del area visible de la camara.
+     * Se inspiran en el estilo de aparicion de enemigos del juego Vampire Survivors.
      */
     private void spawnMinotaurosOleada() {
         Random random = new Random();
         int minotaurosGenerados = 0;
 
-        // Obtener dimensiones de la cámara
+        // Obtener el tamaño actual de la camara considerando el zoom
         float camWidth = cam.viewportWidth * cam.zoom;
         float camHeight = cam.viewportHeight * cam.zoom;
 
-        // Determinar los límites de la cámara actual
+        // Calcular los bordes visibles actuales de la camara
         float camLeftX = cam.position.x - camWidth / 2;
         float camRightX = cam.position.x + camWidth / 2;
         float camBottomY = cam.position.y - camHeight / 2;
         float camTopY = cam.position.y + camHeight / 2;
 
-        // Ampliar el área de spawn para que sea fuera de la cámara pero no demasiado lejos
+        // Ampliar los limites para que el spawn ocurra fuera del campo visual
         float margenExterior = 300f;
         float minSpawnX = camLeftX - margenExterior;
         float maxSpawnX = camRightX + margenExterior;
         float minSpawnY = camBottomY - margenExterior;
         float maxSpawnY = camTopY + margenExterior;
 
-        // Asegurar que no nos salgamos de los límites del mapa
+        // Ajustar los valores para que no se salgan del tamaño del mapa
         minSpawnX = Math.max(minSpawnX, 0);
         maxSpawnX = Math.min(maxSpawnX, MAP_WIDTH * TILE_SIZE);
         minSpawnY = Math.max(minSpawnY, 0);
         maxSpawnY = Math.min(maxSpawnY, MAP_HEIGHT * TILE_SIZE);
 
+        // Repetir mientras no se haya alcanzado el maximo de minotauros por oleada
+        // ni se haya excedido el limite total en pantalla
         while (minotaurosGenerados < MINOTAUROS_POR_OLEADA && enemigos.size() < MAX_MINOTAUROS) {
-            // Decidir en qué lado de la cámara aparecerá (0: arriba, 1: derecha, 2: abajo, 3: izquierda)
+            // Escoger al azar un lado desde el cual apareceran
             int lado = random.nextInt(4);
-
             float spawnX, spawnY;
 
             switch (lado) {
@@ -193,21 +223,21 @@ public class DungeonScreen extends PantallaBase {
                     break;
             }
 
-            // Asegurar que la posición esté dentro del mapa
+            // Evitar que se salgan del mapa (ajustado por tamaño del sprite 64x64)
             spawnX = Math.max(0, Math.min(spawnX, MAP_WIDTH * TILE_SIZE - 64));
             spawnY = Math.max(0, Math.min(spawnY, MAP_HEIGHT * TILE_SIZE - 64));
 
-            // Verificar que no esté en un camino o colisionando con árboles
+            // Verificar si la posicion es valida para el spawn
             boolean posicionValida = true;
             int tileX = (int) (spawnX / TILE_SIZE);
             int tileY = (int) (spawnY / TILE_SIZE);
 
-            // Verificar que no esté en un camino
+            // No permitir aparecer sobre caminos
             if (generator.getTile(tileX, tileY) == MapaProcedural.Tile.CAMINO) {
                 continue;
             }
 
-            // Verificar colisiones con árboles
+            // Verificar si esta colisionando con algun arbol
             Rectangle spawnArea = new Rectangle(spawnX, spawnY, 64, 64);
             for (Arbol arbol : generator.getArboles()) {
                 if (spawnArea.overlaps(arbol.getCollider())) {
@@ -217,81 +247,88 @@ public class DungeonScreen extends PantallaBase {
             }
 
             if (posicionValida) {
-                // Verificar si no está demasiado cerca de otros minotauros para evitar agrupaciones
+                // Verificar si esta muy cerca de otros minotauros
                 boolean demasiadoCerca = false;
                 for (Enemigo otroEnemigo : enemigos) {
-                    // Usar los valores directos de x, y
                     float distancia = Vector2.dst(spawnX, spawnY, otroEnemigo.x, otroEnemigo.y);
-                    if (distancia < 150) { // Distancia mínima aumentada entre minotauros
+                    if (distancia < 150) {
                         demasiadoCerca = true;
                         break;
                     }
                 }
 
+                // Si pasa todas las verificaciones, crear el minotauro
                 if (!demasiadoCerca) {
                     Minotauro minotauro = new Minotauro(spawnX, spawnY, playerActor.getJugador());
-                    // Establecer estado inmediatamente para que persiga al jugador
-                    minotauro.estadoActual = Enemigo.EstadoEnemigo.RUNNING;
+                    minotauro.estadoActual = Enemigo.EstadoEnemigo.RUNNING; // activar persecucion
                     enemigos.add(minotauro);
                     minotaurosGenerados++;
+
+                    // Hacer que se mueva inmediatamente en el primer frame
                     minotauro.update(0.016f, playerActor.getX(), playerActor.getY());
                 }
             }
         }
     }
 
+    /**
+     * Inicializa la lista de enemigos. El primer spawn se hara
+     * por medio del sistema de oleadas para imitar Vampire Survivors.
+     */
     private void generarMinotauros() {
         enemigos = new ArrayList<>();
-        // El spawn inicial será manejado por el sistema de oleadas
-        // para simular el comportamiento de Vampire Survivors
     }
 
     /**
-     * Actualiza la gestión de enemigos en cada frame
-     * @param delta tiempo transcurrido desde el último frame
+     * Elimina enemigos muertos en cada frame
+     * @param delta tiempo entre frames
      */
     private void actualizarEnemigos(float delta) {
-        // Eliminar enemigos muertos que han completado su animación
+        // Se eliminan enemigos que han muerto y ya terminaron su animacion
         int eliminados = GestionEnemigos.actualizarEnemigos(enemigos);
         if (eliminados > 0) {
             System.out.println("Eliminados " + eliminados + " enemigos muertos");
         }
     }
 
+    /**
+     * Metodo principal que se ejecuta en cada frame.
+     * Se encarga de dibujar el mundo, jugador, enemigos, HUD y procesar logica.
+     */
     @Override
     public void render(float delta) {
         // 1) Limpiar pantalla
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // 2) Manejar entrada genérica (spawn y actualización de enemigos)
+        // 2) Entrada del teclado + actualizacion de enemigos
         manejarEntrada(delta);
 
-        // Actualizar sistema de pociones
+        // 2.5) Actualizar sistema de pociones
         gestionPociones.actualizar(delta, playerActor.getBounds(), playerActor.getJugador());
 
-        // 3) Centrar cámara en el jugador
+        // 3) Centrar la camara en el jugador
         float px = playerActor.getX() + playerActor.getWidth() * 0.5f;
         float py = playerActor.getY() + playerActor.getHeight() * 0.5f;
         cam.position.set(px, py, 0f);
         cam.update();
 
-        // 4) Sincronizar cámara del Stage
+        // 4) Sincronizar la camara del stage con la camara principal
         OrthographicCamera stageCam = (OrthographicCamera)stage.getViewport().getCamera();
         stageCam.position.set(cam.position);
         stageCam.zoom = cam.zoom;
         stageCam.update();
 
-        // 5) Dibujar el mundo (tiles y piedras)
+        // 5) Dibujar el fondo del mapa (tiles y overlays)
         batch.setProjectionMatrix(cam.combined);
         batch.begin();
-        // Dibujar tiles con margen de 1
         float halfW = cam.viewportWidth * 0.5f;
         float halfH = cam.viewportHeight * 0.5f;
-        int minX = (int)((px - halfW)  / TILE_SIZE) - 1;
-        int maxX = (int)((px + halfW)  / TILE_SIZE) + 1;
-        int minY = (int)((py - halfH)  / TILE_SIZE) - 1;
-        int maxY = (int)((py + halfH)  / TILE_SIZE) + 1;
+        int minX = (int)((px - halfW) / TILE_SIZE) - 1;
+        int maxX = (int)((px + halfW) / TILE_SIZE) + 1;
+        int minY = (int)((py - halfH) / TILE_SIZE) - 1;
+        int maxY = (int)((py + halfH) / TILE_SIZE) + 1;
+
         for (int y = minY; y <= maxY; y++) {
             for (int x = minX; x <= maxX; x++) {
                 MapaProcedural.Tile t = generator.getTile(x, y);
@@ -305,25 +342,27 @@ public class DungeonScreen extends PantallaBase {
                     batch.draw(texHierbaA, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             }
         }
+
+        // Dibujar piedras
         for (Piedra p : generator.getPiedras()) {
             p.render(batch);
         }
         batch.end();
 
-        // 6) Actualizar lógica y dibujar al jugador + pociones
+        // 6) Actualizar logica del jugador, pociones y colisiones
         playerActor.update(delta, enemigos);
         stage.act(delta);
         GestionEnemigos.comprobarColisionesProyectiles(stage, enemigos);
         stage.draw();
 
-        // 7) Dibujar enemigos sobre el suelo
+        // 7) Dibujar enemigos
         batch.begin();
         for (Enemigo e : enemigos) {
             e.render(batch);
         }
         batch.end();
 
-        // 8) Colisiones enemigo→jugador
+        // 8) Colisiones enemigo → jugador
         Rectangle pjBounds = playerActor.getBounds();
         Iterator<Enemigo> itE = enemigos.iterator();
         while (itE.hasNext()) {
@@ -338,65 +377,77 @@ public class DungeonScreen extends PantallaBase {
             }
         }
 
+        // Si el jugador muere, pasar a la pantalla de muerte
         if (playerActor.getJugador().estaMuerto()) {
             juego.setScreen(new PantallaMuerte(juego));
             return;
         }
 
-        // 10) Dibujar árboles
+        // 10) Dibujar arboles sobre el terreno
         batch.begin();
         for (Arbol ar : generator.getArboles()) {
             ar.render(batch);
         }
         batch.end();
 
-        // 11) HUD y lógica específica de clase
+        // 11) HUD fijo + HUD de clase especifica
         batch.begin();
-        // Renderizar el HUD con posición fija en la pantalla
-        batch.setProjectionMatrix(new com.badlogic.gdx.math.Matrix4().setToOrtho2D(0, 0,
-            com.badlogic.gdx.Gdx.graphics.getWidth(),
-            com.badlogic.gdx.Gdx.graphics.getHeight()));
+        // Configurar matriz para dibujar HUD en pantalla (sin camara)
+        batch.setProjectionMatrix(new com.badlogic.gdx.math.Matrix4().setToOrtho2D(
+            0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()
+        ));
 
-        // Usar PlayerHUD para mostrar información fija en pantalla
+        // Mostrar barra de vida, mana, nombre, etc
         playerHUD.render(batch);
 
-        // Restaurar la matriz de proyección a la cámara del juego
+        // Restaurar matriz para continuar el HUD que sigue al jugador
         batch.setProjectionMatrix(cam.combined);
 
-        // Continuar con el HUD normal seguido al jugador
+        // Dibujar HUD encima del personaje (flechas, texto flotante, etc)
         playerActor.dibujarHUD(batch, font);
+
+        // Si el jugador es un arquero, ejecutar logica adicional (como cooldown o disparos)
         if (playerActor.getJugador() instanceof Arquero arq) {
             arq.actualizar(delta);
         }
+
         batch.end();
     }
 
+    /**
+     * Controla el movimiento del jugador, colisiones con arboles
+     * y el sistema de oleadas estilo Vampire Survivors.
+     */
     private void manejarEntrada(float delta) {
+        // 1) Velocidad de movimiento segun el tiempo entre frames
         float speed = 200f * delta;
         float dx = 0f, dy = 0f;
 
-        // Verificar las teclas presionadas para mover al jugador
+        // 2) Leer teclas de movimiento
         if (Gdx.input.isKeyPressed(Input.Keys.W)) dy += speed;
         if (Gdx.input.isKeyPressed(Input.Keys.S)) dy -= speed;
         if (Gdx.input.isKeyPressed(Input.Keys.A)) dx -= speed;
         if (Gdx.input.isKeyPressed(Input.Keys.D)) dx += speed;
 
-        // Verificar si la nueva posición está dentro de los límites del mapa
+        // 3) Calcular nueva posicion del jugador
         float newX = playerActor.getX() + dx;
         float newY = playerActor.getY() + dy;
 
-        // Verificar límites horizontales
+        // 4) Verificar limites del mapa (borde izquierdo y derecho)
         if (newX < 0) newX = 0;
-        if (newX > (MAP_WIDTH * TILE_SIZE) - playerActor.getWidth()) newX = (MAP_WIDTH * TILE_SIZE) - playerActor.getWidth();
+        if (newX > (MAP_WIDTH * TILE_SIZE) - playerActor.getWidth())
+            newX = (MAP_WIDTH * TILE_SIZE) - playerActor.getWidth();
 
-        // Verificar límites verticales
+        // 5) Verificar limites del mapa (borde inferior y superior)
         if (newY < 0) newY = 0;
-        if (newY > (MAP_HEIGHT * TILE_SIZE) - playerActor.getHeight()) newY = (MAP_HEIGHT * TILE_SIZE) - playerActor.getHeight();
+        if (newY > (MAP_HEIGHT * TILE_SIZE) - playerActor.getHeight())
+            newY = (MAP_HEIGHT * TILE_SIZE) - playerActor.getHeight();
 
-        // Crear un rectángulo para la posición futura del jugador
-        Rectangle futurePosition = new Rectangle(newX, newY, playerActor.getWidth(), playerActor.getHeight());
+        // 6) Verificar colision con troncos de arboles
+        Rectangle futurePosition = new Rectangle(newX, newY,
+            playerActor.getWidth(),
+            playerActor.getHeight());
 
-        // Verificar colisiones con troncos de árboles
         boolean colisionConArbol = false;
         for (Arbol arbol : generator.getArboles()) {
             if (futurePosition.overlaps(arbol.getCollider())) {
@@ -405,9 +456,7 @@ public class DungeonScreen extends PantallaBase {
             }
         }
 
-        // Las piedras no tienen collider, así que no hay verificación de colisiones
-
-        // Mover el jugador solo si no se sale de los límites y no colisiona con un árbol
+        // 7) Si hay movimiento y no hay colision, mover al jugador
         if (dx != 0f || dy != 0f) {
             if (!colisionConArbol) {
                 playerActor.setPosition(newX, newY);
@@ -415,14 +464,14 @@ public class DungeonScreen extends PantallaBase {
             }
         }
 
-        // Sistema de spawn de minotauros estilo Vampire Survivors
+        // 8) Control de oleadas estilo Vampire Survivors
         tiempoUltimoSpawn += delta;
         if (tiempoUltimoSpawn >= TIEMPO_ENTRE_SPAWNS && enemigos.size() < MAX_MINOTAUROS) {
             spawnMinotaurosOleada();
             tiempoUltimoSpawn = 0f;
         }
 
-        // Actualizar todos los enemigos y eliminar los que hayan terminado su animación
+        // 9) Actualizar enemigos activos y remover los que ya deben desaparecer
         Iterator<Enemigo> iterator = enemigos.iterator();
         while (iterator.hasNext()) {
             Enemigo enemigo = iterator.next();
@@ -433,40 +482,46 @@ public class DungeonScreen extends PantallaBase {
         }
     }
 
+    /**
+     * Libera todos los recursos usados en esta pantalla para evitar fugas de memoria.
+     */
     @Override
     public void dispose() {
         try {
+            // Llamar al dispose() del padre
             super.dispose();
 
-            // Liberar recursos básicos
+            // 1) Liberar recursos básicos
             if (batch != null) batch.dispose();
             if (font != null) font.dispose();
 
-            // Liberar textura del jugador
+            // 2) Liberar textura del jugador
             if (texPlayer != null) texPlayer.dispose();
 
-            // Liberar texturas de terreno
+            // 3) Liberar texturas de pasto verde (array de variantes)
             if (texPastoVVariants != null) {
                 for (Texture t : texPastoVVariants) {
                     if (t != null) t.dispose();
                 }
             }
+
+            // 4) Liberar texturas individuales del terreno
             if (texPastoA != null) texPastoA.dispose();
             if (texCamino != null) texCamino.dispose();
             if (texHierbaV != null) texHierbaV.dispose();
             if (texHierbaA != null) texHierbaA.dispose();
 
-            // Liberar recursos del PlayerActor
+            // 5) Liberar recursos del actor del jugador
             if (playerActor != null) {
                 playerActor.dispose();
             }
 
-            // Liberar recursos del generador de mapa
+            // 6) Liberar recursos del generador del mapa procedural
             if (generator != null) {
                 generator.dispose();
             }
 
-            // Liberar recursos de los enemigos
+            // 7) Liberar recursos de todos los enemigos activos
             if (enemigos != null) {
                 for (Enemigo enemigo : enemigos) {
                     if (enemigo != null) {
@@ -475,14 +530,16 @@ public class DungeonScreen extends PantallaBase {
                 }
             }
 
-            // Liberar recursos del sistema de pociones
+            // 8) Liberar sistema de pociones
             if (gestionPociones != null) {
                 gestionPociones.dispose();
             }
-            // Liberar recursos del HUD
+
+            // 9) Liberar HUD del jugador
             if (playerHUD != null) {
                 playerHUD.dispose();
             }
+
         } catch (Exception e) {
             System.err.println("Error al liberar recursos en DungeonScreen: " + e.getMessage());
         }

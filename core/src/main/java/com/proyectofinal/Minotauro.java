@@ -8,12 +8,17 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 
+/**
+ * Clase Minotauro que representa un enemigo tipo jefe.
+ * Posee animaciones para diferentes estados y persigue al jugador si está cerca.
+ */
 public class Minotauro extends Enemigo {
     private static final float FRAME_DURATION   = 0.1f;
-    private static final float DETECTION_RANGE  = 2000f;
-    private static final float ATTACK_RANGE     = 25f;
+    private static final float DETECTION_RANGE  = 2000f; // Rango de detección del jugador
+    private static final float ATTACK_RANGE     = 25f;   // Rango para realizar ataque
     private final Jugador jugador;
 
+    // Arreglos para almacenar texturas de cada animación
     private Texture[] idleTextures;
     private Texture[] walkTextures;
     private Texture[] runTextures;
@@ -22,8 +27,8 @@ public class Minotauro extends Enemigo {
     private Texture[] hitTextures;
     private Texture[] deathTextures;
 
-    private boolean facingRight = true;
-    private float lastX;
+    private boolean facingRight = true; // Controla el volteo del sprite
+    private float lastX;               // Para determinar dirección de movimiento
 
     public Minotauro(float x, float y, Jugador jugador) {
         super(x, y,
@@ -31,16 +36,18 @@ public class Minotauro extends Enemigo {
             /* danio */  1,
             /* velocidad */ 85f + (float)(Math.random() * 10));
         this.jugador = jugador;
-        // Cooldown de 1 segundo
-        this.cooldownAttack = 1.0f;
+        this.cooldownAttack = 1.0f; // Cooldown entre ataques
         this.width  = 64f;
         this.height = 64f;
     }
 
+    /**
+     * Carga todas las animaciones del minotauro desde los archivos.
+     */
     @Override
     protected void cargarAnimaciones() {
         try {
-            // Idle
+            // Animación Idle
             idleTextures = new Texture[5];
             var idleFrames = new TextureRegion[5];
             for (int i = 0; i < idleTextures.length; i++) {
@@ -49,7 +56,7 @@ public class Minotauro extends Enemigo {
             }
             idleAnimation = new Animation<>(FRAME_DURATION, idleFrames);
 
-            // Walk
+            // Animación de caminar
             walkTextures = new Texture[5];
             var walkFrames = new TextureRegion[5];
             for (int i = 0; i < walkTextures.length; i++) {
@@ -58,7 +65,7 @@ public class Minotauro extends Enemigo {
             }
             walkAnimation = new Animation<>(FRAME_DURATION, walkFrames);
 
-            // Run
+            // Animación de correr
             runTextures = new Texture[8];
             var runFrames = new TextureRegion[8];
             for (int i = 0; i < runTextures.length; i++) {
@@ -67,7 +74,7 @@ public class Minotauro extends Enemigo {
             }
             runAnimation = new Animation<>(FRAME_DURATION, runFrames);
 
-            // Attack 1
+            // Ataque 1
             attackTextures = new Texture[9];
             var attackFrames = new TextureRegion[9];
             for (int i = 0; i < attackTextures.length; i++) {
@@ -76,7 +83,7 @@ public class Minotauro extends Enemigo {
             }
             attackAnimation = new Animation<>(FRAME_DURATION, attackFrames);
 
-            // Attack 2
+            // Ataque 2
             attack2Textures = new Texture[9];
             var attack2Frames = new TextureRegion[9];
             for (int i = 0; i < attack2Textures.length; i++) {
@@ -85,7 +92,7 @@ public class Minotauro extends Enemigo {
             }
             attack2Animation = new Animation<>(FRAME_DURATION, attack2Frames);
 
-            // Hit
+            // Animación de recibir golpe
             hitTextures = new Texture[3];
             var hitFrames = new TextureRegion[3];
             for (int i = 0; i < hitTextures.length; i++) {
@@ -94,7 +101,7 @@ public class Minotauro extends Enemigo {
             }
             hitAnimation = new Animation<>(FRAME_DURATION, hitFrames);
 
-            // Death
+            // Animación de muerte
             deathTextures = new Texture[6];
             var deathFrames = new TextureRegion[6];
             for (int i = 0; i < deathTextures.length; i++) {
@@ -104,6 +111,7 @@ public class Minotauro extends Enemigo {
             deathAnimation = new Animation<>(FRAME_DURATION, deathFrames);
 
         } catch (Exception e) {
+            // Si hay error, usar frames vacíos
             System.err.println("Error al cargar animaciones de Minotauro: " + e.getMessage());
             var fallbackRegion = new TextureRegion(new Texture(64, 64, Pixmap.Format.RGBA8888));
             idleAnimation    = new Animation<>(FRAME_DURATION, fallbackRegion);
@@ -116,6 +124,9 @@ public class Minotauro extends Enemigo {
         }
     }
 
+    /**
+     * Comportamiento general del minotauro según distancia al jugador.
+     */
     @Override
     protected void actualizarComportamiento(float deltaTime, float playerX, float playerY) {
         float distancia = Vector2.dst(playerX, playerY, x, y);
@@ -124,7 +135,6 @@ public class Minotauro extends Enemigo {
             estadoActual = EstadoEnemigo.ATTACKING;
             stateTime    = 0f;
             jugador.recibirDanio(getDanio());
-
         } else if (distancia <= DETECTION_RANGE) {
             estadoActual = EstadoEnemigo.RUNNING;
             moverHaciaJugador(playerX, playerY, deltaTime);
@@ -135,6 +145,9 @@ public class Minotauro extends Enemigo {
         actualizarHitbox();
     }
 
+    /**
+     * Renderiza al minotauro según su estado actual.
+     */
     @Override
     public void render(SpriteBatch batch) {
         if (marcarParaEliminar) return;
@@ -151,7 +164,7 @@ public class Minotauro extends Enemigo {
             default:         frame = idleAnimation.getKeyFrame(stateTime, true); break;
         }
 
-        // Volteo horizontal según dirección
+        // Volteo de sprite según movimiento
         if (x != lastX) {
             facingRight = x > lastX;
             lastX = x;
@@ -160,10 +173,13 @@ public class Minotauro extends Enemigo {
         if (facingRight) {
             batch.draw(frame, x, y, 64, 64);
         } else {
-            batch.draw(frame, x + 64, y, -64, 64);
+            batch.draw(frame, x + 64, y, -64, 64); // Volteado horizontal
         }
     }
 
+    /**
+     * Libera las texturas de todas las animaciones.
+     */
     @Override
     public void dispose() {
         disposeTextures(idleTextures);
@@ -175,6 +191,7 @@ public class Minotauro extends Enemigo {
         disposeTextures(deathTextures);
     }
 
+    // Método auxiliar para liberar arrays de texturas
     private void disposeTextures(Texture[] textures) {
         if (textures == null) return;
         for (var t : textures) {

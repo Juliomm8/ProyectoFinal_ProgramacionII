@@ -8,22 +8,26 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.TimeUtils;
 
+/**
+ * Clase base abstracta para todos los enemigos del juego.
+ * Maneja estados, animaciones, logica de ataque, daño y movimiento.
+ */
 public abstract class Enemigo implements Disposable {
+
+    // Dimensiones del sprite
     protected float width, height;
 
-    // Tiempo de retraso para eliminar el enemigo después de la animación de muerte
+    // Tiempo que debe pasar tras la muerte para eliminar al enemigo
     protected static final float TIEMPO_ELIMINACION = 1.0f;
-    // Flag para indicar que el enemigo debe ser eliminado
     protected boolean marcarParaEliminar = false;
-    // Contador para el tiempo después de la muerte
     protected float tiempoPostMortem = 0f;
 
-    // Estados del enemigo
+    // Estados posibles del enemigo
     public enum EstadoEnemigo {
         IDLE, WALKING, RUNNING, ATTACKING, ATTACKING2, HIT, DYING
     }
 
-    // Coordenadas y propiedades básicas
+    // Posicion y propiedades basicas
     protected float x, y;
     protected int vida;
     protected int danio;
@@ -31,11 +35,11 @@ public abstract class Enemigo implements Disposable {
     protected boolean estaVivo = true;
     protected Rectangle hitbox = new Rectangle();
 
-    // Propiedades de animación
+    // Animacion y estado actual
     public float stateTime = 0f;
     public EstadoEnemigo estadoActual = EstadoEnemigo.IDLE;
 
-    // Animaciones
+    // Animaciones por estado
     protected Animation<TextureRegion> idleAnimation;
     protected Animation<TextureRegion> walkAnimation;
     protected Animation<TextureRegion> runAnimation;
@@ -44,11 +48,11 @@ public abstract class Enemigo implements Disposable {
     protected Animation<TextureRegion> hitAnimation;
     protected Animation<TextureRegion> deathAnimation;
 
-    /** Tiempo (en segundos) de reutilización entre ataques. */
+    // Cooldown entre ataques (en segundos)
     protected float cooldownAttack = 0f;
-    /** Marca de tiempo en milisegundos del último ataque completado. */
-    protected long lastAttackTime = 0L;
+    protected long lastAttackTime = 0L; // Tiempo del ultimo ataque en milisegundos
 
+    // Constructor
     public Enemigo(float x, float y, int vida, int danio, float velocidad) {
         this.x = x;
         this.y = y;
@@ -58,36 +62,34 @@ public abstract class Enemigo implements Disposable {
         this.estaVivo = true;
         this.stateTime = 0f;
         actualizarHitbox();
-        cargarAnimaciones();
+        cargarAnimaciones(); // Cada subclase implementa esto
     }
 
-    // Getters básicos
+    // Getters
     public float getX() { return x; }
     public float getY() { return y; }
     public float getWidth() { return width; }
     public float getHeight() { return height; }
     public int getDanio() { return danio; }
 
-    // Hitbox
+    // Actualizar hitbox segun posicion
     protected void actualizarHitbox() {
         hitbox.set(x, y, 64, 64);
     }
+
     public Rectangle getHitbox() {
         return hitbox;
     }
 
-    // Estado de vida/eliminación
     public boolean estaVivo() {
         return estaVivo;
     }
+
     public boolean debeEliminarse() {
         return marcarParaEliminar;
     }
 
-    // Carga de animaciones (implementar en cada subclase)
-    protected abstract void cargarAnimaciones();
-
-    // Verifica si el cooldown entre ataques ha pasado
+    // Verifica si puede atacar (segun cooldown)
     public boolean canAttack() {
         return TimeUtils.millis() - lastAttackTime >= (long)(cooldownAttack * 1000);
     }
@@ -96,38 +98,42 @@ public abstract class Enemigo implements Disposable {
         return marcarParaEliminar;
     }
 
+    // Metodo principal para recibir daño
     public void recibirDanio(int cantidad) {
         if (!estaVivo) {
-            System.out.println("Enemigo ya está muerto, ignorando daño adicional");
+            System.out.println("Enemigo ya esta muerto, ignorando daño adicional");
             return;
         }
         vida -= cantidad;
-        System.out.println("Enemigo recibió " + cantidad + " de daño. Vida restante: " + vida);
+        System.out.println("Enemigo recibio " + cantidad + " de daño. Vida restante: " + vida);
         if (vida <= 0) {
             vida = 0;
             estaVivo = false;
             estadoActual = EstadoEnemigo.DYING;
             stateTime = 0f;
             tiempoPostMortem = 0f;
-            System.out.println("¡Enemigo ha muerto! Iniciando animación de muerte.");
+            System.out.println("¡Enemigo ha muerto! Iniciando animacion de muerte.");
         } else {
             estadoActual = EstadoEnemigo.HIT;
             stateTime = 0f;
         }
     }
 
+    // Metodo deprecated por si alguien usa "Dano" en lugar de "Danio"
     @Deprecated
     public void recibirDano(int cantidad) {
         recibirDanio(cantidad);
     }
 
     /**
-     * Actualiza estados, animaciones y controla el ciclo de vida del enemigo.
+     * Metodo de actualizacion general del enemigo.
+     * Controla la animacion de muerte, golpe y ataque.
+     * Delega la logica especifica a la subclase.
      */
     public void update(float deltaTime, float playerX, float playerY) {
         stateTime += deltaTime;
 
-        // 1) Gestión de muerte y eliminación
+        // Gestion de muerte
         if (!estaVivo) {
             if (estadoActual != EstadoEnemigo.DYING) {
                 estadoActual = EstadoEnemigo.DYING;
@@ -142,7 +148,7 @@ public abstract class Enemigo implements Disposable {
             return;
         }
 
-        // 2) Gestión de animación de golpe (HIT)
+        // Gestion de animacion de golpe
         if (estadoActual == EstadoEnemigo.HIT) {
             if (hitAnimation.isAnimationFinished(stateTime)) {
                 estadoActual = EstadoEnemigo.IDLE;
@@ -151,7 +157,7 @@ public abstract class Enemigo implements Disposable {
             return;
         }
 
-        // 3) Gestión de animación de ataque (ATTACKING)
+        // Gestion de animacion de ataque
         if (estadoActual == EstadoEnemigo.ATTACKING || estadoActual == EstadoEnemigo.ATTACKING2) {
             Animation<TextureRegion> anim = (estadoActual == EstadoEnemigo.ATTACKING)
                 ? attackAnimation
@@ -164,38 +170,51 @@ public abstract class Enemigo implements Disposable {
             return;
         }
 
-        // 4) Lógica específica de cada subclase
+        // Llamar a la logica personalizada de la subclase
         actualizarComportamiento(deltaTime, playerX, playerY);
     }
 
     /**
-     * Implementar en subclases: detección, decisión de movimiento/ataque (usando canAttack()).
+     * Metodo abstracto para cargar las animaciones del enemigo.
+     * Cada clase hija lo implementa.
+     */
+    protected abstract void cargarAnimaciones();
+
+    /**
+     * Metodo abstracto para implementar la logica personalizada del enemigo.
+     * Se llama desde update().
      */
     protected abstract void actualizarComportamiento(float deltaTime, float playerX, float playerY);
 
     /**
-     * Renderiza el sprite correspondiente al estado actual.
+     * Metodo abstracto para renderizar el sprite segun la animacion actual.
      */
     public abstract void render(SpriteBatch batch);
 
     /**
-     * Movimiento genérico hacia el jugador (puede usarse o sobrescribirse).
+     * Movimiento generico hacia el jugador.
+     * Se puede sobrescribir si se necesita un comportamiento mas complejo.
      */
     protected void moverHaciaJugador(float playerX, float playerY, float deltaTime) {
-        Vector2 dir = new Vector2(playerX - x, playerY - y).nor();
-        float dist = Vector2.dst(playerX, playerY, x, y);
-        // Variación aleatoria para evitar agrupamientos
+        Vector2 dir = new Vector2(playerX - x, playerY - y).nor(); // Direccion normalizada
+        float dist = Vector2.dst(playerX, playerY, x, y); // Distancia al jugador
+
+        // Variacion aleatoria para que los enemigos no se agrupen exactamente
         if (Math.random() < 0.3) {
-            dir.add((float)(Math.random()*0.8-0.4), (float)(Math.random()*0.8-0.4)).nor();
+            dir.add((float)(Math.random()*0.8 - 0.4), (float)(Math.random()*0.8 - 0.4)).nor();
         }
-        float factor = dist < 150 ? dist/150f : 1f;
+
+        float factor = dist < 150 ? dist / 150f : 1f; // Frenar si esta muy cerca
         x += dir.x * velocidad * factor * deltaTime;
         y += dir.y * velocidad * factor * deltaTime;
         actualizarHitbox();
     }
 
+    /**
+     * Las subclases deben liberar sus texturas u otros recursos aqui.
+     */
     @Override
     public void dispose() {
-        // Las subclases liberan sus texturas/recursos aquí
+        // Nada aqui, lo hacen las subclases
     }
 }
