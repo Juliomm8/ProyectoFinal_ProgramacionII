@@ -116,6 +116,7 @@ public class DungeonScreen extends PantallaBase {
         playerActor.setStage(stage);
         playerActor.setViewport(stage.getViewport());
         stage.addActor(playerActor);
+        playerActor.setEnemigosActuales(enemigos);
 
         // Sistema de generación y gestión de pociones
         gestionPociones = new GestionPociones(stage, generator);

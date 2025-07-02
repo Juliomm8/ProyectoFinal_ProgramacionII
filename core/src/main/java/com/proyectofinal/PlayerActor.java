@@ -392,6 +392,15 @@ public class PlayerActor extends Image {
      */
     private List<? extends Enemigo> enemigosActuales;
 
+    /**
+     * Permite inyectar la lista de enemigos visibles. Debe llamarse desde la
+     * pantalla principal antes de actualizar el actor para que los ataques
+     * puedan procesar las colisiones correctamente.
+     */
+    public void setEnemigosActuales(List<? extends Enemigo> enemigosActuales) {
+        this.enemigosActuales = enemigosActuales;
+    }
+
     @Override
     public void act(float delta) {
         super.act(delta);

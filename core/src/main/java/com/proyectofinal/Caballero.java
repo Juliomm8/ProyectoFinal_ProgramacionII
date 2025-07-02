@@ -80,7 +80,7 @@ public class Caballero extends Jugador implements RecargableInterface {
             if (e.estaVivo()) {
                 boolean enRango = estaEnRango(e);
                 System.out.println("Enemigo en posición (" + e.getX() + ", " + e.getY() + ") " +
-                                  (enRango ? "ESTÁ" : "NO ESTÁ") + " en rango");
+                    (enRango ? "ESTÁ" : "NO ESTÁ") + " en rango");
 
                 if (enRango) {
                     System.out.println("Aplicando daño letal al enemigo");
@@ -117,46 +117,31 @@ public class Caballero extends Jugador implements RecargableInterface {
     private boolean estaEnRango(Enemigo e) {
         // Aumentar el tamaño vertical del área para facilitar colisiones
         float alturaAmpliada = getHeight() * 1.5f;
-        float offsetY = (alturaAmpliada - getHeight()) / 2;
+        float offsetY = (alturaAmpliada - getHeight()) / 2f;
 
         Rectangle area;
         if ("DERECHA".equals(direccion)) {
             area = new Rectangle(
-                getX() + getWidth() * 0.5f, // Iniciar un poco antes para mejorar la detección
+                getX() + getWidth() * 0.5f,
                 getY() - offsetY,
                 rangoAtaque,
                 alturaAmpliada);
         } else {
             area = new Rectangle(
-                getX() - rangoAtaque + getWidth() * 0.5f, // Ajustar posición para mejorar la detección
+                getX() - rangoAtaque + getWidth() * 0.5f,
                 getY() - offsetY,
                 rangoAtaque,
                 alturaAmpliada);
         }
 
-        // Imprimir información de depuración sobre las áreas
+        Rectangle hitJugador = getCollider();
+        Rectangle hitE = e.getHitbox();
+
+        boolean enRango = area.overlaps(hitE) || hitJugador.overlaps(hitE);
+
         System.out.println("Área de ataque: x=" + area.x + ", y=" + area.y + ", w=" + area.width + ", h=" + area.height);
-
-        // Aumentar el tamaño del hitbox del enemigo para facilitar las colisiones
-            // Usando directamente el hitbox del enemigo en lugar de crear uno nuevo
-            Rectangle hitE = e.getHitbox();
-
-            // Verificar la intersección entre el área de ataque y el hitbox del enemigo
-            boolean enRango = area.overlaps(hitE);
-
-            // Imprimir información de depuración
-            if (enRango) {
-                System.out.println("-------------------------------------");
-                System.out.println("Área de ataque: x=" + area.x + ", y=" + area.y + ", w=" + area.width + ", h=" + area.height);
-                System.out.println("Hitbox enemigo: x=" + hitE.x + ", y=" + hitE.y + ", w=" + hitE.width + ", h=" + hitE.height);
-                System.out.println("¡COLISIÓN DETECTADA!");
-                System.out.println("-------------------------------------");
-            }
-
         if (enRango) {
-            System.out.println("¡Enemigo detectado en rango de ataque del Caballero!");
-            System.out.println("Posición del Caballero: (" + getX() + ", " + getY() + ")");
-            System.out.println("Posición del Enemigo: (" + e.getX() + ", " + e.getY() + ")");
+            System.out.println("Hitbox enemigo: x=" + hitE.x + ", y=" + hitE.y + ", w=" + hitE.width + ", h=" + hitE.height);
         }
 
         return enRango;
