@@ -55,10 +55,6 @@ public class Caballero extends Jugador implements RecargableInterface {
     public boolean atacar(List<? extends Enemigo> enemigos) {
         if (atacando || !puedeAtacar()) return false;
 
-        // Iniciar animación de ataque
-        atacando = true;
-        tiempoAtaque = 0f;
-        registrarAtaque();
         System.out.println(getNombre() + " realiza un ataque demoledor!");
 
         // Verificar si hay enemigos para atacar
@@ -91,7 +87,7 @@ public class Caballero extends Jugador implements RecargableInterface {
         }
 
         System.out.println("Enemigos golpeados en este ataque: " + enemigosGolpeados);
-        return false;
+        return enemigosGolpeados > 0;
     }
 
     /** Lógica de animación de ataque y regeneración de escudo. */

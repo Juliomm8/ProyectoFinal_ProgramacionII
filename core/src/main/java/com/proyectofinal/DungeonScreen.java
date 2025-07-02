@@ -109,6 +109,7 @@ public class DungeonScreen extends PantallaBase {
         float spawnPx = spawnTileX * TILE_SIZE;
         float spawnPy = spawnTileY * TILE_SIZE;
         playerActor.setPosition(spawnPx, spawnPy);
+        jugadorLogico.setPosition(spawnPx, spawnPy);
         cam.position.set(spawnPx, spawnPy, 0f);
         cam.update();
 
@@ -410,6 +411,7 @@ public class DungeonScreen extends PantallaBase {
         if (dx != 0f || dy != 0f) {
             if (!colisionConArbol) {
                 playerActor.setPosition(newX, newY);
+                playerActor.getJugador().setPosition(newX, newY);
             }
         }
 

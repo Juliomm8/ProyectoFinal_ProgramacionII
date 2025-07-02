@@ -469,9 +469,11 @@ public class PlayerActor extends Image {
 
         // Si no está atacando, procesa el movimiento
         if (!atacando) {
-            // Mover al personaje en ambas direcciones si hay input
+            // Actualizar dirección y sincronizar posición lógica con el actor
             if (dirX != 0 || dirY != 0) {
-                jugador.mover(dirX, dirY, delta);
+                jugador.setPosition(getX(), getY());
+                if (dirX < 0) jugador.direccion = "IZQUIERDA";
+                else if (dirX > 0) jugador.direccion = "DERECHA";
 
                 // Verificar si cambió la dirección y actualizar frames si es necesario
                 if (!direccionActualFrames.equals(jugador.direccion)) {
