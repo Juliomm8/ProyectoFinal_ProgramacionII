@@ -21,12 +21,17 @@ public class PocionHP extends Pocion {
      */
     @Override
     public void consumir(Personaje personaje) {
+        if (personaje.getVida() >= personaje.getVidaMaxima()) {
+            throw new InvalidPotionException(
+                "No puedes usar una pocion de vida si ya tienes la salud completa.");
+        }
         int vidaAntes = personaje.getVida();
         personaje.recibirDanio(-valor);  // Restaurar salud (valor negativo de daño)
         int vidaDespues = personaje.getVida();
         int restaurado = vidaDespues - vidaAntes;
 
-        System.out.println(personaje.getNombre() + " ha restaurado " + restaurado + " HP. (" +
-                           vidaAntes + " → " + vidaDespues + ")");
+        System.out.println(personaje.getNombre() +
+            " ha restaurado " + restaurado + " HP. (" +
+            vidaAntes + " → " + vidaDespues + ")");
     }
 }

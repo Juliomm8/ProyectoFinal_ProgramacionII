@@ -40,6 +40,8 @@ public class Caballero extends Jugador implements RecargableInterface {
         this.escudo = escudoInicial;
         this.escudoMaximo = escudoInicial;
         this.tiempoRegeneracionEscudo = 0f;
+        this.vidaMaxima = 200;
+        this.vida = vidaMaxima;
     }
 
     /** ¿Ha pasado el cooldown para poder atacar de nuevo? */

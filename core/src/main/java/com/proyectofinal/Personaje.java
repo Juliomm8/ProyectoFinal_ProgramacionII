@@ -7,6 +7,7 @@ public abstract class Personaje implements AtacanteInterface, DaniableInterface 
     protected String nombre;
     protected int vida;
     protected int ataque;
+    protected int vidaMaxima;
 
     public Personaje(String nombre, int vida, int ataque) {
         this.nombre = nombre;
@@ -28,4 +29,6 @@ public abstract class Personaje implements AtacanteInterface, DaniableInterface 
         System.out.println(nombre + " ataca con daño base " + ataque);
         return ataque;
     }
+    public int getVidaMaxima() { return vidaMaxima; }
+
 }

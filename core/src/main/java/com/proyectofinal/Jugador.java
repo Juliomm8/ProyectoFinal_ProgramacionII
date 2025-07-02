@@ -10,7 +10,6 @@ public class Jugador extends Personaje {
     private float x, y;             // Posición del jugador
     private float width, height;    // Tamaño y collider
     private int nivel;              // Nivel del jugador
-    private int vidaMaxima;         // Límite superior de vida
     protected String direccion;     // "IZQUIERDA" o "DERECHA"
     private boolean muerto;
 
@@ -41,7 +40,6 @@ public class Jugador extends Personaje {
                    float height,
                    int nivel) {
         super(nombre, vida, ataque);
-        this.vidaMaxima = vida;
         this.x = x;
         this.y = y;
         this.width = width;
@@ -58,10 +56,6 @@ public class Jugador extends Personaje {
 
     public int getVida() {
         return vida;
-    }
-
-    public int getVidaMaxima() {
-        return vidaMaxima;
     }
 
     public boolean estaMuerto() {
@@ -89,6 +83,28 @@ public class Jugador extends Personaje {
 
     public int getNivel() {
         return nivel;
+    }
+
+    /**
+     * Determina si el jugador cumple los requisitos para equipar un item.
+     * @param item objeto a comprobar
+     * @return true si puede equiparlo
+     */
+    public boolean puedeEquipar(Item item) {
+        return item != null && item.cumpleRequisitos(this);
+    }
+
+    /**
+     * Intenta equipar un item y lanza una excepción si no cumple con los
+     * requisitos de clase o nivel.
+     * @param item objeto a equipar
+     */
+    public void equiparItem(Item item) {
+        if (!puedeEquipar(item)) {
+            throw new ItemNotEquippableException(
+                "Este objeto no puede ser equipado por tu clase o nivel.");
+        }
+        System.out.println(nombre + " ha equipado " + item.getNombre());
     }
 
     // ——————————— Setters y utilidad ———————————

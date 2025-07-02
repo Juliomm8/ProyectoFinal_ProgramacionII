@@ -138,7 +138,14 @@ public class PocionActor extends Image {
         System.out.println(personaje.getNombre() + " recoge " + pocion.getNombre());
 
         // Aplicar el efecto de la poción
-        pocion.consumir(personaje);
+        try {
+            pocion.consumir(personaje);
+        } catch (InvalidPotionException e) {
+            System.out.println(e.getMessage());
+            // Si no se pudo consumir, revertir la recogida
+            recogida = false;
+            return;
+        }
 
         // Marcar para eliminar en el próximo frame
         debeEliminarse = true;

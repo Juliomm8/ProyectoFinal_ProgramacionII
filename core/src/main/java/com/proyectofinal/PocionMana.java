@@ -26,17 +26,27 @@ public class PocionMana extends Pocion {
     public void consumir(Personaje p) {
         if (p instanceof RecargableInterface) {
             // Mensaje específico según la clase
-            if (p instanceof Arquero) {
+            if (p instanceof Mago) {
+                Mago mago = (Mago) p;
+                if (mago.getMana() >= mago.getManaMaximo()) {
+                    throw new InvalidPotionException(
+                        "No puedes usar una poción de maná si no has perdido mana.");
+                }
+                int antes = mago.getMana();
+                ((RecargableInterface) p).recargar(valor);
+                System.out.println(p.getNombre() + " ha recargado " + (mago.getMana() - antes)
+                    + " de maná. (" + antes + " → " + mago.getMana() + ")");
+            } else if (p instanceof Arquero) {
                 Arquero arquero = (Arquero) p;
                 int flechasAntes = arquero.getFlechas();
-                ((RecargableInterface)p).recargar(valor);
+                ((RecargableInterface) p).recargar(valor);
                 int flechasDespues = arquero.getFlechas();
 
-                System.out.println(p.getNombre() + " ha recargado " + (flechasDespues - flechasAntes) +
-                                 " flechas. (" + flechasAntes + " → " + flechasDespues + ")");
+                System.out.println(p.getNombre() + " ha recargado " + (flechasDespues - flechasAntes)
+                    + " flechas. (" + flechasAntes + " → " + flechasDespues + ")");
             } else {
-                // Para otros tipos recargables (Mago, Caballero)
-                ((RecargableInterface)p).recargar(valor);
+                // Para otros tipos recargables (Caballero)
+                ((RecargableInterface) p).recargar(valor);
                 System.out.println(p.getNombre() + " ha recargado " + valor + " de energía.");
             }
         } else {

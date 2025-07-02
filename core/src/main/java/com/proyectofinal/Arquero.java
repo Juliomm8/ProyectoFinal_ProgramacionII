@@ -18,6 +18,8 @@ public class Arquero extends Jugador implements RecargableInterface {
         this.flechas = flechasIniciales;
         this.modoIlimitado = false;
         this.tiempoIlimitado = 0;
+        this.vidaMaxima = 180;
+        this.vida = vidaMaxima;
     }
 
     public float getPrecision() {
