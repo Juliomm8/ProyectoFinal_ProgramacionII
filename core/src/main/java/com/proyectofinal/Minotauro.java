@@ -33,6 +33,8 @@ public class Minotauro extends Enemigo {
         this.jugador = jugador;
         // Cooldown de 1 segundo
         this.cooldownAttack = 1.0f;
+        this.width  = 64f;
+        this.height = 64f;
     }
 
     @Override

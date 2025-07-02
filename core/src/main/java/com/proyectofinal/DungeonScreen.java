@@ -82,15 +82,15 @@ public class DungeonScreen extends PantallaBase {
         Jugador jugadorLogico;
         switch (playerClass) {
             case "Arquero":
-                jugadorLogico = new Arquero("Legolas", 100, 15, 0.8f, 10, 32f, 32f, 20, 15);
+                jugadorLogico = new Arquero("Legolas", 180, 15, 0.8f, 10, 32f, 32f, 40, 15);
                 texPlayer = new Texture("PersonajesPrincipales/Arquero/arquero.png");
                 break;
             case "Mago":
-                jugadorLogico = new Mago("Gandalf", 80, 12, 50, 0.8f, 32f, 32f, 1);
+                jugadorLogico = new Mago("Gandalf", 150, 12, 50, 0.8f, 32f, 32f, 1);
                 texPlayer = new Texture("PersonajesPrincipales/Mago/mago.png");
                 break;
             case "Caballero":
-                jugadorLogico = new Caballero("Arthur", 120, 15, 50, 0.8f, 32f, 32f, 100);
+                jugadorLogico = new Caballero("Arthur", 200, 15, 50, 0.8f, 32f, 32f, 100);
                 texPlayer = new Texture("PersonajesPrincipales/Caballero/caballero.png");
                 break;
             default:
@@ -311,6 +311,7 @@ public class DungeonScreen extends PantallaBase {
         // 6) Actualizar lógica y dibujar al jugador + pociones
         playerActor.update(delta, enemigos);
         stage.act(delta);
+        GestionEnemigos.comprobarColisionesProyectiles(stage, enemigos);
         stage.draw();
 
         // 7) Dibujar enemigos sobre el suelo
