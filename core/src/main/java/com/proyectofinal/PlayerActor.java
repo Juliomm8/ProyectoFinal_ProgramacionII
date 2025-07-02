@@ -543,6 +543,7 @@ public class PlayerActor extends Image {
                 // Ataque básico (botón izquierdo o SPACE)
                 if (jugador instanceof Caballero caballero && caballero.puedeAtacar()) {
                     caballero.registrarAtaque();
+                    caballero.iniciarAtaque();
 
                     // Transición a estado de ataque
                     if (!atacando) {
@@ -600,6 +601,7 @@ public class PlayerActor extends Image {
                 // Lógica para Caballero (usando attackFrames)
                 if (idx >= attackFrames.length) {
                     atacando = false;
+                    ((Caballero)jugador).terminarAtaque();
                 } else {
                     frameAttack = idx;
                     if (idx == ATTACK_IMPACT && !impactoHecho) {
@@ -691,6 +693,9 @@ public class PlayerActor extends Image {
             } else {
                 // Si no tiene frames de ataque, terminar rápido
                 atacando = false;
+                if (jugador instanceof Caballero cab) {
+                    cab.terminarAtaque();
+                }
             }
         }
     }

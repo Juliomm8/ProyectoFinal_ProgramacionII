@@ -19,6 +19,12 @@ public class Caballero extends Jugador implements RecargableInterface {
     private float duracionAnimacionAtaque = 0.5f; // seg
     private boolean atacando = false;
     private float tiempoAtaque = 0f;
+    /** Indica si la hitbox de ataque está activa */
+    private boolean hitboxActiva = false;
+
+    /** Hitbox del ataque cuerpo a cuerpo para detectar colisiones. */
+    private Rectangle hitboxAtaque = new Rectangle();
+
 
     // Cooldown en ms
     private long tiempoUltimoAtaque = 0L;
@@ -47,13 +53,50 @@ public class Caballero extends Jugador implements RecargableInterface {
     }
 
     /**
+     * Inicia el ataque activando la hitbox y marcando el estado.
+     */
+    public void iniciarAtaque() {
+        atacando = true;
+        tiempoAtaque = 0f;
+        hitboxActiva = true;
+    }
+
+    /**
+     * Finaliza el ataque y desactiva la hitbox.
+     */
+    public void terminarAtaque() {
+        atacando = false;
+        hitboxActiva = false;
+        tiempoAtaque = 0f;
+    }
+
+    /**
+     * Posiciona la hitbox de ataque justo frente al caballero. Se utiliza
+     * únicamente mientras se ejecuta la animación de ataque.
+     */
+    private void actualizarHitboxAtaque() {
+        float altura = getHeight() * 1.5f;
+        float offsetY = (altura - getHeight()) / 2f;
+
+        float x = "DERECHA".equals(direccion)
+            ? getX() + getWidth()
+            : getX() - rangoAtaque;
+
+        hitboxAtaque.set(x, getY() - offsetY, rangoAtaque, altura);
+    }
+
+    /**
      * Mata de un solo golpe a cualquier enemigo en la misma fila
      * y dentro de rango frontal.
      *
      * @return
      */
     public boolean atacar(List<? extends Enemigo> enemigos) {
-        if (atacando || !puedeAtacar()) return false;
+        if (!atacando || !hitboxActiva) return false;
+        hitboxActiva = false;
+        atacando = true;
+        tiempoAtaque = 0f;
+        actualizarHitboxAtaque();
 
         System.out.println(getNombre() + " realiza un ataque demoledor!");
 
@@ -79,8 +122,8 @@ public class Caballero extends Jugador implements RecargableInterface {
                     (enRango ? "ESTÁ" : "NO ESTÁ") + " en rango");
 
                 if (enRango) {
-                    System.out.println("Aplicando daño letal al enemigo");
-                    e.recibirDanio(9999); // Usar un valor grande pero no MAX_VALUE para evitar overflow
+                    System.out.println("Aplicando daño al enemigo");
+                    e.recibirDanio(getDanoBase());
                     enemigosGolpeados++;
                 }
             }
@@ -95,6 +138,7 @@ public class Caballero extends Jugador implements RecargableInterface {
     public void actualizar(float delta) {
         // Animación de ataque
         if (atacando) {
+            actualizarHitboxAtaque();
             tiempoAtaque += delta;
             if (tiempoAtaque >= duracionAnimacionAtaque) {
                 atacando = false;
@@ -111,36 +155,7 @@ public class Caballero extends Jugador implements RecargableInterface {
 
     /** Comprueba si un enemigo está en la zona frontal de ataque. */
     private boolean estaEnRango(Enemigo e) {
-        // Aumentar el tamaño vertical del área para facilitar colisiones
-        float alturaAmpliada = getHeight() * 1.5f;
-        float offsetY = (alturaAmpliada - getHeight()) / 2f;
-
-        Rectangle area;
-        if ("DERECHA".equals(direccion)) {
-            area = new Rectangle(
-                getX() + getWidth() * 0.5f,
-                getY() - offsetY,
-                rangoAtaque,
-                alturaAmpliada);
-        } else {
-            area = new Rectangle(
-                getX() - rangoAtaque + getWidth() * 0.5f,
-                getY() - offsetY,
-                rangoAtaque,
-                alturaAmpliada);
-        }
-
-        Rectangle hitJugador = getCollider();
-        Rectangle hitE = e.getHitbox();
-
-        boolean enRango = area.overlaps(hitE) || hitJugador.overlaps(hitE);
-
-        System.out.println("Área de ataque: x=" + area.x + ", y=" + area.y + ", w=" + area.width + ", h=" + area.height);
-        if (enRango) {
-            System.out.println("Hitbox enemigo: x=" + hitE.x + ", y=" + hitE.y + ", w=" + hitE.width + ", h=" + hitE.height);
-        }
-
-        return enRango;
+        return hitboxAtaque.overlaps(e.getHitbox());
     }
 
     // ——— RecargableInterface ———
